@@ -1,0 +1,76 @@
+name: Import NEXORA source into S4P
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/import-nexora.yml
+permissions:
+  contents: write
+concurrency:
+  group: s4p-import-source
+  cancel-in-progress: false
+jobs:
+  import-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Checkout original source read-only
+        run: |
+          git clone --depth 1 --branch main https://github.com/Clopezgg/nexora-group.git /tmp/nexora-source
+          git -C /tmp/nexora-source rev-parse HEAD > /tmp/s4p-source-sha
+      - name: Copy source without replacing migration automation
+        run: |
+          set -euo pipefail
+          mkdir -p docs/archive
+          cp /tmp/nexora-source/README.md docs/archive/NEXORA_ORIGINAL_README.md
+          rsync -a --exclude='.git/' --exclude='.github/workflows/' --exclude='.env' --exclude='backend/.env' --exclude='node_modules/' --exclude='.venv/' /tmp/nexora-source/ ./
+          mkdir -p docs
+          cat > README.md <<'EOF'
+          # S4P — NEXORA ERP modernization
+
+          S4P is a controlled modernization of the original [NEXORA GROUP](https://github.com/Clopezgg/nexora-group) codebase.
+
+          The existing SAP Fiori / SAP GUI inspired design and NEXORA identity are protected. Stack: React + TypeScript + Vite, FastAPI + Python, PostgreSQL + Alembic.
+
+          **Do not assume this repository is production-ready.** CI failures, business transaction invariants, RBAC, and database migrations require verification. The original repository remains unchanged.
+
+          See [migration scope](docs/S4P_MIGRATION.md) and [original README](docs/archive/NEXORA_ORIGINAL_README.md).
+          EOF
+          cat > docs/S4P_MIGRATION.md <<'EOF'
+          # S4P migration and modernization
+
+          ## Source of truth
+          - Source: Clopezgg/nexora-group, branch main, read-only.
+          - Destination: Clopezgg/S4P-, branch main.
+          - Preserve SAP Fiori / SAP GUI visual identity, design tokens, layouts, brand assets, and functional behavior.
+          - Maintain FastAPI and PostgreSQL; do not substitute D1 without an explicit compatibility and transactional review.
+
+          ## Scope
+          - Executive home; Projects/WBS; Finance/Treasury/Accounting; Procurement;
+            Inventory; Operations; Approvals/Audit; Administration/RBAC.
+          - Stabilize CI before declaring release ready.
+          - Validate purchase-to-pay including stock, AP, treasury, accounting, reversals, audit and idempotency.
+          - Make infrastructure portable; use Cloudflare for frontend and edge security.
+          - Python backend and PostgreSQL require separately provisioned hosting.
+          - Add production smoke, E2E, backup/restore and security validation before launch.
+
+          ## Guardrails
+          - No production data migration or live release without a tested rollback.
+          - No fabricated responses, business metrics or test success claims.
+          - No source repository writes.
+          - Never commit credentials; audit config and GitHub Actions before enabling any deployment.
+          EOF
+          echo "source_commit=$(cat /tmp/s4p-source-sha)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Files copied including binary SAP assets and source tests." >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit imported source to S4P
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "feat: import NEXORA source and preserve SAP UI for S4P modernization [skip ci]"
+          git push origin HEAD:main
