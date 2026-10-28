@@ -70,5 +70,10 @@ jobs:
         run: ruff check app tests
       - name: Python compile
         run: python -m compileall -q app
+      - name: Prepare worktree-isolated test database
+        env:
+          PGPASSWORD: nexora
+        run: |
+          psql -h localhost -U nexora -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE nexora_test_s4p;'
       - name: Tests with real PostgreSQL
         run: pytest -q
