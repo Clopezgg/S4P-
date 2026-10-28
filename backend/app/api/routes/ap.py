@@ -1,0 +1,506 @@
+import uuid
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_db
+from app.api.deps_correlation import get_correlation_id
+from app.domain.errors import (
+    InvalidFinancialReferenceError,
+    NotFoundError,
+    SegregationOfDutiesError,
+)
+from app.models.ap import SupplierInvoice, SupplierPayment
+from app.schemas.ap import (
+    PaymentPlanItemResponse,
+    PaymentPlanRequest,
+    SupplierInvoiceCreateRequest,
+    SupplierInvoiceResponse,
+    SupplierInvoiceSubmitRequest,
+    SupplierPaymentCreateRequest,
+    SupplierPaymentResponse,
+)
+from app.services import ap_service, audit_service, idempotency_service
+from app.services.permission_service import (
+    accessible_project_ids,
+    assert_company_access,
+    require_permission,
+    user_has_any_company_scope,
+    user_has_company_access,
+    user_has_permission,
+)
+
+router = APIRouter(prefix="/ap", tags=["accounts-payable"])
+
+
+def _resolve_invoice(db: Session, invoice_id: uuid.UUID):
+    invoice = ap_service.get_supplier_invoice(db, invoice_id=invoice_id)
+    if invoice is None:
+        raise NotFoundError(f"SupplierInvoice {invoice_id} no existe")
+    return invoice
+
+
+@router.post("/supplier-invoices", response_model=SupplierInvoiceResponse, status_code=201)
+def create_supplier_invoice(
+    payload: SupplierInvoiceCreateRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "create")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierInvoiceResponse:
+    assert_company_access(
+        db, user_id=user.id, resource="ap.supplier_invoice", action="create", company_id=payload.company_id
+    )
+    invoice = ap_service.create_supplier_invoice(
+        db,
+        company_id=payload.company_id,
+        supplier_id=payload.supplier_id,
+        invoice_number=payload.invoice_number,
+        scope=payload.scope,
+        project_id=payload.project_id,
+        cost_center_id=payload.cost_center_id,
+        expense_account_id=payload.expense_account_id,
+        payable_account_id=payload.payable_account_id,
+        currency_code=payload.currency_code,
+        amount=payload.amount,
+        tax_amount=payload.tax_amount,
+        invoice_date=payload.invoice_date,
+        due_date=payload.due_date,
+        description=payload.description,
+        supplier_contract_id=payload.supplier_contract_id,
+        contract_installment_id=payload.contract_installment_id,
+        purchase_order_id=payload.purchase_order_id,
+        commit=False,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="ap.supplier_invoice.create",
+        entity_type="ap.supplier_invoice",
+        entity_id=invoice.id,
+        company_id=invoice.company_id,
+        project_id=invoice.project_id,
+        before=None,
+        after={
+            "invoiceNumber": invoice.invoice_number,
+            "amount": str(invoice.amount),
+            "taxAmount": str(invoice.tax_amount),
+            "status": invoice.status,
+        },
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return SupplierInvoiceResponse.model_validate(invoice, from_attributes=True)
+
+
+@router.get("/supplier-invoices/{invoice_id}", response_model=SupplierInvoiceResponse)
+def get_supplier_invoice(
+    invoice_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "read")),
+) -> SupplierInvoiceResponse:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="read",
+        company_id=invoice.company_id,
+    )
+    return SupplierInvoiceResponse.model_validate(invoice, from_attributes=True)
+
+
+@router.get("/supplier-invoices", response_model=list[SupplierInvoiceResponse])
+def list_supplier_invoices(
+    company_id: uuid.UUID = Query(alias="companyId"),
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "read")),
+) -> list[SupplierInvoiceResponse]:
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="read",
+        company_id=company_id,
+    )
+    allowed = accessible_project_ids(
+        db, user_id=user.id, resource="ap.supplier_invoice", action="read"
+    )
+    invoices = ap_service.list_supplier_invoices(db, company_id=company_id)
+    if allowed is not None:
+        allowed_set = set(allowed)
+        invoices = [
+            invoice
+            for invoice in invoices
+            if invoice.project_id is None or invoice.project_id in allowed_set
+        ]
+    return [SupplierInvoiceResponse.model_validate(invoice, from_attributes=True) for invoice in invoices]
+
+
+@router.post(
+    "/supplier-invoices/{invoice_id}/submit-for-approval", response_model=SupplierInvoiceResponse
+)
+def submit_supplier_invoice_for_approval(
+    invoice_id: uuid.UUID,
+    payload: SupplierInvoiceSubmitRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "submit")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierInvoiceResponse:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="submit",
+        company_id=invoice.company_id,
+    )
+    if payload.assigned_to == user.id:
+        raise SegregationOfDutiesError(
+            "El solicitante no puede asignarse a sí mismo la aprobación (INV-SOD-001)"
+        )
+    if not user_has_permission(
+        db, user_id=payload.assigned_to, resource="workflow.approval", action="decide"
+    ) or not (
+        user_has_any_company_scope(
+            db, user_id=payload.assigned_to, resource="workflow.approval", action="decide"
+        )
+        or user_has_company_access(db, user_id=payload.assigned_to, company_id=invoice.company_id)
+    ):
+        raise InvalidFinancialReferenceError(
+            "assignedTo debe ser un usuario con permiso para decidir aprobaciones en esta compañía"
+        )
+    before_status = invoice.status
+    invoice = ap_service.submit_supplier_invoice_for_approval(
+        db,
+        invoice_id=invoice_id,
+        requested_by=user.id,
+        assigned_to=payload.assigned_to,
+        priority=payload.priority,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="ap.supplier_invoice.submit",
+        entity_type="ap.supplier_invoice",
+        entity_id=invoice.id,
+        company_id=invoice.company_id,
+        project_id=invoice.project_id,
+        before={"status": before_status},
+        after={"status": invoice.status},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return SupplierInvoiceResponse.model_validate(invoice, from_attributes=True)
+
+
+@router.post("/supplier-invoices/{invoice_id}/approve", response_model=SupplierInvoiceResponse)
+def approve_supplier_invoice(
+    invoice_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "approve")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierInvoiceResponse:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="approve",
+        company_id=invoice.company_id,
+    )
+    before_status = invoice.status
+    invoice = ap_service.approve_supplier_invoice(db, invoice_id=invoice_id)
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="ap.supplier_invoice.approve",
+        entity_type="ap.supplier_invoice",
+        entity_id=invoice.id,
+        company_id=invoice.company_id,
+        project_id=invoice.project_id,
+        before={"status": before_status},
+        after={"status": invoice.status},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return SupplierInvoiceResponse.model_validate(invoice, from_attributes=True)
+
+
+@router.post("/supplier-invoices/{invoice_id}/cancel", response_model=SupplierInvoiceResponse)
+def cancel_supplier_invoice(
+    invoice_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "cancel")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierInvoiceResponse:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="cancel",
+        company_id=invoice.company_id,
+    )
+    before_status = invoice.status
+    invoice = ap_service.cancel_supplier_invoice(db, invoice_id=invoice_id)
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="ap.supplier_invoice.cancel",
+        entity_type="ap.supplier_invoice",
+        entity_id=invoice.id,
+        company_id=invoice.company_id,
+        project_id=invoice.project_id,
+        before={"status": before_status},
+        after={"status": invoice.status},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return SupplierInvoiceResponse.model_validate(invoice, from_attributes=True)
+
+
+@router.post(
+    "/supplier-invoices/{invoice_id}/payments", response_model=SupplierPaymentResponse, status_code=201
+)
+def pay_supplier_invoice(
+    invoice_id: uuid.UUID,
+    payload: SupplierPaymentCreateRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_payment", "create")),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierPaymentResponse:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_payment",
+        action="create",
+        company_id=invoice.company_id,
+    )
+    if payload.contract_override_reason and not user_has_permission(
+        db, user_id=user.id, resource="contract.payment", action="override"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes el permiso contract.payment:override para saltar la asignación contractual",
+        )
+    outcome = None
+    request_payload = {"invoiceId": str(invoice_id), **payload.model_dump(mode="json")}
+    try:
+        if idempotency_key:
+            outcome = idempotency_service.begin(
+                db,
+                key=idempotency_key,
+                command="ap.supplier_payment.create",
+                payload=request_payload,
+            )
+            if outcome.is_replay:
+                return SupplierPaymentResponse.model_validate(outcome.record.result)
+        payment = ap_service.pay_supplier_invoice(
+            db,
+            invoice_id=invoice_id,
+            treasury_account_id=payload.treasury_account_id,
+            amount=payload.amount,
+            payment_date=payload.payment_date,
+            payment_method=payload.payment_method,
+            payment_evidence_ids=payload.payment_evidence_ids,
+            contract_allocations=(
+                [a.model_dump(mode="json") for a in payload.contract_allocations]
+                if payload.contract_allocations
+                else None
+            ),
+            contract_override_reason=payload.contract_override_reason,
+            bank_transaction_reference=payload.bank_transaction_reference,
+            payment_observations=payload.payment_observations,
+            commit=outcome is None,
+        )
+        audit_service.record(
+            db,
+            actor_user_id=user.id,
+            action="ap.supplier_payment.create",
+            entity_type="ap.supplier_payment",
+            entity_id=payment.id,
+            company_id=invoice.company_id,
+            project_id=invoice.project_id,
+            before=None,
+            after={
+                "amount": str(payment.amount),
+                "invoiceId": str(invoice.id),
+                "paymentMethod": payment.payment_method,
+                "paymentEvidenceCount": len(payload.payment_evidence_ids or []),
+                "bankTransactionReference": payment.bank_transaction_reference,
+                "paymentObservations": payment.payment_observations,
+            },
+            correlation_id=correlation_id,
+        )
+        response = SupplierPaymentResponse.model_validate(payment, from_attributes=True)
+        if outcome is not None:
+            idempotency_service.complete(
+                db,
+                outcome.record,
+                result=response.model_dump(mode="json"),
+                entity_type="SupplierPayment",
+                entity_id=payment.id,
+            )
+        db.commit()
+        return response
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.get(
+    "/supplier-invoices/{invoice_id}/payment-plan",
+    response_model=list[PaymentPlanItemResponse],
+)
+def get_payment_plan(
+    invoice_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "read")),
+) -> list[PaymentPlanItemResponse]:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="read",
+        company_id=invoice.company_id,
+    )
+    return [
+        PaymentPlanItemResponse.model_validate(row, from_attributes=True)
+        for row in ap_service.list_payment_plan(db, invoice_id=invoice_id)
+    ]
+
+
+@router.put(
+    "/supplier-invoices/{invoice_id}/payment-plan",
+    response_model=list[PaymentPlanItemResponse],
+)
+def set_payment_plan(
+    invoice_id: uuid.UUID,
+    payload: PaymentPlanRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_invoice", "update")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> list[PaymentPlanItemResponse]:
+    invoice = _resolve_invoice(db, invoice_id)
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_invoice",
+        action="update",
+        company_id=invoice.company_id,
+    )
+    try:
+        rows = ap_service.set_payment_plan(
+            db,
+            invoice_id=invoice_id,
+            installments=[item.model_dump() for item in payload.installments],
+            commit=False,
+        )
+        audit_service.record(
+            db,
+            actor_user_id=user.id,
+            action="ap.supplier_invoice.payment_plan.set",
+            entity_type="ap.supplier_invoice",
+            entity_id=invoice.id,
+            company_id=invoice.company_id,
+            project_id=invoice.project_id,
+            before=None,
+            after={"installments": len(rows), "total": str(invoice.amount + invoice.tax_amount)},
+            correlation_id=correlation_id,
+        )
+        db.commit()
+        return [PaymentPlanItemResponse.model_validate(row, from_attributes=True) for row in rows]
+    except ValueError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)
+        ) from error
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.get("/payment-proposal", response_model=None)
+def payment_proposal(
+    company_id: uuid.UUID = Query(alias="companyId"),
+    horizon_days: int = Query(default=14, ge=1, le=90, alias="horizonDays"),
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_payment", "read")),
+):
+    from app.core.business_time import business_today
+
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_payment",
+        action="read",
+        company_id=company_id,
+    )
+    return ap_service.build_payment_proposal(
+        db, company_id=company_id, as_of=business_today(), horizon_days=horizon_days
+    )
+
+
+@router.patch(
+    "/supplier-payments/{payment_id}",
+    response_model=SupplierPaymentResponse,
+)
+def update_supplier_payment_bank_reference(
+    payment_id: uuid.UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("ap.supplier_payment", "update")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> SupplierPaymentResponse:
+    """Update bank transaction reference on a supplier payment.
+    Only the bank_transaction_reference field can be updated.
+    Requires Protected Edit capability."""
+    payment = db.get(SupplierPayment, payment_id)
+    if payment is None:
+        raise HTTPException(status_code=404, detail="Pago no encontrado")
+    invoice = db.get(SupplierInvoice, payment.supplier_invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="ap.supplier_payment",
+        action="update",
+        company_id=invoice.company_id,
+    )
+    if payment.reversed_at is not None:
+        raise HTTPException(
+            status_code=422, detail="No se puede modificar un pago revertido"
+        )
+    allowed_fields = {"bankTransactionReference"}
+    for field in payload.keys():
+        if field not in allowed_fields:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Campo no permitido: {field}. Solo se permite 'bankTransactionReference'.",
+            )
+    old_reference = payment.bank_transaction_reference
+    new_reference = payload.get("bankTransactionReference")
+    if new_reference is not None and len(new_reference.strip()) > 120:
+        raise HTTPException(
+            status_code=422, detail="La referencia bancaria no puede exceder 120 caracteres"
+        )
+    payment.bank_transaction_reference = new_reference.strip() if new_reference else None
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="ap.supplier_payment.update_bank_reference",
+        entity_type="ap.supplier_payment",
+        entity_id=payment.id,
+        company_id=invoice.company_id,
+        project_id=invoice.project_id,
+        before={"bankTransactionReference": old_reference},
+        after={"bankTransactionReference": payment.bank_transaction_reference},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    db.refresh(payment)
+    return SupplierPaymentResponse.model_validate(payment, from_attributes=True)

@@ -1,0 +1,142 @@
+/* Login NEXORA — Opción 1, moderna minimalista.
+ * Misma identidad en desktop y iPhone; una sola tarjeta centrada. */
+
+.nx-login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(var(--nx-safe-top) + 24px)
+    calc(var(--nx-safe-right) + 20px)
+    calc(var(--nx-safe-bottom) + 24px)
+    calc(var(--nx-safe-left) + 20px);
+  background:
+    radial-gradient(circle at 50% -10%, var(--nx-color-accent-soft), transparent 45%),
+    linear-gradient(180deg, #fbfcfe 0%, var(--nx-color-background) 100%);
+}
+
+.nx-login__card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--nx-color-surface);
+  border: 1px solid var(--nx-color-border);
+  border-radius: var(--nx-radius-lg);
+  box-shadow: var(--nx-shadow-lg);
+  padding: clamp(28px, 6vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nx-login__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nx-login__brand-mark {
+  width: 28px;
+  height: 32px;
+  border: 2px solid var(--nx-color-accent);
+  border-radius: 7px 7px 4px 4px;
+  position: relative;
+  display: inline-block;
+  background: var(--nx-color-accent-soft);
+  flex-shrink: 0;
+}
+.nx-login__brand-mark::before,
+.nx-login__brand-mark::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  width: 4px;
+  border-radius: 1px;
+  background: var(--nx-color-accent);
+}
+.nx-login__brand-mark::before { left: 6px; height: 13px; }
+.nx-login__brand-mark::after { right: 6px; height: 19px; }
+.nx-login__brand-name {
+  font-weight: 800;
+  font-size: var(--nx-text-label);
+  letter-spacing: 0.13em;
+  color: var(--nx-color-brand-900);
+}
+
+.nx-login__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nx-login__title {
+  margin: 0;
+  color: var(--nx-color-text);
+  font-size: var(--nx-text-h1);
+  letter-spacing: -0.02em;
+}
+.nx-login__subtitle {
+  margin: 0;
+  color: var(--nx-color-text-muted);
+  font-size: var(--nx-text-body);
+}
+
+.nx-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nx-login__password {
+  position: relative;
+}
+.nx-login__password-toggle {
+  position: absolute;
+  top: 30px;
+  right: 10px;
+  border: none;
+  background: none;
+  color: var(--nx-color-accent);
+  font-size: var(--nx-text-caption);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px;
+  min-height: var(--nx-touch-target);
+}
+
+.nx-login__remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--nx-text-label);
+  color: var(--nx-color-text-muted);
+  min-height: var(--nx-touch-target);
+}
+.nx-login__remember input {
+  width: 16px;
+  height: 16px;
+}
+
+.nx-login__notice {
+  margin: 0;
+  font-size: var(--nx-text-label);
+  color: var(--nx-color-text-muted);
+}
+.nx-login__notice--error {
+  color: var(--nx-color-error);
+}
+
+.nx-login__submit {
+  width: 100%;
+  min-height: var(--nx-touch-target);
+  margin-top: 2px;
+}
+
+.nx-login__footer {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--nx-color-border);
+  text-align: center;
+  color: var(--nx-color-text-muted);
+  font-size: var(--nx-text-caption);
+  letter-spacing: 0.02em;
+}

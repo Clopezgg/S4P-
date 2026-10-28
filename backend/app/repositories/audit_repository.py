@@ -1,0 +1,38 @@
+import uuid
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
+
+from app.models.audit import AuditLog
+
+
+def create(db: Session, **kwargs) -> AuditLog:
+    row = AuditLog(**kwargs)
+    db.add(row)
+    db.flush()
+    return row
+
+
+def list_for_company(
+    db: Session,
+    *,
+    company_id: uuid.UUID,
+    entity_type: str | None = None,
+    entity_id: uuid.UUID | None = None,
+    actor_user_id: uuid.UUID | None = None,
+    offset: int = 0,
+    limit: int = 50,
+) -> list[AuditLog]:
+    stmt = (
+        select(AuditLog)
+        .options(selectinload(AuditLog.actor))
+        .where(AuditLog.company_id == company_id)
+    )
+    if entity_type is not None:
+        stmt = stmt.where(AuditLog.entity_type == entity_type)
+    if entity_id is not None:
+        stmt = stmt.where(AuditLog.entity_id == entity_id)
+    if actor_user_id is not None:
+        stmt = stmt.where(AuditLog.actor_user_id == actor_user_id)
+    stmt = stmt.order_by(AuditLog.created_at.desc(), AuditLog.id.asc()).offset(offset).limit(limit)
+    return list(db.execute(stmt).scalars())

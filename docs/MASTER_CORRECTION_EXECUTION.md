@@ -1,0 +1,240 @@
+# Master correction execution — continuity
+
+## Initial state (supervisor iteration 1)
+
+- REFERENCE_AUDITED_SHA=dc58619c9cdfb8e4648eedd8fa4cba2200a9d4c8
+- INITIAL_MAIN_SHA=dc58619c9cdfb8e4648eedd8fa4cba2200a9d4c8
+- PROCESS_START_SHA=9eb1a4bdb0336582797bfe5f4cac9e514accb040
+- Branch: `fix/nexora-phase1-core-foundations`; initially clean, one local commit ahead of remote.
+- Fetch completed; existing changes preserved and subsequently published.
+- Phase 1 remains incomplete; CORE_BASELINE_SHA, DOMAIN_INTEGRATION_SHA and FINAL_CERTIFIED_SHA are PENDING.
+
+## Executed
+
+- Commit `1be88d9d`: fiscal bootstrap now ends when a FiscalYear exists, even if no periods have been generated. Regression reproduced DID NOT RAISE before the fix.
+- Targeted PostgreSQL regression: 33 passed (fiscal, posting, project setup and lifecycle).
+- Backend critical Ruff checks and compileall passed.
+- Frontend typecheck, lint, 65 test files / 204 tests and production build passed.
+- Fresh isolated PostgreSQL database `nexora_phase1_migrations_20260908`: real Alembic upgrade to `e4f6a8b0c2d3` passed. Log: `/tmp/nexora-phase1-migrations.log`.
+- Draft PR: https://github.com/Clopezgg/nexora-group/pull/114 (continue this PR; do not merge until Phase 1 requirements and CI pass).
+
+## Running verification — inspect before starting another runner
+
+Full serial backend `pytest -q` launched from backend, writing `/tmp/nexora-phase1-full-pytest.log`. It uses `nexora_test_nexora_group`. Do not run another schema-resetting pytest against that database while this process runs. Check running process and log; do not infer PASS from progress dots. The session's exec ID is 40489.
+
+## Next known Phase 1 work
+
+- Complete fiscal DB overlap and company/year integrity defenses using a NEW migration; current fiscal migration only supplies range/status/positive-number checks.
+- Define and test SOFT_CLOSED authorization/audit policy centrally; current gate only rejects CLOSED.
+- Add real two-session Project Setup and Lifecycle concurrency tests. Existing targeted tests do not prove concurrency.
+- Revalidate posting/reversal immutability, source adapters, idempotency and economic dates across consumers against the master order.
+- Finish remaining core requirements, full backend and concurrency regression, CI, safe merge, then obtain real CORE_BASELINE_SHA before Phase 2.
+- Retain observed warnings for later review: Starlette httpx/422 deprecations; frontend test-environment localStorage, HydrateFallback and zero-size chart warnings. No test was skipped or error suppressed to pass.
+
+No Azure deployment, production verification, audit-item closure or final certification is claimed.
+
+## CI dependency correction
+
+CI run `34303670382` failed frontend dependency audit before typecheck. Local reproduction identified GHSA-2883-xcg3-v3hh in js-yaml 4.3.1. Updated only its lockfile entry to patched 4.3.2 using `npm update js-yaml --cache /tmp/nexora-npm-cache`; npm audit at the unchanged high threshold now passes. Three moderate advisories remain in the Vitest dependency chain (GHSA-82fw-gwwq-j7x9); upstream fixes start at 4.1.11, requiring a deliberate major-version upgrade from the current 3.x, still pending. No audit exclusions or CI gate changes were introduced.
+
+Authoritative advisories: https://github.com/advisories/GHSA-2883-xcg3-v3hh and https://github.com/advisories/GHSA-82fw-gwwq-j7x9 . Inspect latest PR checks rather than treating this initial failed run as current evidence.
+
+## Supervisor iteration 2 — fiscal DB integrity
+
+- Start HEAD: `a192ed5a8d6230a757cfc83aa624120d26bb7208`; fetched `origin/main` remains the audited SHA. Clean initial working tree; existing draft PR #114 retained.
+- New migration `f5a7b9c1d3e4`: GiST exclusions enforce non-overlapping inclusive fiscal year/period ranges per company; composite FK enforces period/year company identity. Locked preflight rejects incompatible rows without modifying them. Requires PostgreSQL `btree_gist`.
+- Four invalid-data cases reproduced `DID NOT RAISE` before implementation. Real two-session service race reproduced an uncaught DB conflict; `create_year` now locks Company before overlap validation, producing one year and one domain rejection.
+- Targeted regression: **39 passed**, fiscal DB integrity/concurrency, economic-date gate, posting, setup and lifecycle. Log `/tmp/nexora-fiscal-regression-iteration2.log`. Existing Starlette deprecation warnings remain.
+- Real clean Alembic upgrade succeeded on `nexora_fiscal_clean_iteration2`; upgrade from prior head succeeded on `nexora_phase1_migrations_20260908`. Single head `f5a7b9c1d3e4`; PostgreSQL catalog confirms two exclusion constraints and composite FK.
+- Downgrade/preflight experiment on the isolated clean database: injected two overlapping fixture years, upgrade rejected, both rows and previous version preserved; explicitly corrected fixture dates and re-upgrade passed. Script `/tmp/nexora-fiscal-migration-check.py`.
+- Critical Ruff and Python compile passed. Bicep compiled using local binary with `DOTNET_BUNDLE_EXTRACT_BASE_DIR=/tmp/nexora-dotnet`. Azure extension allowlist is declared in Bicep and prepared before the workflow's migration step; no Azure mutation/deployment was executed.
+- Azure extension requirement: https://learn.microsoft.com/en-us/azure/postgresql/extensions/how-to-allow-extensions .
+- Latest observed CI of prior SHA: run `34303802147`, frontend/IaC/Docker passed, backend/E2E still running. This is not evidence for the new changes until pushed and checked.
+- Remaining Phase 1: SOFT_CLOSED permission/audit policy; Setup/Lifecycle two-session regression; full posting/reversal/source synchronization review; complete serial regression and CI; integration. No baseline SHA or certification yet.
+
+## Project concurrency verification (iteration 2)
+
+- Added two real independent-session regressions: same stale DRAFT SetupRun creates exactly one Project/WBS/Budget/access grant; competing ACTIVE→ON_HOLD / ACTIVE→COMPLETED transitions yield one winner, one 409, one audit mutation.
+- Mutation verification removed row locking/refresh temporarily, then restored the exact original files: both tests failed for actual violations (two different project IDs; both incompatible transitions accepted). Log `/tmp/nexora-project-concurrency-mutation.log`.
+- After restoring production locking, both tests passed again; critical Ruff and compile passed. Existing production fixes preserved without additional implementation changes.
+- Prior CI run `34303802147` E2E now reports failure; backend remains running. Inspect job `102316158894` logs and newer run before Phase 1 closure. No CI-green claim.
+
+## Supervisor iteration 4 — economic closing checks and Protected Edit E2E
+
+- Start HEAD `8ee06693dfdf348a2ba92cb4f3276e658b8ed8b5`; successful fetch confirms `origin/main` still `dc58619c9cdfb8e4648eedd8fa4cba2200a9d4c8`. Preserved the existing uncommitted Critical Journey helper changes.
+- Commit `08360a08`: closing checklist draft and double-entry checks now use `AccountingDocument.effective_date`. A real PostgreSQL/API regression first reproduced an undetected draft with `posted_at=NULL`; it now blocks hard close for its economic period. Four new cases cover inside/outside dates for draft and balance checks.
+- Targeted closing/fiscal/posting regression: **31 passed**, no skips, 3 existing Starlette deprecation warnings. Logs `/tmp/nexora-closing-red-iteration4.log` and `/tmp/nexora-closing-green-iteration4.log`. Ruff critical checks, compileall and diff check passed. No schema change or migration in this commit.
+- Frontend typecheck/lint, **65 files / 204 unit tests**, and production build passed. Logs `/tmp/nexora-frontend-unit-iteration4.log` and `/tmp/nexora-frontend-build-iteration4.log`.
+- Full serial backend restarted because the old runner was no longer alive and its truncated log did not prove completion. New log `/tmp/nexora-phase1-full-iteration4.log`, exec session 41658, database `nexora_test_nexora_group`. Do not start a competing schema-resetting runner on that database. This is RUNNING, not a PASS claim.
+- E2E root cause from CI: POST reversal returned 428 because the test helper sent Protected Edit only for PUT/PATCH/DELETE. Local real Chromium/PostgreSQL/Azurite run advanced past that with the preserved helper change and exposed a second omission: the new approver session must unlock through the UI. The test now performs 428 → UI unlock → retry and checks the actual invoice state. Verification of this final E2E change is pending below.
+- Local Chromium initially could not launch under the macOS MachPort sandbox; rerunning with the permitted execution override launched the real browser. No application security setting was disabled.
+- Latest inspected prior-SHA CI `34304457942`: frontend, Bicep and Docker pass; E2E fails; backend still running. PR #114 remains draft and must not merge yet.
+- Core follow-up remains mandatory: SOFT_CLOSED permission/audit policy; fiscal transition/posting serialization; consolidated reversal authority (`posting_service.reverse_document` and `payment_receipt_reversal_service._reverse_posted_document` currently construct reversals separately); posting/source uniqueness and adapters; full regression/CI/integration. Existing Setup/Lifecycle concurrency corrections need no duplicate implementation.
+
+### E2E verification and actual client correction
+
+The explicit approval assertion exposed a production client defect: `apiFetch` still omitted the capability on POST even after UI unlock. Corrected this centrally for POST mutations; the backend still classifies and enforces protected actions. A new unit regression failed specifically for POST before the fix; all 11 HTTP-client tests pass afterward.
+
+Final local Critical Journey: **1 passed (44.6s)** with real Chromium, clean Alembic PostgreSQL database, Azurite, UI unlock, approval and resulting APPROVED invoice checked. Log `/tmp/nexora-critical-green-iteration4.log`. The previous full E2E run had **6 passed / 1 failed** before this client correction; its six accessibility/visual tests passed, but a full same-SHA CI rerun is still required. Do not describe that previous run as fully green.
+
+After the production-client change: frontend typecheck, lint, **65 files / 209 tests**, and build all pass. No permissions, fiscal rules, test thresholds or CI gates were relaxed. Full backend remains pending, so no phase baseline, merge or certification is claimed.
+
+## Supervisor iteration 5 — fiscal posting/transition serialization
+
+- Initial HEAD `2b2a1624fff8378e3c1be6fb0019edc0df719a4c`; fetched origin, clean tree, `origin/main` still audited `dc58619c9cdfb8e4648eedd8fa4cba2200a9d4c8`. PR #114 retained.
+- Three new independent PostgreSQL session regressions reproduced missing synchronization: posting passed an uncommitted closure; closure passed an active eligibility transaction; stale OPEN identity allowed overwriting committed CLOSED. All three failed before implementation (`/tmp/nexora-fiscal-red-iteration5.log`).
+- Central fiscal gate now acquires FOR SHARE and refreshes ORM state; period transitions acquire FOR UPDATE and refresh before evaluating the graph. Locks remain until transaction completion. Concurrent postings can share the period lock, while closure must wait.
+- Directed fiscal/posting/closing regression: **40 passed**, 3 existing Starlette deprecation warnings; `/tmp/nexora-fiscal-regression-iteration5.log`. Critical Ruff, compileall and diff check passed. No schema changes or migration required.
+- Tests use isolated `nexora_fiscal_iteration5_nexora_group`, not the previous full-regression database. PostgreSQL lock timeout is asserted via SQLSTATE 55P03; no sleep-based ordering or mocked persistence.
+- Previous full backend iteration-4 log remains truncated at 35%; no connections to its test database remained when inspected. It is NOT a passing full regression.
+- Latest observed prior-SHA CI `34305301720`: frontend/Bicep/Docker success, backend/E2E in progress. PR Deploy Azure success is not production deployment evidence.
+- Still mandatory: SOFT_CLOSED explicit permission/audit policy; lock before hard-close checklist and accurate pre-transition audit snapshots; calendar bootstrap/configuration race review; consolidated reversal authority/source adapters; source uniqueness; full backend/CI and phase integration. This change does not certify all fiscal concurrency paths or close Phase 1.
+
+### Hard-close follow-up
+
+A fourth PostgreSQL independent-session test reproduced duplicate hard-close manifests from a stale OPEN object after another transaction committed CLOSED. `hard_close` now locks and refreshes the period **before** the checklist, so posting eligibility cannot advance while it is evaluated. Regression: **10 passed** (fiscal serialization + closing center), with existing Starlette warnings, `/tmp/nexora-hardclose-green-iteration5.log`; failing reproduction `/tmp/nexora-hardclose-red-iteration5.log`. Ruff critical checks/compileall/diff check passed. Fiscal route audit before-status snapshots still need revalidation.
+
+Full serial regression started against `nexora_test_nexora_group`, log `/tmp/nexora-phase1-full-iteration5.log`, exec session 57521. It started at commit `1b48d1ff` before the hard-close follow-up; do not treat it as full final-SHA evidence and do not run a competing schema-resetting runner on that database. New CI for `1b48d1ff`: `34305568080`, in progress when observed. All certification SHAs remain PENDING.
+
+---
+
+> **Corrección de estado (2026-09-10).** Los párrafos anteriores son histórico de las
+> iteraciones 1–5 y quedan superados por la integración real. Las tres fases fueron
+> ejecutadas e integradas a `origin/main`:
+>
+> - PR #114 `fix/nexora-phase1-core-foundations` → merge `964d537c`
+> - PR #115 `fix/phase1-soft-closed-complete` → merge `6fd6f6e3` (cierre Fase 1)
+> - PR #116 `fix/phase2-domain-integration` → merge `c4b0394d`
+> - PR #117 `fix/phase3-qa-certification` → merge `1b389698`
+> - PR #118 subledger↔GL reconciliation → merge `1d28a266`
+> - PR #119 test-schema-reset robustness → merge `1fddcbc7`
+> - PR #120 SAP GUI theme engine → merge `55d368b3`
+> - PR #121 NX-AUD model schema alignment → merge `a3cc6136`
+> - PR #123 iteration-14 invariants+tema → merge `802b621d`
+> - PR #124 regresión contraste SAP → merge `fa3dc1a4`
+> - PR #125 F3.8 retire pre_migration_repairs → merge `e9efbe81`
+>
+> Tags de fase (SHAs reales de `origin/main`): FASE1_CORE_BASELINE `6fd6f6e3`,
+> FASE2_DOMAIN_INTEGRATION `c4b0394d`, FASE3_QA_CERTIFICATION `1b389698`.
+> Suites verdes: backend 632 passed (log `/tmp/pytest_full_run.log`), frontend 238 tests,
+> e2e, Compile Azure Bicep y Docker Compose smoke en CI. Ruleset `main protection
+> (ORDEN MAESTRA §42)` ahora exige los 5 gates reales (backend, frontend, e2e,
+> Compile Azure Bicep, Docker Compose smoke). PR #122 cerrado como SUPERSEDIDO.
+>
+> **Iteración 15 (2026-09-10) — verificación independiente sobre `origin/main`.**
+>
+> - HEAD verificado: `c7818a3f` (`origin/main` == HEAD, `git fetch` limpio).
+> - Referencia auditada: `dc58619c9cdfb8e4648eedd8fa4cba2200a9d4c8`; HEAD actual está
+>   +48 commits con integración completa de las tres fases.
+> - CI del SHA actual `c7818a3f`: run `34441305479` — **5/5 gates success**
+>   (backend, frontend, e2e, Compile Azure Bicep, Docker Compose smoke).
+> - Regresión backend local completa: **632 passed** en 12:32, log
+>   `/tmp/nexora-full-pytest-iter15.log`. Frontend local: typecheck + lint +
+>   **239 tests** + `npm run build` (PWA `v1.3.0`) verdes.
+> - Alembic: único head `b8c9d0e1f2a3`; `test_migrations.py` verde.
+> - Bicep: `az bicep build --file infra/main.bicep` verde (local).
+> - Producción Azure actual: despliegue verificado en **`a3cc6136`** (PR #121)
+>   por run `34373224543` (Deploy infra + apps success, smoke de producción
+>   completo: /api/healthz 200, /api/readyz 200, cookie Secure+HttpOnly, login,
+>   companies, projects, accounts, dashboard HNL, logout/relogin). Los SHA
+>   posteriores de `main` (PR #123–#127) son theme/frontend/docs/F3.8 y están
+>   CI-verdes pero no desplegados todavía.
+> - Sin migración nueva entre `a3cc6136` y `c7818a3f` (diff `backend/alembic/versions`
+>   vacío). `pre_migration_repairs` retirado del runtime path (F3.8, PR #125).
+> - Artefacto local preservado sin tocar: `backend/.backup_restore_test_nexora_group.dump`
+>   y el log de terminal `-a` (untracked, fuera de Git).
+> - Pendiente real para Fase 3 cierre: desplegar el SHA final de `main`
+>   (`c7818a3f`) y verificar smoke de producción de ESE SHA. Requiere confirmación
+>   explícita puntual (AGENTS.md §11) antes de ejecutar el deploy.
+
+## Iteración 20 (2026-09-11) — integración de los dos streams huérfanos (PR #132)
+
+Estado inicial detectado: `origin/main` en `5a564d0a` (PR #131) pero `main`
+local 7 commits por delante (stream A: source accounting/contratos/TWM) y rama
+divergente `fix/nexora-absolute-final-closure` con 6 commits (stream B:
+fail-closed FX, moneda funcional, inventario/activos/GL). Ninguno estaba en
+`origin/main`. Se preservó TODO el trabajo y se integró por rama limpia
+`work/integrate-absolute-final-closure-33f6`:
+
+- **Stream A (local main, 7 commits):** `9177d710..33f6dd40` — financial source
+  accounting, contrato schedule/retention, service acceptance + procurement
+  matching, fail-closed en referencias de procurement, migraciones idempotentes
+  + revisión huérfana recreada. Backend suite completa verificada en `main`
+  local: **658 passed** (`/tmp/pytest_main_full.log`).
+- **Stream B (fix branch, 6 commits):** `6603df22` — inventario/activos GL
+  canónico, rollback subledger ante fallo, moneda funcional derivada de la
+  compañía activa (sin asumir HNL), fail-closed FX sin política autoritativa.
+- **Merge** limpio (sin conflictos): `7c86b4f3`. Suite del merge: **665 passed,
+  4 failed** — todas en `test_asset_disposal.py` por el nuevo fail-closed de
+  moneda funcional del stream B vs fixture del stream A.
+- **Regresiones corregidas:** fixture `_create_test_setup` de asset disposal
+  configura `functional_currency_code="HNL"` en la Company (FK de currency
+  satisfecha con flush previo); `frontend/tests/BudgetVsActualPage.test.tsx`
+  mockea la compañía activa con `functionalCurrencyCode: 'HNL'` (stream B quitó
+  el default HNL de `reportMoney.ts`).
+- **NX-AUD-024 (F3.10) en producción:** la arquitectura real es first-party
+  (`az staticwebapp backends link`); la cookie de sesión se emite con
+  `SameSite=Lax` en TODOS los entornos (antes `SameSite=None` en producción).
+  Se mantienen `HttpOnly`+`Secure`+guard de `Origin`. Nuevo test
+  `test_session_cookie_uses_first_party_samesite_lax_in_production`.
+- **Verificación final sobre el SHA del merge:**
+  - Backend `pytest tests/ -q`: **670 passed, 0 failed** en 14m01s
+    (`/tmp/pytest_merged_full2.log`).
+  - Frontend: `tsc` ✓ · `eslint .` ✓ · `vitest run` **249 passed** ✓ ·
+    `npm run build` ✓.
+  - Alembic: único head `f2c3d4e5f6a7`; `upgrade head` limpio e idempotente
+    sobre PostgreSQL real (DB aislada, luego descartada).
+  - Auditorías: `pip-audit` limpio · `npm audit --audit-level=high` 0 ·
+    `ruff check --select E9,F63,F7,F82` limpio.
+- **PR #132** merge a `origin/main` → **`55b8b3eb`**. CI de rama 5/5 gates
+  verdes (backend, frontend, e2e, Compile Azure Bicep, Docker Compose smoke)
+  + `Bicep what-if` success y `Deploy infra + apps` **skipped** (gated).
+- **Pendiente inalterado (F3.16):** desplegar Azure real del nuevo SHA
+  (`55b8b3eb`) con smoke de producción. Requiere confirmación explícita
+  puntual (AGENTS.md §11; suscripción activa = tenant UNAH). Producción sigue
+  en `a3cc6136` (PR #121) hasta una autorización puntual.
+- Artefacto local preservado sin tocar: log de terminal `-a` (untracked, fuera
+  de Git).
+
+## Iteración 22 (2026-09-13) — PR #140: SAP GUI fidelity + production smoke fix
+
+Estado inicial: `origin/main` en `1f3b7ab8` (merge de PR #144, constraints de
+check en tablas). PR #140 (`fix/sap-fidelity-and-production-smoke`) estaba
+siendo alimentado por un agente paralelo (fidelity SAP GUI, e2e crítico
+reforzado, manifest de convergencia) y contenía la corrección del smoke de
+producción fallido del deploy `0d251c78` (run `34741454477`): "Verify
+production" ahora extrae `functionalCurrencyCode` real de companies (fail-closed)
+y pasa `companyId` a `/dashboard/summary` en lugar de hardcodear `HNL`.
+
+- **Causa raíz del deploy fallido:** smoke comparaba `.currency` contra `HNL`
+  fijo mientras `dashboard_service.py` deriva la moneda de
+  `company.functional_currency_code`. Corrección en `.github/workflows/deploy-azure.yml`.
+- **Verificación local sobre `1f3b7ab8`:**
+  - Backend completo `pytest -q`: **696 passed** en 20:39, DB aislada
+    `nexora_verify_tests_20260913_nexora_group`, log
+    `/tmp/nexora-main-full-20260913.log`.
+  - Alembic: único head `eb8ce8e18b2d`; cadena f2c3d…→…→eb8ce8e verificada.
+  - Bicep: `backendImage` en `infra/main.bicep` **sin default** (param requerido) —
+    layout de imagem docker no hardcodeado.
+- **E2E main previo (`1f3b7ab8`, run `34771651091`):** `e2e` falló en WebKit en
+  `/finanzas/contabilidad` por fetch de dashboard abortado por la navegación
+  (`Fetch API cannot load … due to access control checks.`). La versión de PR
+  #140 resuelve la raza: pageErrors global al final del journey + waitForResponse
+  del dashboard tras reload + espera real de la respuesta PUT `/api/me/preferences`.
+- **CI de PR #140** en el SHA convergido `1ea63420` (0 behind / 11 ahead, merge
+  de main incluido): **backend, frontend, e2e** success + Compile Azure Bicep,
+  Docker Compose smoke, Bicep what-if, CodeQL, gitleaks, GitGuardian, NEXORA
+  Domain/Financial classier/Final Certification, coverage, review. `Deploy infra
+  + apps` correctamente **skipped** (input `deploy` no seteado).
+- **Merge:** PR #140 → `gh pr merge --merge` → **`41339f12`** en `origin/main`.
+- **CI de main post-merge (run `34774003714`):** **5/5 gates success**
+  (backend, frontend, e2e, Compile Azure Bicep, Docker Compose smoke) en el
+  SHA del merge — el e2e que fallaba en `1f3b7ab8` ahora es verde con la
+  versión reforzada de PR #140.
+- **Pendiente inalterado (F3.16):** desplegar Azure real del SHA certificado
+  (`41339f12`) con smoke de producción (el paso "Verify production" corregido).
+  Continúa BLOCKED: requiere confirmación explícita puntual (AGENTS.md §11 —
+  suscripción activa = tenant UNAH). Producción sigue en `a3cc6136` hasta
+  autorización.
+- Artefacto local preservado sin tocar: log de terminal `-a` (untracked, fuera
+  de Git) y `backend/.backup_restore_test_nexora_group.dump`.

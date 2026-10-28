@@ -1,0 +1,269 @@
+.nx-home {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nx-home__header {
+  align-items: flex-end;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 2px;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid #dfe7f0;
+}
+
+.nx-home__eyebrow {
+  color: #1769d2;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+
+.nx-dashboard__title {
+  margin: 0;
+  color: #173b61;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.nx-home__subtitle {
+  color: #53657a;
+  font-size: 12px;
+  margin: 5px 0 0;
+}
+
+.nx-home__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.nx-home__charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, .9fr);
+  gap: 12px;
+  margin-top: 0;
+}
+
+.nx-home__operations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 0;
+}
+
+.nx-home__sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.nx-home__section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #173b61;
+  margin: 0 0 8px;
+}
+
+.nx-home__quick-link {
+  color: inherit;
+  text-decoration: none;
+}
+.nx-home__quick-link .nx-card {
+  height: 100%;
+  min-height: 118px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+.nx-home__quick-link .nx-card::after {
+  content: '→';
+  position: absolute;
+  right: 18px;
+  bottom: 15px;
+  color: #a8b9cc;
+  font-size: 17px;
+}
+.nx-home__quick-link:hover .nx-card,
+.nx-home__quick-link:focus-visible .nx-card {
+  border-color: #9dc2ea;
+  box-shadow: 0 8px 22px rgba(20, 70, 120, .09);
+  transform: translateY(-1px);
+}
+.nx-home__quick-link:focus-visible {
+  border-radius: 8px;
+  outline: 3px solid rgba(36,128,240,.15);
+  outline-offset: 2px;
+}
+.nx-home__quick-link p {
+  color: #53657a;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+  max-width: 90%;
+}
+.nx-home__quick-action {
+  color: #1769d2;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Dashboard status cards keep the compact financial look from the approved reference. */
+.nx-home .nx-stat-card { min-height: 92px; }
+.nx-home .nx-stat-card__label { max-width: 92%; }
+.nx-home .nx-stat-card__value {
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.nx-home .nx-chart-card { min-height: 0; }
+
+/* "Mi trabajo hoy" — tarjetas compactas clicables. */
+.nx-worktoday { display: flex; flex-direction: column; gap: 8px; }
+.nx-worktoday__title {
+  margin: 0;
+  font-size: var(--nx-text-h3);
+  color: var(--nx-color-text);
+}
+.nx-worktoday__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.nx-worktoday__tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: var(--nx-radius-md);
+  background: var(--nx-color-surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.nx-worktoday__tile:hover,
+.nx-worktoday__tile:focus-visible {
+  border-color: var(--nx-color-accent);
+  box-shadow: var(--nx-shadow-sm);
+  outline: none;
+}
+.nx-worktoday__icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nx-radius-sm);
+  background: var(--nx-color-accent-soft);
+  color: var(--nx-color-accent);
+}
+.nx-worktoday__icon .nx-icon { width: 16px; height: 16px; }
+.nx-worktoday__body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.nx-worktoday__label {
+  font-size: var(--nx-text-label);
+  font-weight: 700;
+  color: var(--nx-color-text);
+}
+.nx-worktoday__hint {
+  font-size: var(--nx-text-caption);
+  color: var(--nx-color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nx-worktoday__count {
+  flex-shrink: 0;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nx-radius-full);
+  font-size: var(--nx-text-caption);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.nx-worktoday__count--neutral { background: var(--nx-color-surface-secondary); color: var(--nx-color-text-muted); }
+.nx-worktoday__count--warning { background: #fdf1dd; color: var(--nx-color-warning); }
+.nx-worktoday__count--danger { background: #fde5e7; color: var(--nx-color-error); }
+.nx-worktoday__chevron { flex-shrink: 0; color: var(--nx-color-text-muted); }
+
+@media (max-width: 1279px) {
+  .nx-home__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nx-home__sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nx-worktoday__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .nx-home__charts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 430px) {
+  /* KPIs en 2×2 compacto (§17). */
+  .nx-home__grid--kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .nx-home__grid:not(.nx-home__grid--kpi),
+  .nx-home__sections { grid-template-columns: 1fr; }
+  .nx-home__header { align-items: flex-start; }
+  .nx-home .nx-stat-card { min-height: 76px; padding: 12px; }
+  .nx-worktoday__tile { min-height: 52px; }
+}
+
+/* OC PR B — KPI icon tiles, forecast y cuentas bancarias en el Home */
+.nx-kpi-tile {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nx-radius-sm, 6px);
+}
+.nx-kpi-tile .nx-icon { width: 16px; height: 16px; }
+.nx-kpi-tile--treasury { background: #e4edff; color: #1d5fd6; }
+.nx-kpi-tile--income { background: #dcf5ea; color: #0f9f6e; }
+.nx-kpi-tile--expense { background: #fdf1dd; color: #b7791f; }
+.nx-kpi-tile--projects { background: #efe6fb; color: #7c3aed; }
+.nx-home .nx-stat-card__head { align-items: center; }
+
+.nx-home__forecast-empty { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.nx-home__forecast-empty .nx-state { min-height: 0; padding: 18px; width: 100%; }
+
+.nx-home__banks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.nx-home__bank {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--nx-theme-border, #dce5ef);
+  color: inherit;
+  text-decoration: none;
+}
+.nx-home__banks li:last-child .nx-home__bank { border-bottom: none; }
+.nx-home__bank:hover { background: var(--nx-theme-surface-2, #f4f7fb); }
+.nx-home__bank-icon {
+  display: inline-flex; width: 34px; height: 34px; flex-shrink: 0;
+  align-items: center; justify-content: center;
+  border-radius: var(--nx-radius-sm, 6px);
+  background: #e4edff; color: #1d5fd6;
+}
+.nx-home__bank-id { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.nx-home__bank-name { font-weight: 700; font-size: var(--nx-text-label, 12px); }
+.nx-home__bank-ref {
+  font-size: var(--nx-text-caption, 11px);
+  color: var(--nx-theme-text-muted, #4f6176);
+  font-variant-numeric: tabular-nums;
+}
+.nx-home__bank-balance {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

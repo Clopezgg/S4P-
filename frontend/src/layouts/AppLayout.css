@@ -1,0 +1,307 @@
+.nx-app-shell {
+  display: grid;
+  grid-template-columns: var(--nx-layout-sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--nx-color-page-bg, #eef3f9);
+}
+
+.nx-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--nx-shell-sidebar-bg, #071a33);
+  color: var(--nx-shell-sidebar-text, #fff);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 5px 0 22px rgba(7, 26, 51, .10);
+  z-index: 5;
+}
+
+.nx-sidebar__brand {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  color: #fff;
+}
+
+.nx-sidebar__brand-mark {
+  width: 31px;
+  height: 36px;
+  border: 2px solid rgba(123, 184, 255, .95);
+  border-radius: 7px 7px 4px 4px;
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(180deg, rgba(60, 144, 239, .22), rgba(24, 93, 163, .08));
+  box-shadow: inset 0 0 0 4px rgba(255,255,255,.025);
+}
+.nx-sidebar__brand-mark::before,
+.nx-sidebar__brand-mark::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  width: 5px;
+  border-radius: 1px;
+  background: #65aefb;
+}
+.nx-sidebar__brand-mark::before { left: 7px; height: 17px; }
+.nx-sidebar__brand-mark::after { right: 7px; height: 24px; }
+
+.nx-sidebar__brand-copy { display: flex; flex-direction: column; min-width: 0; }
+.nx-sidebar__brand-name {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: .045em;
+  color: #fff;
+  line-height: 1.05;
+}
+.nx-sidebar__brand-tagline {
+  margin-top: 4px;
+  color: #91a9c5;
+  font-size: 9px;
+  letter-spacing: .025em;
+  white-space: nowrap;
+}
+
+.nx-sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.nx-sidebar__group-label {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #6f8bad;
+}
+
+.nx-sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nx-sidebar__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: #c2d0df;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+.nx-sidebar__link .nx-icon { width: 16px; height: 16px; color: #8ea9c7; }
+.nx-sidebar__link:hover {
+  background: rgba(255,255,255,.065);
+  color: #fff;
+}
+.nx-sidebar__link--active {
+  background: linear-gradient(90deg, #1769d2 0%, #2078df 100%);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(13, 86, 170, .22);
+}
+.nx-sidebar__link--active .nx-icon { color: #fff; }
+.nx-sidebar__link--active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #80bcff;
+}
+
+.nx-app-shell__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.nx-topbar {
+  min-height: var(--nx-layout-topbar-min-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 22px;
+  background: var(--nx-shell-topbar-bg, #0a203c);
+  border-bottom: 1px solid var(--nx-shell-topbar-border, rgba(255,255,255,.07));
+  color: var(--nx-shell-topbar-text, #fff);
+  position: sticky;
+  top: 0;
+  z-index: var(--nx-z-sticky);
+  box-shadow: 0 3px 12px rgba(7, 26, 51, .10);
+}
+
+.nx-topbar__left,
+.nx-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.nx-topbar__left { flex: 1; }
+.nx-topbar__right { justify-content: flex-end; }
+
+.nx-topbar__nav-toggle { display: none; }
+
+.nx-topbar__company {
+  padding-right: 12px;
+  border-right: 1px solid rgba(255,255,255,.12);
+}
+.nx-topbar__company-name {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nx-topbar .nx-select {
+  height: 34px;
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.16);
+  color: #fff;
+  font-size: 12px;
+  min-width: 188px;
+}
+.nx-topbar .nx-select option { color: #102844; background: #fff; }
+
+.nx-topbar__context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.nx-topbar__context-label {
+  font-size: 10px;
+  color: #9db2ca;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
+.nx-topbar .nx-badge {
+  background: rgba(255,255,255,.07);
+  color: #b8cbe0;
+  border: 1px solid rgba(255,255,255,.08);
+  white-space: nowrap;
+}
+.nx-topbar .nx-icon-button {
+  width: 36px;
+  height: 36px;
+  color: #c2d4e8;
+}
+.nx-topbar .nx-icon-button:hover {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+}
+
+.nx-topbar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,.12);
+}
+.nx-topbar__user-info { display: flex; flex-direction: column; line-height: 1.15; }
+.nx-topbar__user-name { color: #fff; font-size: 11px; font-weight: 700; }
+.nx-topbar__user-role { color: #91a9c5; font-size: 9px; }
+.nx-topbar__logout {
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: #becfe1;
+  font-size: 10px;
+  cursor: pointer;
+  min-height: 32px;
+  padding: 0 9px;
+  border-radius: 5px;
+}
+.nx-topbar__logout:hover { color: #fff; border-color: rgba(255,255,255,.24); }
+
+.nx-app-shell__content {
+  padding: 22px 24px 36px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: var(--nx-layout-content-max-width);
+  margin: 0 auto;
+}
+
+@media (min-width: 1440px) {
+  .nx-app-shell { grid-template-columns: var(--nx-layout-sidebar-width-wide) minmax(0, 1fr); }
+  .nx-app-shell__content { padding: 26px 30px 40px; }
+}
+
+@media (max-width: 1279px) {
+  .nx-app-shell { grid-template-columns: var(--nx-layout-sidebar-width-narrow) minmax(0, 1fr); }
+  .nx-sidebar__brand-tagline { display: none; }
+  .nx-topbar__context-label { display: none; }
+  .nx-topbar .nx-select { min-width: 155px; }
+}
+
+@media (max-width: 1024px) {
+  .nx-app-shell { grid-template-columns: minmax(0, 1fr); }
+  .nx-sidebar { display: none; }
+  .nx-topbar__nav-toggle { display: inline-flex; }
+  .nx-topbar__company { display: none; }
+  .nx-topbar { padding: 8px 14px; }
+  .nx-app-shell__content { padding: 18px; }
+}
+
+@media (max-width: 768px) {
+  .nx-topbar {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .nx-topbar__left {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    gap: 6px;
+  }
+  .nx-topbar__right {
+    flex: 0 0 auto;
+    width: auto;
+    gap: 4px;
+  }
+  .nx-topbar__context { flex: 1 1 auto; min-width: 0; }
+  .nx-topbar .nx-select { width: 100%; min-width: 0; }
+  .nx-topbar__period,
+  .nx-topbar__action--approvals { display: none; }
+  .nx-topbar__user-info { display: none; }
+}
+
+@media (max-width: 430px) {
+  .nx-app-shell__content { padding: 14px 12px 28px; }
+  .nx-topbar__user { display: none; }
+}
+
+/* SAP GUI owns its shell geometry in sap-gui/components/SapWorkstation.css.
+ * Keep the modern AppLayout stylesheet free of SAP shell overrides so theme
+ * identity cannot mutate the geometry of a different composition. */

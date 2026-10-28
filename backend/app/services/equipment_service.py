@@ -1,0 +1,310 @@
+import uuid
+from datetime import date
+from decimal import Decimal
+
+from sqlalchemy.orm import Session
+
+from app.core.business_time import business_today
+from app.domain.errors import (
+    ImmutableMaintenanceOrderError,
+    InvalidEquipmentStatusError,
+    InvalidFinancialReferenceError,
+    InvalidOperationScopeError,
+)
+from app.models.asset import FixedAsset
+from app.models.equipment import (
+    EQUIPMENT_STATUSES,
+    MAINTENANCE_TERMINAL_STATUSES,
+    Equipment,
+    FuelLog,
+    MaintenanceOrder,
+    MaintenancePlan,
+)
+from app.models.supplier import Supplier
+from app.repositories import equipment_repository
+from app.services import resource_posting_service
+from app.services.financial_validation_service import assert_project_belongs_to_company
+
+"""Equipment / Fuel / Maintenance.
+
+Resource costs are posted through company-owned configurable GL mappings. No
+financial account code is embedded here; missing configuration fails closed.
+"""
+
+
+def _assert_fuel_scope(scope: str, project_id: uuid.UUID | None) -> None:
+    if scope not in ("GENERAL", "PROJECT"):
+        raise InvalidOperationScopeError(
+            f"scope inválido para fuel log: {scope!r} (solo GENERAL o PROJECT)"
+        )
+    if scope == "GENERAL" and project_id is not None:
+        raise InvalidOperationScopeError("scope=GENERAL requiere project_id=None")
+    if scope == "PROJECT" and project_id is None:
+        raise InvalidOperationScopeError("scope=PROJECT requiere project_id")
+
+
+def create_equipment(
+    db: Session,
+    *,
+    company_id: uuid.UUID,
+    asset_id: uuid.UUID | None,
+    project_id: uuid.UUID | None,
+    equipment_type: str,
+    name: str,
+    serial_number: str | None,
+    plate_number: str | None,
+    operator: str | None,
+    commit: bool = True,
+) -> Equipment:
+    assert_project_belongs_to_company(db, project_id=project_id, company_id=company_id)
+    if asset_id is not None:
+        asset = db.get(FixedAsset, asset_id)
+        if asset is None or asset.company_id != company_id:
+            raise InvalidFinancialReferenceError(
+                "asset_id debe pertenecer a la compañía propietaria del equipo"
+            )
+    equipment = equipment_repository.create_equipment(
+        db,
+        company_id=company_id,
+        asset_id=asset_id,
+        project_id=project_id,
+        equipment_type=equipment_type,
+        name=name,
+        serial_number=serial_number,
+        plate_number=plate_number,
+        operator=operator,
+    )
+    if commit:
+        db.commit()
+        db.refresh(equipment)
+    else:
+        db.flush()
+    return equipment
+
+
+def get_equipment(db: Session, equipment_id: uuid.UUID) -> Equipment | None:
+    return equipment_repository.get_equipment(db, equipment_id)
+
+
+def list_equipment(db: Session, *, company_id: uuid.UUID) -> list[Equipment]:
+    return equipment_repository.list_equipment(db, company_id=company_id)
+
+
+def change_equipment_status(db: Session, *, equipment_id: uuid.UUID, status: str, commit: bool = True) -> Equipment:
+    equipment = equipment_repository.get_equipment(db, equipment_id)
+    if equipment is None:
+        raise ValueError(f"Equipment {equipment_id} no existe")
+    if status not in EQUIPMENT_STATUSES:
+        raise InvalidEquipmentStatusError(f"status inválido: {status!r}")
+    equipment.status = status
+    if commit:
+        db.commit()
+        db.refresh(equipment)
+    else:
+        db.flush()
+    return equipment
+
+
+def record_fuel_log(
+    db: Session,
+    *,
+    company_id: uuid.UUID,
+    equipment_id: uuid.UUID | None,
+    vehicle_description: str | None,
+    log_date: date,
+    quantity: Decimal,
+    unit_cost: Decimal,
+    scope: str,
+    project_id: uuid.UUID | None,
+    commit: bool = True,
+) -> FuelLog:
+    """Persist fuel usage and post its server-computed cost exactly once."""
+    _assert_fuel_scope(scope, project_id)
+    assert_project_belongs_to_company(db, project_id=project_id, company_id=company_id)
+    if equipment_id is not None:
+        equipment = equipment_repository.get_equipment(db, equipment_id)
+        if equipment is None or equipment.company_id != company_id:
+            raise InvalidFinancialReferenceError(
+                "equipment_id debe pertenecer a la compañía propietaria"
+            )
+    total_cost = (quantity * unit_cost).quantize(Decimal("0.01"))
+    log = equipment_repository.create_fuel_log(
+        db,
+        company_id=company_id,
+        equipment_id=equipment_id,
+        vehicle_description=vehicle_description,
+        log_date=log_date,
+        quantity=quantity,
+        unit_cost=unit_cost,
+        total_cost=total_cost,
+        scope=scope,
+        project_id=project_id,
+    )
+    db.flush()
+    resource_posting_service.post_resource_cost(
+        db,
+        company_id=company_id,
+        source_type="FUEL",
+        source_id=log.id,
+        amount=total_cost,
+        scope=scope,
+        project_id=project_id,
+        effective_date=log_date,
+        description=f"Combustible {log_date.isoformat()} · {vehicle_description or equipment_id or 'equipo'}",
+    )
+    if commit:
+        db.commit()
+        db.refresh(log)
+    else:
+        db.flush()
+    return log
+
+
+def list_fuel_logs(db: Session, *, equipment_id: uuid.UUID) -> list[FuelLog]:
+    return equipment_repository.list_fuel_logs(db, equipment_id=equipment_id)
+
+
+def create_maintenance_plan(
+    db: Session,
+    *,
+    equipment_id: uuid.UUID,
+    name: str,
+    trigger_type: str,
+    trigger_value: Decimal,
+    description: str | None,
+    commit: bool = True,
+) -> MaintenancePlan:
+    plan = equipment_repository.create_maintenance_plan(
+        db,
+        equipment_id=equipment_id,
+        name=name,
+        trigger_type=trigger_type,
+        trigger_value=trigger_value,
+        description=description,
+    )
+    if commit:
+        db.commit()
+        db.refresh(plan)
+    else:
+        db.flush()
+    return plan
+
+
+def list_maintenance_plans(db: Session, *, equipment_id: uuid.UUID) -> list[MaintenancePlan]:
+    return equipment_repository.list_maintenance_plans(db, equipment_id=equipment_id)
+
+
+def create_maintenance_order(
+    db: Session,
+    *,
+    equipment_id: uuid.UUID,
+    plan_id: uuid.UUID | None,
+    order_type: str,
+    opened_at: date,
+    supplier_id: uuid.UUID | None,
+    supplier_ref: str | None,
+    description: str | None,
+    commit: bool = True,
+) -> MaintenanceOrder:
+    equipment = equipment_repository.get_equipment(db, equipment_id)
+    if equipment is None:
+        raise InvalidFinancialReferenceError("El equipo de la orden de mantenimiento no existe")
+
+    if plan_id is not None:
+        plan = db.get(MaintenancePlan, plan_id)
+        if plan is None or plan.equipment_id != equipment_id:
+            raise InvalidFinancialReferenceError(
+                "plan_id debe pertenecer al mismo equipo de la orden de mantenimiento"
+            )
+
+    if supplier_id is not None:
+        supplier = db.get(Supplier, supplier_id)
+        if supplier is None or supplier.company_id != equipment.company_id:
+            raise InvalidFinancialReferenceError(
+                "supplier_id debe pertenecer a la compañía propietaria del equipo"
+            )
+
+    order = equipment_repository.create_maintenance_order(
+        db,
+        equipment_id=equipment_id,
+        plan_id=plan_id,
+        order_type=order_type,
+        opened_at=opened_at,
+        supplier_id=supplier_id,
+        supplier_ref=supplier_ref,
+        description=description,
+    )
+    equipment.status = "UNDER_MAINTENANCE"
+    if commit:
+        db.commit()
+        db.refresh(order)
+    else:
+        db.flush()
+    return order
+
+
+def list_maintenance_orders(db: Session, *, equipment_id: uuid.UUID) -> list[MaintenanceOrder]:
+    return equipment_repository.list_maintenance_orders(db, equipment_id=equipment_id)
+
+
+def update_maintenance_order(
+    db: Session,
+    *,
+    order_id: uuid.UUID,
+    status: str | None = None,
+    parts_cost: Decimal | None = None,
+    labor_cost: Decimal | None = None,
+    downtime_hours: Decimal | None = None,
+    description: str | None = None,
+    closed_at: date | None = None,
+    commit: bool = True,
+) -> MaintenanceOrder:
+    """Close a maintenance order atomically with its GL cost accrual."""
+    order = equipment_repository.get_maintenance_order(db, order_id)
+    if order is None:
+        raise ValueError(f"MaintenanceOrder {order_id} no existe")
+    if order.status in MAINTENANCE_TERMINAL_STATUSES:
+        raise ImmutableMaintenanceOrderError(
+            f"MaintenanceOrder {order.id} está {order.status}; es inmutable"
+        )
+
+    if status is not None:
+        order.status = status
+        if status == "CLOSED":
+            order.closed_at = closed_at or business_today()
+    if parts_cost is not None:
+        order.parts_cost = parts_cost
+    if labor_cost is not None:
+        order.labor_cost = labor_cost
+    if downtime_hours is not None:
+        order.downtime_hours = downtime_hours
+    if description is not None:
+        order.description = description
+
+    if order.status == "CLOSED":
+        equipment = equipment_repository.get_equipment(db, order.equipment_id)
+        if equipment is None:
+            raise InvalidFinancialReferenceError("El equipo de la orden de mantenimiento no existe")
+        if equipment.status == "UNDER_MAINTENANCE":
+            equipment.status = "AVAILABLE"
+        total_cost = (Decimal(order.parts_cost) + Decimal(order.labor_cost)).quantize(Decimal("0.01"))
+        if total_cost > 0:
+            scope = "PROJECT" if equipment.project_id else "GENERAL"
+            resource_posting_service.post_resource_cost(
+                db,
+                company_id=equipment.company_id,
+                source_type="MAINTENANCE",
+                source_id=order.id,
+                amount=total_cost,
+                scope=scope,
+                project_id=equipment.project_id,
+                effective_date=order.closed_at or order.opened_at,
+                description=f"Mantenimiento {order.order_type} · {equipment.name}",
+            )
+
+    if commit:
+        db.commit()
+        db.refresh(order)
+    else:
+        db.flush()
+    return order

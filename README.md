@@ -1,15 +1,9 @@
-# S4P — ERP empresarial
+# S4P — NEXORA ERP modernization
 
-Repositorio de modernización controlada de [NEXORA GROUP](https://github.com/Clopezgg/nexora-group).
+S4P is a controlled modernization of the original [NEXORA GROUP](https://github.com/Clopezgg/nexora-group) codebase.
 
-## Principios
-- Conservar el diseño SAP Fiori / SAP GUI y la identidad visual NEXORA.
-- Mantener inicialmente React, TypeScript, FastAPI y PostgreSQL.
-- Proteger la integridad financiera, RBAC, sesiones, auditoría y migraciones.
-- Separar frontend Cloudflare del backend Python y la base de datos.
-- No presentar pantallas simuladas como módulos empresariales funcionales.
+The existing SAP Fiori / SAP GUI inspired design and NEXORA identity are protected. Stack: React + TypeScript + Vite, FastAPI + Python, PostgreSQL + Alembic.
 
-## Estado
-Inicialización de la migración. La publicación de código y las verificaciones se registrarán en GitHub Actions.
+**Do not assume this repository is production-ready.** CI failures, business transaction invariants, RBAC, and database migrations require verification. The original repository remains unchanged.
 
-**Fuente protegida:** la modernización se ejecuta en S4P-. El repositorio NEXORA original no se modifica.
+See [migration scope](docs/S4P_MIGRATION.md) and [original README](docs/archive/NEXORA_ORIGINAL_README.md).

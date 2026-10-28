@@ -1,0 +1,55 @@
+import { apiFetch } from './httpClient'
+import type { DepreciationEntry, FixedAsset } from '../types/asset'
+
+export const assetService = {
+  list: (companyId: string) => apiFetch<FixedAsset[]>(`/assets?companyId=${companyId}`),
+  create: (payload: {
+    companyId: string
+    category: string
+    name: string
+    acquisitionDate: string
+    cost: string
+    currencyCode: string
+    usefulLifeMonths: number
+    salvageValue: string
+    scope: 'CENTRAL' | 'GENERAL' | 'PROJECT'
+    projectId?: string
+    depreciationExpenseAccountId: string
+    accumulatedDepreciationAccountId: string
+    assetAccountId: string
+    acquisitionOffsetAccountId: string
+  }) => apiFetch<FixedAsset>('/assets', { method: 'POST', body: JSON.stringify(payload) }),
+  createFromSupplierInvoice: (
+    supplierInvoiceId: string,
+    payload: {
+      category: string
+      name: string
+      usefulLifeMonths: number
+      salvageValue: string
+      assetAccountId: string
+      depreciationExpenseAccountId: string
+      accumulatedDepreciationAccountId: string
+    },
+  ) =>
+    apiFetch<FixedAsset>(`/assets/from-supplier-invoice/${supplierInvoiceId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  changeStatus: (assetId: string, status: FixedAsset['status']) =>
+    apiFetch<FixedAsset>(`/assets/${assetId}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
+  dispose: (
+    assetId: string,
+    payload: { disposalDate: string; proceeds: string; proceedsAccountId?: string },
+  ) => apiFetch<FixedAsset>(`/assets/${assetId}/dispose`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+
+  listDepreciationEntries: (assetId: string) =>
+    apiFetch<DepreciationEntry[]>(`/assets/${assetId}/depreciation-entries`),
+  generateDepreciationEntry: (assetId: string, payload: { periodStart: string; periodEnd: string }) =>
+    apiFetch<DepreciationEntry>(`/assets/${assetId}/depreciation-entries`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+}

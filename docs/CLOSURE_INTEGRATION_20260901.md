@@ -1,0 +1,173 @@
+# Cierre — ORDEN MAESTRA DEFINITIVA DE INTEGRACIÓN OPERATIVA (2026-09-01)
+
+Documento de evidencia de cierre para la ejecución de la ORDEN MAESTRA de
+integración operativa. **No** declara "100% CERTIFIED": lista lo entregado
+con evidencia y lo que queda pendiente.
+
+## Referencias
+
+| Concepto | Valor |
+|---|---|
+| Rama de trabajo | `work/nexora-integrated-erp-final` (fusionada y borrada) |
+| PR | [#92](https://github.com/Clopezgg/nexora-group/pull/92) — `feat: integrate NEXORA project-to-payment ERP experience` |
+| Commit en `main` | `e93e142e7cae8368032b4e70e0914964e9fb0f56` (squash) |
+| CI de rama (verde) | run `33515365948` — backend / frontend / e2e / docker-compose / bicep ✓ |
+| CI de `main` (verde) | run `33516833462` — todos los jobs ✓ |
+| Deploy Azure (real) | run `33518405139` — `workflow_dispatch` `deploy=true`, `main@e93e142` |
+| "Deploy infra + apps" | **success** (NO skipped) |
+| Imagen backend desplegada | `ghcr.io/clopezgg/nexora-backend:e93e142e7cae8368032b4e70e0914964e9fb0f56` |
+| Frontend (SWA) | `https://jolly-plant-0d6bf700f.7.azurestaticapps.net` |
+| Backend (Container App) | `nexora-backend-dev` — revisión sana, `runningStatus: Running` |
+| Cabeza de migración | `d5a7c9e30f66` |
+| Ruleset de `main` (§42) | `22017503` — require PR + checks (backend/frontend/e2e) + block force-push + block deletion — **active** |
+
+## Migraciones aplicadas en producción
+
+```
+a1c3e5f70b21 -> b2d4f6a80c33   supplier_contracts.contract_category + número único por compañía + projects.manager_user_id
+b2d4f6a80c33 -> c4f6a8b20d55   suppliers: dirección estructurada (§26)
+c4f6a8b20d55 -> d5a7c9e30f66   evidence.derived_blob_key / derived_mime_type — render HEIC->JPEG (§28)
+```
+
+Single head. Roundtrip upgrade/downgrade verificado en DB fresca y existente
+antes del despliegue. `pillow-heif 1.6.0` instalado en la imagen.
+
+## Verificación de producción
+
+### Step "Verify production" del propio deploy (run 33518405139)
+- Frontend `/` → HTTP 200
+- SWA `/api/healthz` → 200 · `/healthz` → 200
+- API first-party health → 200 · DB readiness → 200
+- Ruta Protected Edit → HTTP 405 (existe) · token inválido → **HTTP 403 (fail-closed, sin fallback)**
+- Cookie de sesión: `Secure` + `HttpOnly` + `Path=/`
+- `auth/me`, `master-data/companies` (1 visible), `projects`, `master-data/accounts`, `dashboard/summary` (HNL), `fiscal/periods/current` → HTTP 200
+- `auth/logout` → 204 · relogin → 200
+
+### Smoke funcional adicional (endpoints nuevos, sin auth)
+| Endpoint | Código | Interpretación |
+|---|---|---|
+| `GET /api/financial-control/cash-flow-actual/series?...` | 401 | registrado |
+| `GET /api/procurement/suppliers/contracts?...&category=LABOR` | 401 | registrado, acepta `category` |
+| `GET /api/evidence/{id}/render` | 401 | ruta nueva registrada |
+| `GET /api/contract-payments/schedules/{id}/fifo-preview` | 405 | POST-only registrado |
+| `POST .../fifo-preview` | 401 | registrado |
+
+Ningún endpoint nuevo devuelve 404.
+
+## Entregado (con test)
+
+- **WS1 (P0 §5/§6/§7/§10)** — Home sin S1–S13: módulo compartido
+  `features/finance/cashflow/`, `series()` con rangos 1M/3M/6M/12M y
+  granularidad Auto/Día/Semana/Mes, etiquetas de calendario, resumen visible.
+- **WS2 (§13/§15/§16)** — `contract_category` full stack, `contract_number`
+  único por compañía, `Project.manager_user_id` FK.
+- **WS3 (P0 §20-25)** — el formulario real de pago de una factura ligada a
+  contrato muestra el contexto contractual y genera `ContractPaymentAllocation`
+  por FIFO.
+- **WS4 (P0 §11/§17/§18/§19/§35)** — ubicación en el alta, `ProjectWizard`
+  guiado (borrador/activar), `ProjectDetailPage` como object page con
+  pestañas, pestaña "Contratos" con tarjetas.
+- **WS5 (§25/§26/§28/§30)** — dirección estructurada de proveedor, categoría
+  del contrato en el comprobante, pipeline HEIC→JPEG real (`DEFERRED-FINAL-019`
+  cerrado), beneficiario buscar-o-crear.
+- **WS6 (§36/§37)** — vista previa de temas con períodos reales, FilterBar en
+  Contratos.
+- **§42** — ruleset de `main` aplicado.
+
+## Segunda iteración (PR #94 — WS5 §27 + WS6 §50)
+
+- **WS5 §27** — comprobante premium: membrete corporativo con identidad
+  completa de la empresa emisora (razón comercial/legal, RTN, dirección,
+  teléfono · correo · **sitio web**) + tarjeta de metadatos del documento +
+  QR; `_styles()` documentado como sistema tipográfico DEL DOCUMENTO,
+  independiente de los temas de UI; banda "PAGADO A / BENEFICIARIO" / "PAGADO
+  POR"; `_section()` uniforma la jerarquía; bloque TOTAL PAGADO a 20pt; pie de
+  página en cada hoja (NEXORA GROUP · Comprobante · Verificación · Página X).
+  `company_website_snapshot` (migración `e6b8d0c41a77`). Test
+  `test_voucher_pdf_is_a_premium_corporate_document`.
+- **WS6 §50** — `e2e/visual-audit.spec.ts`: 8 rutas autenticadas + el
+  asistente de proyecto a 1440/768/390 con gates reales (sin scroll
+  horizontal de página, nada fuera del viewport, objetivo táctil ≥ 32px en
+  móvil, sin S1..S13). Hallazgo corregido: `.nx-linkbutton` del flujo de caja
+  era 20×20 → 32px mínimo. Corre en CI vía `npm run test:e2e`. Un hallazgo
+  posterior de la propia auditoría en CI (`.nx-theme-preview` desbordaba 10px
+  el viewport móvil por tracks `1fr` sin `minmax(0, …)`) también quedó
+  corregido.
+
+### Despliegue de la segunda iteración
+
+| Concepto | Valor |
+|---|---|
+| PR | [#94](https://github.com/Clopezgg/nexora-group/pull/94) fusionada |
+| Commit en `main` | `18b7a52c3732b94a6e01e258141087a4d999b53b` |
+| CI de rama (verde) | run `33529844855` |
+| CI de `main` (verde) | run `33531402176` |
+| Deploy Azure (real) | run **`33533096853`** — `workflow_dispatch deploy=true` |
+| "Deploy infra + apps" | **success** (NO skipped) |
+| Migración aplicada | `d5a7c9e30f66 → e6b8d0c41a77` (voucher_issuances.company_website_snapshot) |
+| Cabeza de migración | `e6b8d0c41a77` |
+| Imagen backend | `ghcr.io/clopezgg/nexora-backend:18b7a52c3732b94a6e01e258141087a4d999b53b` |
+
+Verify production del deploy: Frontend 200 · SWA `/api/healthz` + `/healthz`
+200 · API health + DB readiness 200 · Protected Edit ruta 405 / token
+inválido **403 (fail-closed)** · cookie `Secure`+`HttpOnly`+`Path=/` ·
+`auth/me` + companies (1) + projects + accounts + dashboard (HNL) + fiscal
+periods → 200 · logout 204 + relogin 200.
+
+Smoke adicional: `/` 200 · `/api/healthz` 200 · `/api/readyz` 200 ·
+`/api/financial-control/cash-flow-actual/series` 401 (registrado) ·
+`/api/evidence/{id}/render` 401 (§28 vivo) ·
+`/api/verificar/comprobante/<token>` 404 (ruta pública registrada).
+
+## Tercera iteración (PR #96 — WS6 §31-38 estructural)
+
+- **`ThemeStructure`** — nuevo dominio tipado del `ThemePreset`:
+  `dialogHeaderBorder`, `dialogAccentRail`, `overlayScrim`,
+  `inputBorderWidth`, `inputBg`, `fieldLabelTransform`, `filterBarBg`,
+  `filterBarBorder`, `objectHeaderBg`, `objectHeaderAccentRail`. Cada familia
+  tiene su combinación:
+  - **Horizon** — sin regla de cabecera (la sombra la marca), input en caja,
+    filter-bar transparente.
+  - **Quartz** — hairline en todo, input en caja sobre superficie hundida,
+    filter-bar hundido con borde fino.
+  - **Belize** — regla dura 1.5px en cabeceras, **input subrayado** (sólo
+    borde inferior), etiquetas en **VERSALITAS**, filter-bar como banda
+    teñida con borde inferior.
+  - **NEXORA** — **riel de acento** en diálogo, drawer, filter-bar y
+    object-header; input en caja con foco.
+- `compileTheme` emite 10 tokens nuevos; `themes.css` los consume en
+  `.nx-modal`, `.nx-drawer`, `.nx-filter-bar`, `.nx-input`, `.nx-field__label`,
+  `.nx-object-header`. La vista previa de temas (§37) muestra la nueva
+  anatomía (filter-bar + diálogo con su tratamiento).
+- **§36** — FilterBar añadido a **Proyectos** (estado + texto) y **Cuentas
+  por pagar** (estado + proveedor); ya existía en Contratos y Auditoría.
+- Tests: `themeEngine.test.ts` +1 (`la ESTRUCTURA … difiere por familia`),
+  tokens estructurales verificados en `compileTheme`.
+
+### Despliegue de la tercera iteración
+
+| Concepto | Valor |
+|---|---|
+| PR | [#96](https://github.com/Clopezgg/nexora-group/pull/96) fusionada |
+| Commit en `main` | `a8d49f4c22864b023253b6a63980f613d9760b07` |
+| CI de rama / de `main` | run `33538523187` ✅ / run `33539984163` ✅ |
+| Deploy Azure (real) | run **`33541534773`** — `workflow_dispatch deploy=true`, "Deploy infra + apps" **success** |
+| Migraciones | ninguna nueva (head `e6b8d0c41a77`) |
+| Imagen backend | `ghcr.io/clopezgg/nexora-backend:a8d49f4c22864b023253b6a63980f613d9760b07` |
+
+Verify production: Frontend 200 · SWA healthz/`/healthz` 200 · API health + DB
+readiness 200 · Protected Edit 405 / token inválido **403** · cookie
+Secure+HttpOnly+Path=/ · auth/me + companies (1) + projects + accounts +
+dashboard (HNL) + fiscal periods → 200 · logout 204 + relogin 200.
+
+## Pendiente
+
+- **WS7** — captura visual del Home DESPLEGADO en producción confirmando
+  ausencia de S1–S13 en el navegador (requiere credenciales de la sesión de
+  producción, que no están disponibles en este entorno) y verificación
+  visual de los 4 temas en el build de producción. Los gates de S1–S13 y
+  anti-overflow ya se ejercen en CI (`e2e/visual-audit.spec.ts`) sobre el
+  mismo build.
+
+No se usa la frase reservada de cierre: queda la verificación visual en el
+navegador de producción (bloqueada por falta de credenciales de sesión).

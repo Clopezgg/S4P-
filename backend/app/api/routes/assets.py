@@ -1,0 +1,398 @@
+import uuid
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_db
+from app.api.deps_correlation import get_correlation_id
+from app.domain.errors import NotFoundError
+from app.schemas.asset import (
+    AssetDisposalRequest,
+    AssetStatusChangeRequest,
+    BulkDepreciationRequest,
+    BulkDepreciationResponse,
+    DepreciationEntryCreateRequest,
+    DepreciationEntryResponse,
+    FixedAssetCreateRequest,
+    FixedAssetResponse,
+    SupplierInvoiceAssetCreateRequest,
+)
+from app.services import asset_service, audit_service
+from app.services.permission_service import (
+    accessible_project_ids,
+    assert_company_access,
+    assert_project_access,
+    require_permission,
+)
+
+router = APIRouter(prefix="/assets", tags=["assets"])
+
+
+def _resolve_asset(db: Session, asset_id: uuid.UUID):
+    asset = asset_service.get_fixed_asset(db, asset_id)
+    if asset is None:
+        raise NotFoundError(f"FixedAsset {asset_id} no existe")
+    return asset
+
+
+@router.post("", response_model=FixedAssetResponse, status_code=201)
+def create_fixed_asset(
+    payload: FixedAssetCreateRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "create")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> FixedAssetResponse:
+    assert_company_access(
+        db, user_id=user.id, resource="asset.fixed_asset", action="create", company_id=payload.company_id
+    )
+    if payload.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.fixed_asset",
+            action="create",
+            project_id=payload.project_id,
+        )
+    asset = asset_service.create_fixed_asset(
+        db,
+        company_id=payload.company_id,
+        category=payload.category,
+        name=payload.name,
+        acquisition_date=payload.acquisition_date,
+        cost=payload.cost,
+        currency_code=payload.currency_code,
+        useful_life_months=payload.useful_life_months,
+        salvage_value=payload.salvage_value,
+        location=payload.location,
+        responsible=payload.responsible,
+        scope=payload.scope,
+        project_id=payload.project_id,
+        cost_center_id=payload.cost_center_id,
+        depreciation_expense_account_id=payload.depreciation_expense_account_id,
+        accumulated_depreciation_account_id=payload.accumulated_depreciation_account_id,
+        asset_account_id=payload.asset_account_id,
+        acquisition_offset_account_id=payload.acquisition_offset_account_id,
+        commit=False,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="asset.fixed_asset.create",
+        entity_type="asset.fixed_asset",
+        entity_id=asset.id,
+        company_id=payload.company_id,
+        project_id=payload.project_id,
+        before=None,
+        after={
+            "name": asset.name,
+            "cost": str(asset.cost),
+            "category": asset.category,
+            "capitalizationDocumentId": str(asset.capitalization_document_id),
+        },
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return FixedAssetResponse.model_validate(asset, from_attributes=True)
+
+
+@router.post(
+    "/from-supplier-invoice/{invoice_id}",
+    response_model=FixedAssetResponse,
+    status_code=201,
+)
+def capitalize_supplier_invoice_as_asset(
+    invoice_id: uuid.UUID,
+    payload: SupplierInvoiceAssetCreateRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "create")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> FixedAssetResponse:
+    from app.models.ap import SupplierInvoice
+
+    invoice = db.get(SupplierInvoice, invoice_id)
+    if invoice is None:
+        raise NotFoundError(f"SupplierInvoice {invoice_id} no existe")
+    assert_company_access(
+        db,
+        user_id=user.id,
+        resource="asset.fixed_asset",
+        action="create",
+        company_id=invoice.company_id,
+    )
+    if invoice.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.fixed_asset",
+            action="create",
+            project_id=invoice.project_id,
+        )
+    asset = asset_service.capitalize_supplier_invoice_as_asset(
+        db,
+        supplier_invoice_id=invoice_id,
+        category=payload.category,
+        name=payload.name,
+        useful_life_months=payload.useful_life_months,
+        salvage_value=payload.salvage_value,
+        location=payload.location,
+        responsible=payload.responsible,
+        asset_account_id=payload.asset_account_id,
+        depreciation_expense_account_id=payload.depreciation_expense_account_id,
+        accumulated_depreciation_account_id=payload.accumulated_depreciation_account_id,
+        commit=False,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="asset.fixed_asset.capitalize",
+        entity_type="asset.fixed_asset",
+        entity_id=asset.id,
+        company_id=asset.company_id,
+        project_id=asset.project_id,
+        before=None,
+        after={
+            "supplierInvoiceId": str(invoice_id),
+            "capitalizationDocumentId": str(asset.capitalization_document_id),
+            "cost": str(asset.cost),
+        },
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return FixedAssetResponse.model_validate(asset, from_attributes=True)
+
+
+@router.get("", response_model=list[FixedAssetResponse])
+def list_fixed_assets(
+    company_id: uuid.UUID = Query(alias="companyId"),
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "read")),
+) -> list[FixedAssetResponse]:
+    assert_company_access(
+        db, user_id=user.id, resource="asset.fixed_asset", action="read", company_id=company_id
+    )
+    allowed = accessible_project_ids(
+        db, user_id=user.id, resource="asset.fixed_asset", action="read"
+    )
+    assets = asset_service.list_fixed_assets(db, company_id=company_id)
+    if allowed is not None:
+        allowed_set = set(allowed)
+        assets = [asset for asset in assets if asset.project_id is None or asset.project_id in allowed_set]
+    return [FixedAssetResponse.model_validate(asset, from_attributes=True) for asset in assets]
+
+
+@router.get("/{asset_id}", response_model=FixedAssetResponse)
+def get_fixed_asset(
+    asset_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "read")),
+) -> FixedAssetResponse:
+    asset = _resolve_asset(db, asset_id)
+    assert_company_access(
+        db, user_id=user.id, resource="asset.fixed_asset", action="read", company_id=asset.company_id
+    )
+    if asset.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.fixed_asset",
+            action="read",
+            project_id=asset.project_id,
+        )
+    return FixedAssetResponse.model_validate(asset, from_attributes=True)
+
+
+@router.post("/{asset_id}/status", response_model=FixedAssetResponse)
+def change_asset_status(
+    asset_id: uuid.UUID,
+    payload: AssetStatusChangeRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "update")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> FixedAssetResponse:
+    asset = _resolve_asset(db, asset_id)
+    assert_company_access(
+        db, user_id=user.id, resource="asset.fixed_asset", action="update", company_id=asset.company_id
+    )
+    if asset.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.fixed_asset",
+            action="update",
+            project_id=asset.project_id,
+        )
+    before_status = asset.status
+    asset = asset_service.change_asset_status(db, asset_id=asset_id, status=payload.status, commit=False)
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="asset.fixed_asset.status_change",
+        entity_type="asset.fixed_asset",
+        entity_id=asset_id,
+        company_id=asset.company_id,
+        project_id=asset.project_id,
+        before={"status": before_status},
+        after={"status": asset.status},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return FixedAssetResponse.model_validate(asset, from_attributes=True)
+
+
+@router.post(
+    "/{asset_id}/depreciation-entries", response_model=DepreciationEntryResponse, status_code=201
+)
+def generate_depreciation_entry(
+    asset_id: uuid.UUID,
+    payload: DepreciationEntryCreateRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.depreciation", "create")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> DepreciationEntryResponse:
+    asset = _resolve_asset(db, asset_id)
+    assert_company_access(
+        db, user_id=user.id, resource="asset.depreciation", action="create", company_id=asset.company_id
+    )
+    if asset.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.depreciation",
+            action="create",
+            project_id=asset.project_id,
+        )
+    entry = asset_service.generate_depreciation_entry(
+        db,
+        asset_id=asset_id,
+        period_start=payload.period_start,
+        period_end=payload.period_end,
+        post=payload.post,
+        commit=False,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="asset.depreciation.create",
+        entity_type="asset.depreciation_entry",
+        entity_id=entry.id,
+        company_id=asset.company_id,
+        project_id=asset.project_id,
+        before=None,
+        after={"periodStart": str(entry.period_start), "amount": str(entry.amount), "posted": entry.accounting_document_id is not None},
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return DepreciationEntryResponse.model_validate(entry, from_attributes=True)
+
+
+@router.get("/{asset_id}/depreciation-entries", response_model=list[DepreciationEntryResponse])
+def list_depreciation_entries(
+    asset_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.depreciation", "read")),
+) -> list[DepreciationEntryResponse]:
+    asset = _resolve_asset(db, asset_id)
+    assert_company_access(
+        db, user_id=user.id, resource="asset.depreciation", action="read", company_id=asset.company_id
+    )
+    if asset.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.depreciation",
+            action="read",
+            project_id=asset.project_id,
+        )
+    return [
+        DepreciationEntryResponse.model_validate(entry, from_attributes=True)
+        for entry in asset_service.list_depreciation_entries(db, asset_id=asset_id)
+    ]
+
+
+@router.post("/{asset_id}/dispose", response_model=FixedAssetResponse)
+def dispose_asset(
+    asset_id: uuid.UUID,
+    payload: AssetDisposalRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.fixed_asset", "update")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> FixedAssetResponse:
+    asset = _resolve_asset(db, asset_id)
+    assert_company_access(
+        db, user_id=user.id, resource="asset.fixed_asset", action="update", company_id=asset.company_id
+    )
+    if asset.project_id is not None:
+        assert_project_access(
+            db,
+            user_id=user.id,
+            resource="asset.fixed_asset",
+            action="update",
+            project_id=asset.project_id,
+        )
+    before_status = asset.status
+    asset = asset_service.dispose_asset(
+        db,
+        asset_id=asset_id,
+        disposal_date=payload.disposal_date,
+        proceeds=payload.proceeds,
+        proceeds_account_id=payload.proceeds_account_id,
+        commit=False,
+    )
+    audit_service.record(
+        db,
+        actor_user_id=user.id,
+        action="asset.fixed_asset.dispose",
+        entity_type="asset.fixed_asset",
+        entity_id=asset_id,
+        company_id=asset.company_id,
+        project_id=asset.project_id,
+        before={"status": before_status},
+        after={
+            "status": asset.status,
+            "disposalDate": str(asset.disposal_date),
+            "disposalProceeds": str(asset.disposal_proceeds),
+            "disposalDocumentId": str(asset.disposal_document_id),
+        },
+        correlation_id=correlation_id,
+    )
+    db.commit()
+    return FixedAssetResponse.model_validate(asset, from_attributes=True)
+
+
+@router.post("/bulk-depreciate", response_model=BulkDepreciationResponse)
+def bulk_depreciate_all_assets(
+    payload: BulkDepreciationRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("asset.depreciation", "create")),
+    correlation_id: str = Depends(get_correlation_id),
+) -> BulkDepreciationResponse:
+    assert_company_access(
+        db, user_id=user.id, resource="asset.depreciation", action="create", company_id=payload.company_id
+    )
+    entries = asset_service.bulk_depreciate_all_assets(
+        db,
+        company_id=payload.company_id,
+        period_start=payload.period_start,
+        period_end=payload.period_end,
+        commit=False,
+    )
+    if entries:
+        audit_service.record(
+            db,
+            actor_user_id=user.id,
+            action="asset.depreciation.bulk",
+            entity_type="asset.depreciation_entry",
+            entity_id=entries[0].id,
+            company_id=payload.company_id,
+            before=None,
+            after={
+                "periodStart": str(payload.period_start),
+                "entriesCreated": len(entries),
+            },
+            correlation_id=correlation_id,
+        )
+    db.commit()
+    return BulkDepreciationResponse(
+        entries_created=len(entries),
+        entries=[DepreciationEntryResponse.model_validate(e, from_attributes=True) for e in entries],
+    )

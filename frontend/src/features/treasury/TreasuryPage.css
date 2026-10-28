@@ -1,0 +1,179 @@
+.nx-treasury {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-6);
+}
+
+.nx-treasury__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-4);
+}
+
+.nx-treasury__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--nx-space-4);
+}
+
+.nx-treasury__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nx-space-3);
+}
+
+.nx-treasury__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-4);
+}
+
+.nx-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-2);
+  padding: var(--nx-space-3);
+  border: 1px solid var(--nx-color-border, rgba(0, 0, 0, 0.12));
+  border-radius: var(--nx-radius-2, 8px);
+}
+
+.nx-evidence__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nx-space-2);
+}
+
+.nx-evidence__actions .nx-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-1);
+}
+
+.nx-evidence__file {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--nx-space-2);
+  font-size: 0.875rem;
+}
+
+.nx-evidence__filename {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.nx-evidence__meta {
+  color: var(--nx-color-text-muted, #666);
+}
+
+.nx-evidence__ok {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-1);
+  color: var(--nx-color-success, #1a7f37);
+  font-size: 0.875rem;
+}
+
+.nx-evidence .nx-field__error {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-2);
+}
+
+@media (max-width: 768px) {
+  .nx-evidence__actions .nx-button {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .nx-treasury__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nx-treasury__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* OD FASE 4 — identidad bancaria + vista previa del comprobante */
+.nx-bank-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: var(--nx-radius-md);
+  background: var(--nx-color-surface-secondary);
+}
+.nx-bank-identity__icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nx-radius-sm);
+  background: var(--nx-color-accent-soft);
+  color: var(--nx-color-accent);
+  flex-shrink: 0;
+}
+.nx-bank-identity__body { display: flex; flex-direction: column; min-width: 0; }
+.nx-bank-identity__name { font-weight: 700; font-size: var(--nx-text-label); color: var(--nx-color-text); }
+.nx-bank-identity__meta {
+  font-size: var(--nx-text-caption);
+  color: var(--nx-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-voucher-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  margin: 0 0 12px;
+}
+.nx-voucher-preview > div { display: flex; flex-direction: column; gap: 2px; }
+.nx-voucher-preview dt {
+  font-size: var(--nx-text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nx-color-text-muted);
+}
+.nx-voucher-preview dd {
+  margin: 0;
+  font-size: var(--nx-text-body);
+  color: var(--nx-color-text);
+}
+.nx-voucher-preview__actions { display: flex; justify-content: flex-end; }
+
+@media (max-width: 620px) {
+  .nx-voucher-preview { grid-template-columns: 1fr; }
+  .nx-voucher-preview__actions {
+    position: sticky;
+    bottom: calc(var(--nx-bottom-nav-height) + var(--nx-safe-bottom) + 8px);
+    background: var(--nx-color-surface);
+    padding-top: 8px;
+  }
+  .nx-voucher-preview__actions .nx-button { width: 100%; }
+}
+
+/* Contexto contractual dentro del pago real (ORDEN MAESTRA §20–§25). */
+.nx-contract-context {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--nx-color-border, #d8e0ea);
+  border-radius: var(--nx-shape-radius-md, 8px);
+  background: var(--nx-color-surface-sunken, #f6f9fc);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.nx-contract-context__fifo {
+  border-top: 1px dashed var(--nx-color-border, #d8e0ea);
+  padding-top: 0.5rem;
+}
+.nx-contract-context__alloc {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}

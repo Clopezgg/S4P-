@@ -1,0 +1,1608 @@
+/* Enterprise Theme Engine — capa de aplicación.
+   §68: solo presentación (color / tipografía / radio / densidad).
+
+   El Theme Engine gobierna SIEMPRE: NEXORA Horizon Light (default) también
+   re-pinta por variables. Todas las superficies globales del shell
+   (canvas, topbar, sidebar, cards, tablas, formularios, botones) leen los
+   tokens `--nx-theme-*`. No quedan capas CSS compitiendo con valores
+   hardcoded para estos elementos. */
+
+:root {
+  --nx-theme-page-bg: #eef3f9;
+  --nx-theme-surface: #ffffff;
+  --nx-theme-surface-2: #f4f7fb;
+  --nx-theme-text: #102844;
+  --nx-theme-text-muted: #4f6176;
+  --nx-theme-border: #dce5ef;
+  --nx-theme-accent: #1769d2;
+  --nx-theme-accent-contrast: #ffffff;
+  --nx-theme-sidebar-bg: #0b274a;
+  --nx-theme-sidebar-text: #c7d7ea;
+  --nx-theme-radius: 9px;
+  --nx-theme-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --nx-density-scale: 1;
+}
+
+:root[data-nx-density='compact'] {
+  --nx-density-scale: 0.72;
+}
+
+/* ---------------------------------------------------------------------------
+ * Capa activa (siempre). data-nx-themed="on" lo pone ThemeProvider.
+ * ------------------------------------------------------------------------- */
+
+:root[data-nx-themed='on'] body {
+  background: var(--nx-theme-page-bg);
+  color: var(--nx-theme-text);
+  font-family: var(--nx-theme-font);
+}
+
+/* Solo enlaces del área de contenido: NO recolorear enlaces del sidebar
+   navy ni de la navegación inferior (perderían contraste sobre navy). */
+:root[data-nx-themed='on'] body .nx-app-shell__content a {
+  color: var(--nx-theme-accent);
+}
+
+:root[data-nx-themed='on'] body .nx-app-shell {
+  background: var(--nx-theme-page-bg);
+}
+
+/* Sidebar — superficie navy controlada (o la que defina el preset). */
+:root[data-nx-themed='on'] body .nx-sidebar {
+  background: var(--nx-theme-sidebar-bg);
+  color: var(--nx-theme-sidebar-text);
+}
+/* Etiquetas de grupo del sidebar: contraste AA sobre la superficie navy. */
+:root[data-nx-themed='on'] body .nx-sidebar__group-label {
+  color: #a9c0dc;
+}
+
+/* Topbar — LIGHT CLEAN: superficie del tema, texto e iconos oscuros. */
+:root[data-nx-themed='on'] body .nx-topbar {
+  background: var(--nx-shell-topbar-bg);
+  color: var(--nx-shell-topbar-text);
+  border-bottom: 1px solid var(--nx-shell-topbar-border);
+  box-shadow: 0 1px 2px rgba(7, 26, 51, 0.05);
+}
+:root[data-nx-themed='on'] body .nx-topbar__company,
+:root[data-nx-themed='on'] body .nx-topbar__user {
+  border-color: color-mix(in srgb, var(--nx-shell-topbar-text) 18%, transparent);
+}
+:root[data-nx-themed='on'] body .nx-topbar__company-name,
+:root[data-nx-themed='on'] body .nx-topbar__user-name {
+  color: var(--nx-shell-topbar-text);
+}
+:root[data-nx-themed='on'] body .nx-topbar__context-label,
+:root[data-nx-themed='on'] body .nx-topbar__user-role {
+  color: color-mix(in srgb, var(--nx-shell-topbar-text) 72%, transparent);
+}
+
+/* SAP chrome uses compact text (9–10px). Semi-transparent labels fall just
+   below WCAG AA on the classic Signature topbar, so keep them on the shell's
+   authoritative foreground color instead of reducing opacity. */
+:root[data-nx-themed='on'][data-nx-family='sap-gui'] body .nx-topbar__context-label,
+:root[data-nx-themed='on'][data-nx-family='sap-gui'] body .nx-topbar__user-role {
+  color: var(--nx-shell-topbar-text);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-select {
+  background: var(--nx-theme-surface-2);
+  border-color: var(--nx-theme-border);
+  color: var(--nx-theme-text);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-select option {
+  color: var(--nx-theme-text);
+  background: var(--nx-theme-surface);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-icon-button {
+  color: var(--nx-theme-text-muted);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-icon-button:hover {
+  background: var(--nx-theme-surface-2);
+  color: var(--nx-theme-text);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-badge {
+  background: var(--nx-theme-surface-2);
+  color: var(--nx-theme-text-muted);
+  border: 1px solid var(--nx-theme-border);
+}
+:root[data-nx-themed='on'] body .nx-topbar__logout {
+  background: var(--nx-theme-surface-2);
+  border-color: var(--nx-theme-border);
+  color: var(--nx-theme-text-muted);
+}
+:root[data-nx-themed='on'] body .nx-topbar__logout:hover {
+  color: var(--nx-theme-text);
+  border-color: var(--nx-theme-accent);
+}
+/* Edit-access pill fue diseñado para topbar oscura; en topbar clara usa
+   tokens del tema para no perder contraste. */
+:root[data-nx-themed='on'] body .nx-topbar .nx-edit-access {
+  border-color: var(--nx-theme-border);
+  background: var(--nx-theme-surface-2);
+  color: var(--nx-theme-text-muted);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-edit-access:hover {
+  color: var(--nx-theme-text);
+  background: var(--nx-theme-surface-2);
+}
+:root[data-nx-themed='on'] body .nx-topbar .nx-edit-access--unlocked {
+  color: var(--nx-success, #157347);
+  border-color: rgba(21, 115, 71, 0.35);
+  background: rgba(21, 115, 71, 0.1);
+}
+:root[data-nx-themed='on'][data-nx-family='sap-gui'] body .nx-topbar .nx-edit-access--unlocked {
+  color: #075532;
+  border-color: #3f7861;
+  background: #d5e4e5;
+}
+
+/* Surfaces */
+:root[data-nx-themed='on'] body .nx-card,
+:root[data-nx-themed='on'] body .nx-stat-card,
+:root[data-nx-themed='on'] body .nx-chart-card,
+:root[data-nx-themed='on'] body .nx-fcc-kpi,
+:root[data-nx-themed='on'] body .nx-modal,
+:root[data-nx-themed='on'] body .nx-filter-bar,
+:root[data-nx-themed='on'] body .nx-bottom-nav {
+  background: var(--nx-theme-surface);
+  border-color: var(--nx-theme-border);
+  color: var(--nx-theme-text);
+}
+:root[data-nx-themed='on'] body .nx-card,
+:root[data-nx-themed='on'] body .nx-chart-card {
+  border-radius: var(--nx-theme-radius);
+}
+:root[data-nx-themed='on'] body .nx-card__title,
+:root[data-nx-themed='on'] body .nx-stat-card__label,
+:root[data-nx-themed='on'] body .nx-page__eyebrow,
+:root[data-nx-themed='on'] body .nx-field__hint {
+  color: var(--nx-theme-text-muted);
+}
+:root[data-nx-themed='on'] body .nx-stat-card__value,
+:root[data-nx-themed='on'] body .nx-card__value,
+:root[data-nx-themed='on'] body .nx-app-shell__content h1,
+:root[data-nx-themed='on'] body .nx-app-shell__content h2,
+:root[data-nx-themed='on'] body .nx-app-shell__content h3,
+:root[data-nx-themed='on'] body .nx-dashboard__title {
+  color: var(--nx-theme-text);
+}
+:root[data-nx-themed='on'] body .nx-stat-card::before {
+  background: var(--nx-theme-accent);
+}
+
+/* Forms — anatomía estructural por familia (§31-§34):
+   Horizon/Quartz/NEXORA = caja completa; Belize = subrayado (input plano con
+   sólo borde inferior, herencia SAP). El fondo (superficie vs sunken) y las
+   versalitas de etiqueta también vienen del preset. */
+:root[data-nx-themed='on'] body .nx-input,
+:root[data-nx-themed='on'] body .nx-select,
+:root[data-nx-themed='on'] body .nx-textarea {
+  background: var(--nx-input-bg, var(--nx-theme-surface));
+  border-style: solid;
+  border-width: var(--nx-input-border-width, 1px);
+  border-color: var(--nx-color-border, var(--nx-theme-border));
+  color: var(--nx-theme-text);
+  border-radius: var(--nx-shape-radius-sm, 6px);
+}
+:root[data-nx-themed='on'] body .nx-field__label {
+  color: var(--nx-theme-text);
+  text-transform: var(--nx-field-label-transform, none);
+  letter-spacing: var(--nx-field-label-spacing, normal);
+}
+
+/* Tables */
+:root[data-nx-themed='on'] body .nx-table {
+  background: var(--nx-theme-surface);
+  border-color: var(--nx-theme-border);
+}
+:root[data-nx-themed='on'] body .nx-table th {
+  background: var(--nx-theme-surface-2);
+  color: var(--nx-theme-text-muted);
+  border-bottom-color: var(--nx-theme-border);
+}
+:root[data-nx-themed='on'] body .nx-table td {
+  border-bottom-color: var(--nx-theme-border);
+  color: var(--nx-theme-text);
+}
+
+/* Primary action */
+:root[data-nx-themed='on'] body .nx-button--primary {
+  background: var(--nx-theme-accent);
+  border-color: var(--nx-theme-accent);
+  color: var(--nx-theme-accent-contrast);
+}
+:root[data-nx-themed='on'] body .nx-button--primary:hover {
+  filter: brightness(0.96);
+}
+
+/* ---- Densidad: aplica siempre (comfortable / compact) ---- */
+
+:root[data-nx-density='compact'] body .nx-card {
+  padding: calc(20px * var(--nx-density-scale) + 4px);
+}
+:root[data-nx-density='compact'] body .nx-table td,
+:root[data-nx-density='compact'] body .nx-table th {
+  padding-top: calc(10px * var(--nx-density-scale) + 2px);
+  padding-bottom: calc(10px * var(--nx-density-scale) + 2px);
+}
+:root[data-nx-density='compact'] body .nx-fcc-grid {
+  gap: 0.55rem;
+}
+
+/* ==========================================================================
+ * Enterprise Theme Architecture (§8-§11) — capa estructural.
+ * El compilador compileTheme() emite estos tokens desde el ThemePreset
+ * tipado; aquí el shell los consume para que cambiar de FAMILIA cambie
+ * radio, elevación, tablas y densidad, no solo el color.
+ * ======================================================================== */
+
+/* UI Scale (90 / 100 / 110) — tamaño base de la interfaz, per-dispositivo. */
+:root[data-nx-themed='on'] body {
+  font-size: var(--nx-font-base-size, 14px);
+}
+
+/* Forma + elevación de superficies desde los tokens estructurales. */
+:root[data-nx-themed='on'] body .nx-card,
+:root[data-nx-themed='on'] body .nx-chart-card,
+:root[data-nx-themed='on'] body .nx-stat-card,
+:root[data-nx-themed='on'] body .nx-fcc-kpi {
+  border-radius: var(--nx-shape-radius-md, 9px);
+  border-width: var(--nx-shape-border-width, 1px);
+  box-shadow: var(--nx-elev-card, none);
+}
+:root[data-nx-themed='on'] body .nx-modal,
+:root[data-nx-themed='on'] body .nx-drawer,
+:root[data-nx-themed='on'] body .nx-popover {
+  border-radius: var(--nx-shape-radius-lg, 12px);
+  box-shadow: var(--nx-elev-overlay, 0 18px 50px rgba(0, 0, 0, 0.2));
+}
+
+/* Formularios / botones — radio de la familia. */
+:root[data-nx-themed='on'] body .nx-input,
+:root[data-nx-themed='on'] body .nx-select,
+:root[data-nx-themed='on'] body .nx-textarea {
+  border-radius: var(--nx-shape-radius-sm, 6px);
+  border-color: var(--nx-color-border-strong, var(--nx-theme-border));
+}
+:root[data-nx-themed='on'] body .nx-button {
+  border-radius: var(--nx-shape-radius-sm, 6px);
+}
+:root[data-nx-themed='on'] body .nx-button--primary:hover {
+  background: var(--nx-color-accent-hover, var(--nx-theme-accent));
+  filter: none;
+}
+
+/* Foco visible — ancho reforzado en alto contraste. */
+:root[data-nx-themed='on'] body :focus-visible {
+  outline: var(--nx-focus-width, 2px) solid var(--nx-focus-ring, var(--nx-theme-accent));
+  outline-offset: var(--nx-focus-offset, 2px);
+}
+
+/* Tablas — cabecera teñida según la familia (Belize la tiñe de azul,
+   Quartz la deja casi plana, Horizon un gris muy suave). */
+:root[data-nx-themed='on'] body .nx-table th {
+  background: var(--nx-table-header-bg, var(--nx-theme-surface-2));
+  color: var(--nx-table-header-text, var(--nx-theme-text-muted));
+  border-bottom-color: var(--nx-table-divider, var(--nx-theme-border));
+}
+:root[data-nx-themed='on'] body .nx-table td {
+  border-bottom-color: var(--nx-table-divider, var(--nx-theme-border));
+}
+:root[data-nx-themed='on'] body .nx-table tbody tr:hover td {
+  background: var(--nx-table-row-hover, transparent);
+}
+
+/* ---- Densidad — comfortable / compact / finance-dense ---- */
+:root[data-nx-themed='on'] body .nx-card,
+:root[data-nx-themed='on'] body .nx-chart-card {
+  padding: var(--nx-density-card-padding, 16px);
+}
+:root[data-nx-themed='on'] body .nx-table td,
+:root[data-nx-themed='on'] body .nx-table th {
+  padding-top: calc(9px * var(--nx-density-scale, 1) + 1px);
+  padding-bottom: calc(9px * var(--nx-density-scale, 1) + 1px);
+}
+:root[data-nx-density='finance-dense'] body .nx-fcc-grid,
+:root[data-nx-density='compact'] body .nx-fcc-grid {
+  gap: var(--nx-density-gap, 12px);
+}
+:root[data-nx-density='finance-dense'] body {
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+ * Capa estructural — shell, navegación, controles (ORDEN MAESTRA §4).
+ * Cambiar de FAMILIA cambia el tratamiento del sidebar activo, el radio de
+ * los controles, la altura de fila, badges y segmented — no solo el color.
+ * ======================================================================== */
+
+/* --- Sidebar: estado activo/hover desde los tokens de shell de la familia --- */
+:root[data-nx-themed='on'] body .nx-sidebar__link {
+  border-radius: var(--nx-shape-radius-sm, 5px);
+  transition:
+    background-color var(--nx-motion-fast, 120ms) var(--nx-motion-easing, ease),
+    color var(--nx-motion-fast, 120ms) var(--nx-motion-easing, ease);
+}
+:root[data-nx-themed='on'] body .nx-sidebar__link:hover {
+  background: color-mix(in srgb, var(--nx-shell-sidebar-active-bg, #123a68) 55%, transparent);
+  color: var(--nx-shell-sidebar-active-text, #fff);
+}
+:root[data-nx-themed='on'] body .nx-sidebar__link--active {
+  background: var(--nx-shell-sidebar-active-bg, #123a68);
+  color: var(--nx-shell-sidebar-active-text, #fff);
+  box-shadow: none;
+}
+/* Horizon/NEXORA: barra de acento a la izquierda. Quartz/Belize: sin barra,
+   el bloque teñido ya marca la selección (jerarquía por superficie). */
+:root[data-nx-family='quartz'] body .nx-sidebar__link--active::before,
+:root[data-nx-family='belize'] body .nx-sidebar__link--active::before {
+  display: none;
+}
+:root[data-nx-themed='on'] body .nx-sidebar__link--active::before {
+  background: var(--nx-color-accent, #1769d2);
+  border-radius: 0 2px 2px 0;
+}
+
+/* --- Topbar: borde/altura de la familia --- */
+:root[data-nx-themed='on'] body .nx-topbar {
+  border-bottom-width: var(--nx-shape-border-width, 1px);
+}
+
+/* --- Botones: altura y radio de densidad/familia --- */
+:root[data-nx-themed='on'] body .nx-button {
+  min-height: var(--nx-density-control-height, 36px);
+  transition:
+    background-color var(--nx-motion-fast, 120ms) var(--nx-motion-easing, ease),
+    border-color var(--nx-motion-fast, 120ms) var(--nx-motion-easing, ease);
+}
+
+/* --- Badges / status pills: radio de la familia (Belize casi recto,
+   Horizon redondeado) --- */
+:root[data-nx-themed='on'] body .nx-badge {
+  border-radius: var(--nx-shape-radius-xs, 4px);
+}
+:root[data-nx-family='horizon'] body .nx-badge,
+:root[data-nx-family='nexora'] body .nx-badge {
+  border-radius: 999px;
+}
+
+/* --- Segmented control / tabs: radio de la familia --- */
+:root[data-nx-themed='on'] body .nx-segmented {
+  border-radius: var(--nx-shape-radius-sm, 6px);
+}
+:root[data-nx-themed='on'] body .nx-segmented__option {
+  border-radius: calc(var(--nx-shape-radius-sm, 6px) - 2px);
+}
+:root[data-nx-themed='on'] body .nx-tabs__tab--active {
+  border-bottom-color: var(--nx-color-accent, #1769d2);
+}
+
+/* --- Altura de fila de tabla desde la densidad --- */
+:root[data-nx-themed='on'] body .nx-table tbody tr {
+  height: var(--nx-density-row-height, 38px);
+}
+
+/* --- Page header: ritmo de espaciado desde la densidad --- */
+:root[data-nx-themed='on'] body .nx-page__header {
+  margin-bottom: var(--nx-density-card-padding, 16px);
+}
+
+/* --- Belize: cabeceras de sección con peso (herencia SAP Belize) --- */
+:root[data-nx-family='belize'] body .nx-card__title,
+:root[data-nx-family='belize'] body .nx-page__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+/* --- Quartz: superficies más planas, divisores más marcados --- */
+:root[data-nx-family='quartz'] body .nx-card,
+:root[data-nx-family='quartz'] body .nx-chart-card {
+  border-color: var(--nx-color-border-strong, var(--nx-theme-border));
+}
+
+/* --- Sidebar: color base de link/icono desde el token de shell --- */
+:root[data-nx-themed='on'] body .nx-sidebar__link {
+  color: var(--nx-shell-sidebar-text, #c2d0df);
+}
+:root[data-nx-themed='on'] body .nx-sidebar__link .nx-icon {
+  color: color-mix(in srgb, var(--nx-shell-sidebar-text, #c2d0df) 78%, transparent);
+}
+:root[data-nx-themed='on'] body .nx-sidebar__link--active .nx-icon {
+  color: var(--nx-shell-sidebar-active-text, #fff);
+}
+
+/* ===========================================================================
+   ESTRUCTURA DE COMPONENTES COMPUESTOS POR FAMILIA (ORDEN MAESTRA §31-§34)
+   Diferencias de ANATOMÍA, no de color: reglas de cabecera, velos, bandas,
+   rieles de acento. Horizon = sombra suave sin regla; Quartz = plano con
+   hairline; Belize = reglas duras + bandas teñidas; NEXORA = riel de acento.
+   =========================================================================== */
+
+/* --- Diálogos (Modal) --- */
+:root[data-nx-themed='on'] body .nx-modal__overlay,
+:root[data-nx-themed='on'] body .nx-drawer__overlay {
+  background: var(--nx-overlay-scrim, rgba(5, 11, 24, 0.5));
+}
+:root[data-nx-themed='on'] body .nx-modal {
+  border-radius: var(--nx-shape-radius-lg, 12px);
+  box-shadow: var(--nx-elev-overlay, 0 18px 50px rgba(16, 40, 68, 0.2));
+  border-top: var(--nx-dialog-accent-rail, none);
+}
+:root[data-nx-themed='on'] body .nx-modal__header {
+  padding-bottom: var(--nx-density-gap, 12px);
+  border-bottom: var(--nx-dialog-header-border, none);
+  margin-bottom: var(--nx-density-gap, 12px);
+}
+
+/* --- Drawers --- */
+:root[data-nx-themed='on'] body .nx-drawer {
+  background: var(--nx-theme-surface);
+  box-shadow: var(--nx-elev-overlay, 0 18px 50px rgba(16, 40, 68, 0.2));
+  border-left: var(--nx-dialog-accent-rail, none);
+}
+:root[data-nx-themed='on'] body .nx-drawer--left {
+  border-left: 0;
+  border-right: var(--nx-dialog-accent-rail, none);
+}
+:root[data-nx-themed='on'] body .nx-drawer__header {
+  border-bottom: var(--nx-dialog-header-border, 1px solid var(--nx-theme-border));
+}
+
+/* --- Filter bar: banda teñida (Belize/NEXORA), sunken (Quartz) o
+       transparente (Horizon). NEXORA además lleva riel de acento. --- */
+:root[data-nx-themed='on'] body .nx-filter-bar {
+  background: var(--nx-filterbar-bg, transparent);
+  border: 0;
+  border-bottom: var(--nx-filterbar-border, none);
+  border-radius: var(--nx-shape-radius-sm, 6px);
+}
+:root[data-nx-family='quartz'] body .nx-filter-bar,
+:root[data-nx-family='belize'] body .nx-filter-bar,
+:root[data-nx-family='nexora'] body .nx-filter-bar {
+  padding: 10px 12px;
+}
+:root[data-nx-family='nexora'] body .nx-filter-bar {
+  border-left: 3px solid var(--nx-color-accent, #1769d2);
+}
+
+/* --- Object page header (Project Cockpit) --- */
+:root[data-nx-themed='on'] body .nx-object-header {
+  background: var(--nx-objectheader-bg, var(--nx-theme-surface));
+  border-color: var(--nx-color-border, var(--nx-theme-border));
+  border-radius: var(--nx-shape-radius-md, 10px);
+  border-top: var(--nx-objectheader-accent-rail, none);
+}
+:root[data-nx-family='belize'] body .nx-object-header {
+  border-radius: 0;
+}
+
+/* ========================================================================
+ * SAP GUI global component anatomy — Signature + Tradeshow.
+ * These selectors deliberately sit behind the family dataset: no modern
+ * family receives SAP panels, grids, fields, tabs, dialogs or density.
+ * ====================================================================== */
+:root[data-nx-family='sap-gui'] body {
+  background: var(--nx-color-page-bg);
+  color: var(--nx-color-text);
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+  line-height: 1.35;
+}
+:root[data-nx-family='sap-gui'] body .nx-app-shell__content h1,
+:root[data-nx-family='sap-gui'] body .nx-dashboard__title {
+  margin: -10px -9px 10px;
+  padding: 5px 9px;
+  min-height: 29px;
+  color: var(--nx-color-text);
+  background: linear-gradient(180deg, #f8fbfd, var(--nx-color-surface-sunken));
+  border-bottom: 1px solid var(--nx-color-border-strong);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-app-shell__content h1,
+:root[data-nx-sap-variant='tradeshow'] body .nx-dashboard__title {
+  color: #fff;
+  background: linear-gradient(180deg, #668db5, #182a53);
+  border-color: #172e50;
+}
+:root[data-nx-family='sap-gui'] body .nx-page__eyebrow,
+:root[data-nx-family='sap-gui'] body .nx-field__hint { font-size: 11px; letter-spacing: 0; }
+:root[data-nx-family='sap-gui'] body .nx-page__header { margin-bottom: 8px; }
+
+/* Titled Box / Box / object panels */
+:root[data-nx-family='sap-gui'] body .nx-card,
+:root[data-nx-family='sap-gui'] body .nx-chart-card,
+:root[data-nx-family='sap-gui'] body .nx-stat-card,
+:root[data-nx-family='sap-gui'] body .nx-fcc-kpi,
+:root[data-nx-family='sap-gui'] body .nx-state,
+:root[data-nx-family='sap-gui'] body .nx-object-header,
+:root[data-nx-family='sap-gui'] body .nx-worktoday,
+:root[data-nx-family='sap-gui'] body .nx-home__quick-link {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 0;
+  background: var(--nx-color-surface);
+  box-shadow: inset 1px 1px rgba(255,255,255,.8);
+}
+:root[data-nx-family='sap-gui'] body .nx-card,
+:root[data-nx-family='sap-gui'] body .nx-chart-card,
+:root[data-nx-family='sap-gui'] body .nx-stat-card,
+:root[data-nx-family='sap-gui'] body .nx-fcc-kpi { padding: 9px; }
+:root[data-nx-family='sap-gui'] body .nx-card__title,
+:root[data-nx-family='sap-gui'] body .nx-chart-card__title,
+:root[data-nx-family='sap-gui'] body .nx-stat-card__label {
+  color: var(--nx-color-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-card,
+:root[data-nx-sap-variant='tradeshow'] body .nx-chart-card,
+:root[data-nx-sap-variant='tradeshow'] body .nx-object-header {
+  border-top: 4px solid var(--nx-color-accent);
+}
+:root[data-nx-family='sap-gui'] body .nx-stat-card__value,
+:root[data-nx-family='sap-gui'] body .nx-card__value { font-size: 20px; }
+
+/* Compact classic fields. Focus recreates the JPL blue field without
+   sacrificing the visible focus ring or mobile touch sizing. */
+:root[data-nx-family='sap-gui'] body .nx-field { gap: 2px; }
+:root[data-nx-family='sap-gui'] body .nx-field__label {
+  color: var(--nx-color-text);
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+:root[data-nx-family='sap-gui'] body .nx-input,
+:root[data-nx-family='sap-gui'] body .nx-select,
+:root[data-nx-family='sap-gui'] body .nx-textarea,
+:root[data-nx-family='sap-gui'] body .nx-sidebar__search {
+  min-height: 28px;
+  height: 28px;
+  padding: 2px 6px;
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-raised);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 0;
+  box-shadow: inset 1px 1px 2px rgba(24,42,83,.12);
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+  font-size: 12px;
+}
+:root[data-nx-family='sap-gui'] body .nx-textarea { min-height: 72px; height: auto; }
+:root[data-nx-family='sap-gui'] body .nx-input:focus,
+:root[data-nx-family='sap-gui'] body .nx-select:focus,
+:root[data-nx-family='sap-gui'] body .nx-textarea:focus {
+  color: #172e50;
+  background: #dfeaf3;
+  border-color: #466dbd;
+  box-shadow: inset 0 0 0 1px #87abd6;
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-input:focus,
+:root[data-nx-sap-variant='tradeshow'] body .nx-select:focus,
+:root[data-nx-sap-variant='tradeshow'] body .nx-textarea:focus { background: #c2d8eb; }
+:root[data-nx-family='sap-gui'] body .nx-input:disabled,
+:root[data-nx-family='sap-gui'] body .nx-select:disabled,
+:root[data-nx-family='sap-gui'] body .nx-textarea:disabled {
+  color: var(--nx-color-text-subtle);
+  background: var(--nx-color-surface-sunken);
+  border-color: var(--nx-color-border);
+}
+:root[data-nx-family='sap-gui'] body .nx-input--error,
+:root[data-nx-family='sap-gui'] body .nx-select--error { border: 2px solid var(--nx-color-negative); }
+
+/* Button / Tool Item */
+:root[data-nx-family='sap-gui'] body .nx-button,
+:root[data-nx-family='sap-gui'] body .nx-segmented__option {
+  min-height: 28px;
+  padding: 3px 11px;
+  color: var(--nx-color-text);
+  background: linear-gradient(180deg, #fff 0%, var(--nx-color-surface-sunken) 100%);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 1px;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px rgba(24,42,83,.12);
+  font-family: Arial, Helvetica, system-ui, sans-serif;
+  font-size: 11px;
+}
+:root[data-nx-family='sap-gui'] body .nx-button:hover,
+:root[data-nx-family='sap-gui'] body .nx-segmented__option:hover { background: #fff; border-color: var(--nx-color-accent); }
+:root[data-nx-family='sap-gui'] body .nx-button:active { transform: translate(1px, 1px); box-shadow: inset 1px 1px rgba(24,42,83,.18); }
+:root[data-nx-family='sap-gui'] body .nx-button--primary,
+:root[data-nx-family='sap-gui'] body .nx-segmented__option--active {
+  color: var(--nx-color-accent-contrast);
+  background: linear-gradient(180deg, #668db5, #265b8f);
+  border-color: #172e50;
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-button--primary,
+:root[data-nx-sap-variant='tradeshow'] body .nx-segmented__option--active {
+  background: linear-gradient(180deg, #466dbd, #182a53);
+}
+:root[data-nx-family='sap-gui'] body .nx-button--danger { color: #fff; background: var(--nx-color-negative); }
+:root[data-nx-family='sap-gui'] body .nx-button:disabled { filter: grayscale(.6); opacity: .55; }
+
+/* Grid tables */
+:root[data-nx-family='sap-gui'] body .nx-table-scroll { border: 1px solid var(--nx-color-border-strong); }
+:root[data-nx-family='sap-gui'] body .nx-table {
+  border-collapse: collapse;
+  border: 1px solid var(--nx-color-border-strong);
+  background: var(--nx-color-surface-raised);
+  font-size: 11px;
+}
+:root[data-nx-family='sap-gui'] body .nx-table th,
+:root[data-nx-family='sap-gui'] body .nx-table td {
+  height: 25px;
+  padding: 3px 6px;
+  border: 1px solid var(--nx-table-divider);
+}
+:root[data-nx-family='sap-gui'] body .nx-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--nx-table-header-text);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--nx-table-header-bg) 55%, #fff), var(--nx-table-header-bg));
+  font-size: 10px;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-table th { background: linear-gradient(180deg, #87abd6, #466dbd); }
+:root[data-nx-family='sap-gui'] body .nx-table tbody tr:nth-child(even) td { background: var(--nx-table-stripe); }
+:root[data-nx-family='sap-gui'] body .nx-table tbody tr:hover td { background: var(--nx-table-row-hover); }
+
+/* Folder tabs */
+:root[data-nx-family='sap-gui'] body .nx-tabs__list {
+  gap: 2px;
+  margin-bottom: 0;
+  padding-left: 4px;
+  border-bottom: 1px solid var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__tab {
+  margin: 0 0 -1px;
+  padding: 4px 12px;
+  color: var(--nx-color-text-muted);
+  background: var(--nx-color-surface-sunken);
+  border: 1px solid var(--nx-color-border);
+  border-bottom-color: var(--nx-color-border-strong);
+  border-radius: 2px 2px 0 0;
+  font-size: 11px;
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__tab--active {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface);
+  border-color: var(--nx-color-border-strong);
+  border-bottom-color: var(--nx-color-surface);
+  font-weight: 700;
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__panel {
+  padding: 9px;
+  border: 1px solid var(--nx-color-border-strong);
+  border-top: 0;
+  background: var(--nx-color-surface);
+}
+:root[data-nx-sap-variant='tradeshow'] body .nx-tabs__tab--active { color: #fff; background: #466dbd; border-bottom-color: #466dbd; }
+
+/* Dialog window / drawer / popover */
+:root[data-nx-family='sap-gui'] body .nx-modal,
+:root[data-nx-family='sap-gui'] body .nx-drawer,
+:root[data-nx-family='sap-gui'] body .nx-popover__panel,
+:root[data-nx-family='sap-gui'] body .nx-sheet {
+  padding: 0;
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface);
+  border: 2px solid var(--nx-color-border-strong);
+  border-radius: 1px;
+  box-shadow: var(--nx-elev-overlay);
+}
+:root[data-nx-family='sap-gui'] body .nx-modal__header,
+:root[data-nx-family='sap-gui'] body .nx-drawer__header {
+  min-height: 29px;
+  margin: 0 0 9px;
+  padding: 4px 7px;
+  color: var(--nx-color-text);
+  background: linear-gradient(180deg, #fff, var(--nx-color-surface-sunken));
+  border-bottom: 1px solid var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'] body .nx-modal > :not(.nx-modal__header) { margin-left: 10px; margin-right: 10px; }
+:root[data-nx-family='sap-gui'] body .nx-modal__title,
+:root[data-nx-family='sap-gui'] body .nx-drawer__title { color: inherit; font-size: 12px; }
+:root[data-nx-family='sap-gui'] body .nx-modal__close { color: inherit; border: 1px solid var(--nx-color-border); background: var(--nx-color-surface-raised); }
+:root[data-nx-family='sap-gui'] body .nx-modal__actions { display: flex; justify-content: flex-end; gap: 6px; padding: 9px 0 10px; border-top: 1px solid var(--nx-color-border); }
+:root[data-nx-sap-variant='tradeshow'] body .nx-modal__header,
+:root[data-nx-sap-variant='tradeshow'] body .nx-drawer__header { color: #fff; background: linear-gradient(180deg, #668db5, #182a53); }
+
+/* Compact semantic status cells — color is reinforced by border/shape. */
+:root[data-nx-family='sap-gui'] body .nx-badge {
+  min-height: 19px;
+  height: auto;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  font-size: 10px;
+  font-weight: 700;
+}
+:root[data-nx-family='sap-gui'] body .nx-filter-bar {
+  margin-bottom: 7px;
+  padding: 6px;
+  background: var(--nx-filterbar-bg);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 0;
+}
+:root[data-nx-family='sap-gui'] body .recharts-cartesian-grid line { stroke: var(--nx-chart-grid); }
+:root[data-nx-family='sap-gui'] body .recharts-cartesian-axis line,
+:root[data-nx-family='sap-gui'] body .recharts-cartesian-axis tick { stroke: var(--nx-chart-axis); }
+:root[data-nx-family='sap-gui'] body .recharts-default-tooltip { border: 1px solid var(--nx-color-border-strong) !important; border-radius: 0 !important; }
+
+@media (max-width: 768px) {
+  :root[data-nx-family='sap-gui'] body .nx-input,
+  :root[data-nx-family='sap-gui'] body .nx-select,
+  :root[data-nx-family='sap-gui'] body .nx-button { min-height: 40px; }
+  :root[data-nx-family='sap-gui'] body .nx-app-shell__content h1,
+  :root[data-nx-family='sap-gui'] body .nx-dashboard__title { margin: -8px -8px 8px; font-size: 15px; }
+  :root[data-nx-family='sap-gui'] body .nx-table--responsive tbody tr { border-radius: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-nx-family='sap-gui'] body *,
+  :root[data-nx-family='sap-gui'] body *::before,
+  :root[data-nx-family='sap-gui'] body *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+/* ==========================================================================
+ * SAP GUI Horizon (70% workstation SAP + 30% modernización) y
+ * SAP GUI Horizon Dark (workstation dark real con jerarquía tonal).
+ * Scoping estricto por variante: Signature/Tradeshow no reciben estos
+ * tratamientos. Los selectores por anatomía ([data-nx-toolbar],
+ * [data-nx-table], ...) demuestran que la anatomía tipada gobierna la
+ * presentación junto a familia/variante.
+ * ======================================================================== */
+
+/* --- Horizon: superficies limpias, bordes finos, sin bevel --- */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.45;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-app-shell { border-color: var(--nx-color-border-strong); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-titlebar,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-menubar,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandrow,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-statusbar {
+  background: var(--nx-color-surface);
+  text-shadow: none;
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-titlebar { border-bottom: 1px solid var(--nx-color-border); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-menubar button:hover,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-menubar button:focus-visible {
+  background: color-mix(in srgb, var(--nx-color-accent) 10%, transparent);
+  border-color: transparent;
+  border-radius: 4px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__ok,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__nav,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-toolbar button {
+  background: var(--nx-color-surface);
+  border: 1px solid var(--nx-color-border);
+  border-radius: 4px;
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__nav:hover,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-toolbar button:hover {
+  border-color: var(--nx-color-accent);
+  background: color-mix(in srgb, var(--nx-color-accent) 8%, var(--nx-color-surface));
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__field input {
+  border-radius: 4px;
+  box-shadow: none;
+  background: var(--nx-color-surface-raised);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__results,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-menu__list {
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(18,38,63,.16);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-menu__list button,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-commandbar__results button { border-radius: 4px; }
+/* Tree Horizon: grupo plano con disclosure lineal, sin banda degradada. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sidebar__group--collapsible > summary {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sidebar__group--collapsible > summary:hover {
+  background: color-mix(in srgb, var(--nx-color-accent) 8%, transparent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sidebar__link { border-radius: 4px; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-topbar {
+  background: var(--nx-color-surface);
+  box-shadow: none;
+}
+/* Fields Horizon: compactos pero respirables, foco moderno. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-input,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-select,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-textarea,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sidebar__search {
+  border-radius: 4px;
+  box-shadow: none;
+  min-height: 30px;
+  height: 30px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 12.5px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-textarea { min-height: 76px; height: auto; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-input:focus,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-select:focus,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-textarea:focus {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-raised);
+  border-color: var(--nx-focus-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-focus-ring) 28%, transparent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-field__label { font-size: 11.5px; font-weight: 600; }
+/* Buttons Horizon: planos con borde fino. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-button,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-segmented__option {
+  background: var(--nx-color-surface-raised);
+  border-radius: 4px;
+  box-shadow: none;
+  font-family: inherit;
+  font-size: 12px;
+  min-height: 30px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-button--primary,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-segmented__option--active {
+  background: var(--nx-color-accent);
+  border-color: var(--nx-color-accent);
+}
+/* Enterprise grid Horizon: cabecera plana, separadores finos, zebra sutil. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-table th {
+  background: var(--nx-table-header-bg);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  border-left: 0;
+  border-right: 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-table th,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-table td { border-left: 0; border-right: 0; }
+/* Tabs Horizon: híbrido carpeta moderna — pestaña + subrayado de acento. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-tabs__tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-tabs__tab--active {
+  background: var(--nx-color-surface);
+  border-color: var(--nx-color-border-strong);
+  border-bottom: 2px solid var(--nx-color-accent);
+  font-weight: 600;
+}
+/* Panels Horizon: borde fino, radio contenido, sin bevel. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-chart-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-stat-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-fcc-kpi,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-object-header {
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(18,38,63,.06);
+}
+/* Dialogs Horizon: ventana contemporánea. */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-modal,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-drawer,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-popover__panel {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 8px;
+  box-shadow: 0 16px 44px rgba(18,38,63,.22);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-modal__header,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-drawer__header {
+  background: var(--nx-color-surface);
+  border-bottom: 1px solid var(--nx-color-border);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-sap-screen__header {
+  border-bottom: 1px solid var(--nx-color-border);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon'] body .nx-badge { border-radius: 999px; font-weight: 600; }
+
+/* --- Horizon Dark: workstation oscura con jerarquía tonal --- */
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body {
+  background: var(--nx-color-page-bg);
+  color: var(--nx-color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.45;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-app-shell {
+  background: var(--nx-color-page-bg);
+  border-color: var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-titlebar,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-menubar,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandrow,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-statusbar,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-topbar {
+  background: var(--nx-color-surface);
+  text-shadow: none;
+  box-shadow: none;
+  border-color: var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-menubar button:hover,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-menubar button:focus-visible {
+  background: color-mix(in srgb, var(--nx-color-accent) 18%, transparent);
+  border-color: transparent;
+  border-radius: 4px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__ok,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__nav,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-toolbar button {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-raised);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 4px;
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__field input {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-sunken);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 4px;
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__field input:focus {
+  border-color: var(--nx-focus-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-focus-ring) 32%, transparent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__results,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-menu__list {
+  background: var(--nx-color-surface-raised);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.55);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-menu__list button,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sap-commandbar__results button { border-radius: 4px; color: var(--nx-color-text); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sidebar__group--collapsible > summary {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  text-transform: none;
+  font-weight: 600;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sidebar__link { border-radius: 4px; color: var(--nx-color-text); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sidebar__link .nx-icon { color: var(--nx-color-accent); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-input,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-select,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-textarea,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-sidebar__search {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-sunken);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 4px;
+  box-shadow: none;
+  min-height: 30px;
+  height: 30px;
+  font-family: inherit;
+  font-size: 12.5px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-textarea { min-height: 76px; height: auto; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-input:focus,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-select:focus,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-textarea:focus {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-sunken);
+  border-color: var(--nx-focus-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--nx-focus-ring) 32%, transparent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-input:disabled,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-select:disabled,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-textarea:disabled {
+  color: var(--nx-color-text-subtle);
+  background: var(--nx-color-page-bg);
+  opacity: 1;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-button,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-segmented__option {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface-raised);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 4px;
+  box-shadow: none;
+  font-family: inherit;
+  min-height: 30px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-button--primary,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-segmented__option--active {
+  color: var(--nx-color-accent-contrast);
+  background: var(--nx-color-accent);
+  border-color: var(--nx-color-accent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table { background: var(--nx-color-surface); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table th {
+  background: var(--nx-table-header-bg);
+  border-left: 0;
+  border-right: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table td { border-left: 0; border-right: 0; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table tbody tr:nth-child(even) td { background: var(--nx-table-stripe); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table tbody tr:hover td { background: var(--nx-table-row-hover); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table tbody tr:has(:focus-visible) td,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-table tbody tr:focus-within td {
+  outline: 2px solid var(--nx-focus-ring);
+  outline-offset: -2px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-tabs__tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+  color: var(--nx-color-text-muted);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-tabs__tab--active {
+  color: var(--nx-color-text);
+  background: var(--nx-color-surface);
+  border-color: var(--nx-color-border-strong);
+  border-bottom: 2px solid var(--nx-color-accent);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-tabs__panel { background: var(--nx-color-surface); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-chart-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-stat-card,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-fcc-kpi,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-object-header {
+  background: var(--nx-color-surface);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 6px;
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-modal,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-drawer,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-popover__panel {
+  background: var(--nx-color-surface-raised);
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 8px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-modal__header,
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-drawer__header {
+  background: var(--nx-color-surface-raised);
+  border-bottom: 1px solid var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge { border-radius: 999px; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-filter-bar { background: var(--nx-color-surface-sunken); }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body ::-webkit-scrollbar { width: 12px; height: 12px; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body ::-webkit-scrollbar-thumb {
+  background: var(--nx-color-border-strong);
+  border: 3px solid var(--nx-color-surface);
+  border-radius: 6px;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body ::-webkit-scrollbar-track { background: transparent; }
+
+/* --- Selectores por anatomía: la misma regla sirve a cualquier preset que
+ * declare ese modo anatómico (Horizon hoy, futuros presets después). --- */
+:root[data-nx-toolbar='horizon'] body .nx-sap-commandrow,
+:root[data-nx-toolbar='horizon-dark'] body .nx-sap-commandrow { overflow: visible; }
+:root[data-nx-table='enterprise-grid'] body .nx-table-scroll,
+:root[data-nx-table='enterprise-grid-dark'] body .nx-table-scroll { border-radius: 6px; }
+:root[data-nx-field='horizon-compact'] body .nx-field,
+:root[data-nx-field='horizon-dark-compact'] body .nx-field { gap: 4px; }
+:root[data-nx-dialog='horizon-window'] body .nx-modal__actions,
+:root[data-nx-dialog='horizon-window-dark'] body .nx-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0 12px;
+}
+
+/* --- Badges semánticos en SAP GUI: texto AA sobre superficies SAP.
+ * Fondos opacos para garantizar contraste AA (4.5:1) independientemente
+ * de la superficie padre. --- */
+:root[data-nx-family='sap-gui'] body .nx-badge--warning {
+  color: #664d03;
+  background: #fef3cd;
+  border-color: #d4a843;
+}
+:root[data-nx-family='sap-gui'] body .nx-badge--danger {
+  color: #842029;
+  background: #f8d7da;
+  border-color: #d4536a;
+}
+:root[data-nx-family='sap-gui'] body .nx-badge--success {
+  color: #155724;
+  background: #d1e7dd;
+  border-color: #a3cfbb;
+}
+:root[data-nx-family='sap-gui'] body .nx-badge--info {
+  color: #055160;
+  background: #cff4fc;
+  border-color: #9eeaf9;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge--warning {
+  color: #f7b955;
+  background: rgba(247, 185, 85, 0.14);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge--danger {
+  color: #ff9a9a;
+  background: rgba(255, 122, 122, 0.14);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge--success {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.14);
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge--info {
+  color: #7ec3ff;
+  background: rgba(77, 163, 255, 0.14);
+}
+
+/* --- Field error text: darken for AA contrast on SAP surfaces (12px text needs 4.5:1) --- */
+:root[data-nx-family='sap-gui']:not([data-nx-sap-variant='horizon-dark']) body .nx-field__error {
+  color: #a71d2a;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-field__error {
+  color: #f5a3aa;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-state__title {
+  color: #e0e0e0;
+}
+
+/* SAP workstation metrics. One scale for shell and business controls. */
+:root[data-nx-family='sap-gui'] {
+  --sap-title-height: 26px;
+  --sap-menu-height: 25px;
+  --sap-command-height: 34px;
+  --sap-toolbar-height: 26px;
+  --sap-status-height: 24px;
+  --sap-field-height: 28px;
+  --sap-button-height: 28px;
+  --sap-row-height: 26px;
+  --sap-tab-height: 28px;
+  --sap-panel-header-height: 26px;
+  --sap-sidebar-width: 224px;
+  --sap-space: 6px;
+  --sap-border: 1px;
+}
+:root[data-nx-family='sap-gui'][data-nx-menubar='classic-modern'] {
+  --sap-title-height: 28px;
+  --sap-field-height: 30px;
+  --sap-button-height: 30px;
+  --sap-row-height: 30px;
+  --sap-tab-height: 32px;
+  --sap-space: 8px;
+}
+:root[data-nx-family='sap-gui'][data-nx-density='finance-dense'] {
+  --sap-field-height: 26px;
+  --sap-button-height: 26px;
+  --sap-row-height: 24px;
+  --sap-space: 4px;
+}
+:root[data-nx-family='sap-gui'] body .nx-app-shell__content h1 {
+  margin: 0 0 var(--sap-space);
+  padding: 4px 0;
+  min-height: var(--sap-panel-header-height);
+  background: none;
+  color: var(--nx-color-text);
+  border: 0;
+  font-size: 16px;
+}
+:root[data-nx-family='sap-gui'] body .nx-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sap-space);
+  padding-bottom: var(--sap-space);
+  border-bottom: var(--sap-border) solid var(--nx-color-border);
+}
+:root[data-nx-family='sap-gui'] body .nx-page__header p { margin: 2px 0; }
+:root[data-nx-family='sap-gui'] body .nx-stack { gap: var(--sap-space); }
+:root[data-nx-family='sap-gui'] body .nx-card { margin-block: var(--sap-space); }
+:root[data-nx-family='sap-gui'] body .nx-card__title {
+  display: flex;
+  align-items: center;
+  min-height: var(--sap-panel-header-height);
+  margin: -9px -9px 8px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--nx-color-border);
+  background: var(--nx-color-surface-sunken);
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='titled-box'] body .nx-card__title {
+  display: table;
+  min-height: 0;
+  margin: -17px 0 6px;
+  padding: 0 5px;
+  background: var(--nx-color-surface);
+  border: 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='titled-box'] body .nx-card { margin-top: 14px; }
+:root[data-nx-family='sap-gui'][data-nx-panel='banded-box'] body .nx-card {
+  border-top-width: 1px;
+  box-shadow: inset 1px 1px #fff, 1px 1px 0 var(--nx-color-border);
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='banded-box'] body .nx-card__title {
+  color: #fff;
+  background: linear-gradient(#365c86, #21386b);
+  border-bottom-color: #172e50;
+}
+:root[data-nx-family='sap-gui'] body :is(.nx-input, .nx-select) {
+  height: var(--sap-field-height);
+  min-height: var(--sap-field-height);
+}
+:root[data-nx-family='sap-gui'] body .nx-button {
+  height: auto;
+  min-height: var(--sap-button-height);
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__tab {
+  min-height: var(--sap-tab-height);
+  flex-shrink: 0;
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__list { align-items: end; padding-top: 4px; }
+:root[data-nx-family='sap-gui'][data-nx-tabs='raised-folder'] body .nx-tabs__tab {
+  border-radius: 5px 5px 0 0;
+  margin-top: 3px;
+  background: linear-gradient(#edf4fa, #a8b8c7);
+  box-shadow: inset 1px 1px #fff;
+  border-color: #6289ae;
+  color: #172e50;
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='raised-folder'] body .nx-tabs__tab--active {
+  min-height: calc(var(--sap-tab-height) + 4px);
+  margin-top: 0;
+  border-top: 3px solid #21386b;
+  border-bottom-color: var(--nx-color-surface);
+  background: var(--nx-color-surface);
+  box-shadow: 2px -1px 0 #8e9eab;
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='modern-folder'] body .nx-tabs__tab--active {
+  border-top: 2px solid var(--nx-color-accent);
+  border-bottom-color: var(--nx-color-surface);
+  background: var(--nx-color-surface);
+  box-shadow: inset 0 -2px var(--nx-color-accent);
+}
+:root[data-nx-family='sap-gui'] body .nx-table :is(th, td) {
+  height: var(--sap-row-height);
+  padding: 3px 7px;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-nx-family='sap-gui'][data-nx-table='banded-grid'] body .nx-table th {
+  background: linear-gradient(#365c86, #21386b);
+  color: #fff;
+}
+:root[data-nx-family='sap-gui'] body .nx-fcc-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--sap-space);
+}
+:root[data-nx-family='sap-gui'] body :is(.nx-fcc-kpi__label, .nx-fcc-kpi__hint, .nx-fcc-kpi__severity) {
+  color: var(--nx-color-text-muted);
+  font-size: 11px;
+  margin: 2px 0;
+}
+:root[data-nx-family='sap-gui'] body .nx-fcc-kpi__value {
+  color: var(--nx-color-text);
+  font-size: 19px;
+  margin: 4px 0;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body :is(.nx-topbar .nx-icon-button, .nx-card__title) {
+  background: var(--nx-color-surface-raised);
+  color: var(--nx-color-text);
+  box-shadow: none;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-button:hover:not(:disabled) {
+  background: #29425d;
+  color: #e6edf5;
+}
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-button:disabled {
+  background: #202d3d;
+  color: #8e9fb3;
+  border-color: #43566e;
+  opacity: 1;
+  filter: none;
+}
+:root[data-nx-family='sap-gui'] body :is(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--nx-focus-ring, var(--nx-color-accent));
+  outline-offset: 2px;
+}
+@media (min-width: 761px) {
+  :root[data-nx-family='sap-gui'] body .nx-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: end;
+    gap: var(--sap-space);
+  }
+  :root[data-nx-family='sap-gui'] body .nx-form-grid > .nx-button { justify-self: start; }
+}
+@media (max-width: 768px) {
+  :root[data-nx-family='sap-gui'] {
+    --sap-menu-height: 40px;
+    --sap-field-height: 40px;
+    --sap-button-height: 40px;
+    --sap-tab-height: 40px;
+  }
+  :root[data-nx-family='sap-gui'][data-nx-menubar] body :is(.nx-input, .nx-select, .nx-button, .nx-tabs__tab) { min-height: 40px; }
+  :root[data-nx-family='sap-gui'] body .nx-page__header { align-items: stretch; }
+  :root[data-nx-family='sap-gui'] body .nx-badge { border-radius: 2px; }
+}
+/* Responsive records must grow with their cells; desktop row density cannot
+   constrain a stacked record to a single row and overlap adjacent records. */
+:root[data-nx-family='sap-gui'] body .nx-table tbody tr { height: var(--sap-row-height); }
+@media (max-width: 430px) {
+  :root[data-nx-family='sap-gui'] body .nx-table--responsive tbody tr { height: auto; padding: 5px 7px; }
+  :root[data-nx-family='sap-gui'] body .nx-table--responsive tbody td {
+    height: auto;
+    min-height: 28px;
+    border: 0;
+    border-bottom: 1px solid var(--nx-color-border);
+    align-items: baseline;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+}
+:root[data-nx-family='sap-gui'] body .nx-combobox { width: min(100%, 280px); }
+:root[data-nx-family='sap-gui'] body .nx-combobox__control,
+:root[data-nx-family='sap-gui'] body .nx-combobox__control .nx-input { width: 100%; min-width: 0; }
+:root[data-nx-family='sap-gui'][data-nx-sap-variant='horizon-dark'] body .nx-badge--neutral {
+  color: #c9d6e4;
+  background: #26364a;
+  border-color: #61758e;
+}
+
+/* ---------------------------------------------------------------------------
+ * SAP GUI FIDELITY - STRUCTURAL DIFFERENTIATION
+ * ------------------------------------------------------------------------- */
+
+/* PANELS */
+:root[data-nx-family='sap-gui'][data-nx-panel='titled-box'] body .nx-card {
+  border: 1px solid var(--nx-color-border-strong, #668db5);
+  border-radius: 0;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='modern-titled-box'] body .nx-card {
+  border: 1px solid var(--nx-color-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='dark-titled-box'] body .nx-card {
+  border: 1px solid #334255;
+  border-radius: 4px;
+  background: var(--nx-color-surface-sunken);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='dark-titled-box'] body .nx-card__title {
+  background: var(--nx-color-surface-raised);
+  border-bottom: 1px solid #334255;
+  color: var(--nx-color-text);
+}
+
+/* BUTTONS */
+:root[data-nx-family='sap-gui'][data-nx-button='beveled'] body .nx-button:not(.nx-button--variant-text) {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--nx-color-surface-raised) 0%, var(--nx-color-surface) 100%);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5), inset -1px -1px 0 rgba(0,0,0,0.1);
+  color: var(--nx-color-text);
+  font-weight: normal;
+}
+:root[data-nx-family='sap-gui'][data-nx-button='beveled'] body .nx-button:active:not(:disabled) {
+  background: var(--nx-color-surface-sunken);
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-button='gradient'] body .nx-button:not(.nx-button--variant-text) {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #e3ebf3 0%, #c4d3e2 100%);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(0,0,0,0.2), 1px 1px 1px rgba(0,0,0,0.15);
+  color: #172e50;
+  font-weight: 500;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+:root[data-nx-family='sap-gui'][data-nx-button='gradient'] body .nx-button:active:not(:disabled) {
+  background: linear-gradient(180deg, #c4d3e2 0%, #e3ebf3 100%);
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-button='horizon-tool'] body .nx-button:not(.nx-button--variant-text) {
+  border: 1px solid var(--nx-color-border);
+  border-radius: 4px;
+  background: var(--nx-color-surface-raised);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+  color: var(--nx-color-text);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-button='horizon-dark-tool'] body .nx-button:not(.nx-button--variant-text) {
+  border: 1px solid #43566e;
+  border-radius: 4px;
+  background: #1b2a3c;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  color: #e6edf5;
+}
+
+/* FIELDS */
+:root[data-nx-family='sap-gui'][data-nx-field='classic-blue'] body :is(.nx-input, .nx-select, .nx-textarea) {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 0;
+  background: #fff;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+  color: var(--nx-color-text);
+}
+:root[data-nx-family='sap-gui'][data-nx-field='classic-blue'] body :is(.nx-input, .nx-select, .nx-textarea):focus {
+  background: #eaf1f6;
+  outline: 1px dotted var(--nx-color-accent);
+  outline-offset: -2px;
+}
+
+:root[data-nx-family='sap-gui'][data-nx-field='tradeshow-blue'] body :is(.nx-input, .nx-select, .nx-textarea) {
+  border: 1px solid var(--nx-color-border-strong);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.15);
+}
+:root[data-nx-family='sap-gui'][data-nx-field='tradeshow-blue'] body :is(.nx-input, .nx-select, .nx-textarea):focus {
+  background: #dfeaf3;
+  border-color: var(--nx-color-accent);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-field='horizon-compact'] body :is(.nx-input, .nx-select, .nx-textarea) {
+  border: 1px solid var(--nx-color-border);
+  border-radius: 4px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+:root[data-nx-family='sap-gui'][data-nx-field='horizon-dark-compact'] body :is(.nx-input, .nx-select, .nx-textarea) {
+  border: 1px solid #43566e;
+  border-radius: 4px;
+  background: #121c29;
+  color: #e6edf5;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* TABLES */
+:root[data-nx-family='sap-gui'][data-nx-table='grid'] body .nx-table {
+  border: 1px solid var(--nx-color-border-strong);
+}
+:root[data-nx-family='sap-gui'][data-nx-table='grid'] body .nx-table th {
+  background: var(--nx-color-surface-sunken);
+  border-bottom: 2px solid var(--nx-color-border-strong);
+  border-right: 1px solid var(--nx-color-border-strong);
+  color: var(--nx-color-text);
+  font-weight: 600;
+}
+:root[data-nx-family='sap-gui'][data-nx-table='grid'] body .nx-table td {
+  border-right: 1px dotted var(--nx-color-border);
+  border-bottom: 1px solid var(--nx-color-border);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-table='enterprise-grid'] body .nx-table {
+  border: 1px solid var(--nx-color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+:root[data-nx-family='sap-gui'][data-nx-table='enterprise-grid'] body .nx-table th {
+  background: var(--nx-color-surface-raised);
+  border-bottom: 1px solid var(--nx-color-border);
+  color: var(--nx-color-text-muted);
+  font-weight: 500;
+}
+:root[data-nx-family='sap-gui'][data-nx-table='enterprise-grid-dark'] body .nx-table {
+  border: 1px solid #334255;
+  border-radius: 4px;
+  overflow: hidden;
+}
+:root[data-nx-family='sap-gui'][data-nx-table='enterprise-grid-dark'] body .nx-table th {
+  background: #1b2a3c;
+  border-bottom: 1px solid #334255;
+  color: #8e9fb3;
+}
+
+/* DIALOGS */
+:root[data-nx-family='sap-gui'][data-nx-dialog='window'] body .nx-dialog__content {
+  border: 2px solid var(--nx-color-border-strong);
+  border-radius: 0;
+  background: var(--nx-color-page-bg);
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+}
+:root[data-nx-family='sap-gui'][data-nx-dialog='window'] body .nx-dialog__header {
+  background: var(--nx-color-accent);
+  color: #fff;
+  padding: 8px 12px;
+  margin: 0;
+  border-bottom: 2px solid var(--nx-color-border-strong);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-dialog='window-banded'] body .nx-dialog__content {
+  border: 2px solid #172e50;
+  border-radius: 4px;
+  background: var(--nx-color-page-bg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+:root[data-nx-family='sap-gui'][data-nx-dialog='window-banded'] body .nx-dialog__header {
+  background: linear-gradient(90deg, #182a53 0%, #21386b 100%);
+  color: #fff;
+  padding: 10px 16px;
+  border-bottom: 2px solid #466dbd;
+}
+
+:root[data-nx-family='sap-gui'][data-nx-dialog='horizon-window'] body .nx-dialog__content {
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+  border: 1px solid var(--nx-color-border);
+}
+
+:root[data-nx-family='sap-gui'][data-nx-dialog='horizon-window-dark'] body .nx-dialog__content {
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  border: 1px solid #43566e;
+  background: #172333;
+}
+:root[data-nx-family='sap-gui'][data-nx-dialog='horizon-window-dark'] body .nx-dialog__header {
+  border-bottom: 1px solid #334255;
+  color: #e6edf5;
+}
+
+/* Measured classic SAP anatomy: Signature and Tradeshow folder tabs use a
+   diagonal shoulder, while Horizon keeps its compact modern rectangle. */
+:root[data-nx-family='sap-gui'][data-nx-tabs='folder'] body .nx-tabs__tab,
+:root[data-nx-family='sap-gui'][data-nx-tabs='raised-folder'] body .nx-tabs__tab {
+  position: relative;
+  isolation: isolate;
+  padding-left: 24px;
+  border-radius: 0;
+  clip-path: polygon(18px 0, 100% 0, 100% 100%, 0 100%, 0 18px);
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='folder'] body .nx-tabs__tab {
+  background: linear-gradient(#dee9f3, #c2d8eb);
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='folder'] body .nx-tabs__tab--active {
+  color: #172e50;
+  background: linear-gradient(#8cb1da, #bdd4e9);
+  border-bottom-color: #bdd4e9;
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='folder'] body .nx-tabs__panel {
+  border-top: 2px solid #bdd4e9;
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='raised-folder'] body .nx-tabs__tab--active {
+  color: #fff;
+  background: #265b8f;
+  border-bottom-color: #265b8f;
+  box-shadow: inset 0 1px #87abd6;
+}
+:root[data-nx-family='sap-gui'][data-nx-tabs='raised-folder'] body .nx-tabs__panel {
+  border-top: 2px solid #265b8f;
+}
+:root[data-nx-family='sap-gui'] body .nx-tabs__tab:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Signature titled boxes use the measured blue header band and body fill;
+   Tradeshow retains the stronger banded-box grammar. */
+:root[data-nx-family='sap-gui'][data-nx-panel='titled-box'] body .nx-card {
+  margin-top: var(--sap-space);
+  background: #dfebf5;
+  border-color: #668db5;
+}
+:root[data-nx-family='sap-gui'][data-nx-panel='titled-box'] body .nx-card__title {
+  display: flex;
+  min-height: 25px;
+  margin: -9px -9px 8px;
+  padding: 3px 8px;
+  background: #c0d6ea;
+  border-bottom: 1px solid #668db5;
+}
+
+:root[data-nx-family='sap-gui'][data-nx-button='beveled'] body .nx-button:not(.nx-button--danger) {
+  color: #172e50;
+  background: linear-gradient(#fefcef, #feee9e);
+  border-color: #8e9eab;
+  box-shadow: inset 1px 1px #fff, inset -1px -1px #b8ac75;
+}
+:root[data-nx-family='sap-gui'][data-nx-button='gradient'] body .nx-button:not(.nx-button--danger) {
+  color: #172e50;
+  background: linear-gradient(#fff6d9, #f2e1af);
+  border-color: #64707c;
+  border-width: 1px 2px 2px 1px;
+  border-radius: 0;
+  box-shadow: inset 1px 1px #fff;
+}
