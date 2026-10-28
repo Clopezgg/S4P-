@@ -1,0 +1,44 @@
+name: S4P Cloudflare Pages deploy (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: s4p-production-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Require Cloudflare project and credentials
+        env:
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_PROJECT: ${{ vars.S4P_PAGES_PROJECT }}
+        run: |
+          test -n "$CF_ACCOUNT" || { echo 'Missing CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+          test -n "$CF_TOKEN" || { echo 'Missing CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "$CF_PROJECT" || { echo 'Missing S4P_PAGES_PROJECT'; exit 1; }
+      - name: Install and validate SAP frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run lint
+          npm test -- --run
+          npm run build
+        env:
+          VITE_API_BASE_URL: /api
+      - name: Publish Cloudflare Pages + Functions
+        run: npx --yes wrangler@4 pages deploy frontend/dist --project-name="$S4P_PAGES_PROJECT" --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          S4P_PAGES_PROJECT: ${{ vars.S4P_PAGES_PROJECT }}
