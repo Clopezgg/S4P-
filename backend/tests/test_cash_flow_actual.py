@@ -55,37 +55,34 @@ def _remittance(client, company, bank, *, counter_id, origin_type, amount, remit
 
 
 def test_historical_remittance_buckets_by_economic_date_not_posting_time(client, db_session):
-    """§9/§26 — una remesa con `remittanceDate` de julio, aunque NEXORA la
-    contabilice hoy (agosto), debe aparecer en la semana de julio del flujo
-    de caja real, NO concentrada en la última semana (fecha de importación)."""
-    from datetime import date
+    """A historical remittance stays in its economic week, not the posting week.
 
+    Use a relative economic date so the case remains inside the rolling
+    13-week API window as the calendar advances.
+    """
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
     from app.models.accounting import AccountingDocument
 
     login_admin(client)
     company, bank = _company_with_bank(client)
     equity = create_account(client, company_id=company["id"], code="3100", name="Aportes", account_type="EQUITY")
-
-    # Fecha económica muy anterior a "hoy" (posted_at = ahora en el test).
+    economic_date = business_today() - timedelta(days=35)
     r = _remittance(
         client, company, bank, counter_id=equity["id"],
         origin_type="CAPITAL_CONTRIBUTION", amount="80000.00",
-        remittance_date="2026-07-13",
+        remittance_date=economic_date.isoformat(),
     )
-    doc_id = r["accountingDocumentId"]
-
-    # El AccountingDocument guarda la fecha económica real, distinta del
-    # timestamp técnico posted_at.
-    doc = db_session.get(AccountingDocument, doc_id)
-    assert doc.effective_date == date(2026, 7, 13)
-    assert doc.posted_at.date() != date(2026, 7, 13)  # se contabilizó hoy
+    doc = db_session.get(AccountingDocument, r["accountingDocumentId"])
+    assert doc.effective_date == economic_date
+    assert doc.posted_at.date() != economic_date
 
     cf = client.get(f"/api/financial-control/cash-flow-actual?companyId={company['id']}").json()
     weeks_with_inflow = [w for w in cf["weeks"] if Decimal(w["inflows"]) > 0]
     assert len(weeks_with_inflow) == 1
     week = weeks_with_inflow[0]
-    # Cae en la semana que CONTIENE el 13 de julio, no en la última.
-    assert week["weekStart"] <= "2026-07-13" <= week["weekEnd"]
+    assert week["weekStart"] <= economic_date.isoformat() <= week["weekEnd"]
     assert week["weekIndex"] < 12
     assert Decimal(cf["totalInflows"]) == Decimal("80000.00")
 
@@ -189,18 +186,19 @@ def test_internal_transfer_is_not_a_cash_flow_movement(client):
 
 
 def test_batch_of_historical_remittances_spreads_across_their_real_weeks(client):
-    """§26 — diez remesas con fechas económicas de julio y agosto,
-    importadas/contabilizadas el mismo día, NO se concentran en una semana:
-    cada una cae en la semana de su fecha real y el total reconcilia."""
+    """Historical imports spread across economic weeks in the rolling window."""
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
+
     login_admin(client)
     company, bank = _company_with_bank(client)
     equity = create_account(client, company_id=company["id"], code="3100", name="Aportes", account_type="EQUITY")
 
-    fechas = [
-        "2026-07-02", "2026-07-11", "2026-07-13", "2026-07-18", "2026-07-25",
-        "2026-07-27", "2026-07-29", "2026-08-04", "2026-08-08", "2026-08-15",
-    ]
-    for f in fechas:
+    today = business_today()
+    # Eight distinct prior ISO weeks, all safely inside the 13-week view.
+    dates = [(today - timedelta(weeks=n)).isoformat() for n in range(1, 9)]
+    for f in dates:
         _remittance(
             client, company, bank, counter_id=equity["id"],
             origin_type="CAPITAL_CONTRIBUTION", amount="1000.00", remittance_date=f,
@@ -208,13 +206,10 @@ def test_batch_of_historical_remittances_spreads_across_their_real_weeks(client)
 
     cf = client.get(f"/api/financial-control/cash-flow-actual?companyId={company['id']}").json()
     weeks_with_inflow = [w for w in cf["weeks"] if Decimal(w["inflows"]) > 0]
-    # 10 fechas distintas repartidas en >= 6 semanas ISO distintas.
-    assert len(weeks_with_inflow) >= 6
-    # Ninguna semana concentra más de 3 (la más poblada de julio tiene 3).
-    assert max(Decimal(w["inflows"]) for w in weeks_with_inflow) <= Decimal("3000.00")
-    # El total reconcilia exactamente con lo aportado.
-    assert Decimal(cf["totalInflows"]) == Decimal("10000.00")
-    assert Decimal(cf["closingBalance"]) == Decimal("10000.00")
+    assert len(weeks_with_inflow) == 8
+    assert max(Decimal(w["inflows"]) for w in weeks_with_inflow) == Decimal("1000.00")
+    assert Decimal(cf["totalInflows"]) == Decimal("8000.00")
+    assert Decimal(cf["closingBalance"]) == Decimal("8000.00")
 
 
 def test_reversal_of_historical_remittance_is_a_cash_movement_at_reversal_time(client, db_session):
