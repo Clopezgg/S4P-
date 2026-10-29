@@ -63,6 +63,39 @@ describe('ProjectsPage', () => {
     expect(await screen.findByRole('button', { name: 'Proyecto con configuración completa' })).toBeInTheDocument()
   })
 
+  it('creates a basic draft project directly without requiring evidence storage', async () => {
+    const company = { id: 'c1', name: 'Empresa autorizada', functionalCurrencyCode: 'HNL' }
+    let submitted: Record<string, unknown> | null = null
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/auth/me')) return Promise.resolve({
+        ok: true, status: 200, json: async () => ({ id: 'u1', email: 'admin@s4p.test', fullName: 'Administrador', roles: ['Administrator'] }),
+      } as Response)
+      if (url.includes('/master-data/companies')) return Promise.resolve({
+        ok: true, status: 200, json: async () => [company],
+      } as Response)
+      if (url.endsWith('/projects') && init?.method === 'POST') {
+        submitted = JSON.parse(String(init.body))
+        return Promise.resolve({
+          ok: true, status: 201,
+          json: async () => ({ id: 'new-project', companyId: 'c1', name: 'Proyecto inicial', status: 'PLANNING' }),
+        } as Response)
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response)
+    }))
+
+    render(renderApp('/proyectos'))
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Crear proyecto básico' }))
+    await user.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto inicial')
+    await user.click(screen.getByRole('button', { name: 'Guardar proyecto básico' }))
+
+    await waitFor(() => expect(submitted).toMatchObject({
+      companyId: 'c1', name: 'Proyecto inicial', currencyCode: 'HNL',
+    }))
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url).includes('/evidence'))).toBe(false)
+  })
+
   it('lists real projects for the selected company', async () => {
     stubFetch({
       '/master-data/companies': [{ id: 'c1', name: 'Constructora Nexora', code: null, legalName: null, functionalCurrencyCode: 'HNL', country: null, fiscalId: null }],
