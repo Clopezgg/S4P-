@@ -788,7 +788,8 @@ export const THEME_PRESETS: ThemePreset[] = [
   }),
 ]
 
-export const DEFAULT_THEME_ID = 'nexora-horizon-light'
+// Default SAP workstation for fresh accounts. Existing user/company preferences take priority.
+export const DEFAULT_THEME_ID = 'sap-gui-horizon'
 export const DEFAULT_DENSITY: Density = 'comfortable'
 export const DEFAULT_UI_SCALE: UiScale = 100
 export const UI_SCALES: UiScale[] = [90, 100, 110]
