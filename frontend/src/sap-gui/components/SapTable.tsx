@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Table Primitive
+ * S4P SAP GUI Classic — Table Primitive
  * 
  * Tabla estilo SAP GUI Classic (Table Control / Grid).
  * - Filas compactas (26px)

@@ -14,7 +14,7 @@ interface MenuEntry {
 }
 /**
  * Menu bar SAP real: Sistema / Editar / Navegar / Extras / Ayuda.
- * Cada entrada ejecuta una función real de Nexora (navegación RBAC,
+ * Cada entrada ejecuta una función real de S4P (navegación RBAC,
  * compañía/proyecto, búsqueda, Protected Edit, logout). No hay acciones
  * falsas ni Favoritos inventados: sin persistencia de favoritos no hay menú
  * Favoritos. Teclado completo: Escape, ArrowLeft/Right/Up/Down, Enter.
