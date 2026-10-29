@@ -110,11 +110,10 @@ class Settings(BaseSettings):
         # Never silently point a production ERP at the development database.
         # A Render Blueprint supplies this secret via fromDatabase; keeping
         # this check in the app makes misconfigured deployments fail safely.
-        if not os.environ.get("DATABASE_URL", "").strip():
-            raise ValueError("DATABASE_URL must be configured for production")
         parsed_db = urlparse(self.database_url)
         if (
-            parsed_db.scheme != "postgresql+psycopg"
+            self.database_url == "postgresql+psycopg://nexora:nexora@localhost:5432/nexora_dev"
+            or parsed_db.scheme != "postgresql+psycopg"
             or not parsed_db.hostname
             or parsed_db.hostname in {"localhost", "127.0.0.1", "::1"}
             or not parsed_db.username
