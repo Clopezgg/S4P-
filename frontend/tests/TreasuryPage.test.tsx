@@ -38,7 +38,7 @@ describe('TreasuryPage', () => {
 
     expect(await screen.findByText(/aún no hay ninguna compañía configurada/i)).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /crear compañía y cuentas de inicio/i }),
+      screen.getByRole('button', { name: /crear compañía y habilitar operaciones/i }),
     ).toBeInTheDocument()
   })
 
