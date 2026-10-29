@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Component Exports
+ * S4P SAP GUI Classic — Component Exports
  * 
  * Exporta todos los componentes del sistema SAP GUI Classic.
  */

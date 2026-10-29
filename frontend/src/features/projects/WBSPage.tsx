@@ -151,7 +151,7 @@ function WBSManager({ projectId }: { projectId: string }) {
 
     <Card title="Estructura WBS">
       {nodes.length === 0 ? <EmptyState icon="project" title="Sin WBS todavía" description="Crea la estructura de trabajo antes de congelar el presupuesto de costos." /> : <Table columns={columns} rows={nodes} getRowKey={(row) => row.id} />}
-      <p className="nx-field__hint">Comprometido, costo real y variación muestran “—” mientras los documentos fuente no tengan atribución WBS autoritativa; NEXORA no inventa una distribución.</p>
+      <p className="nx-field__hint">Comprometido, costo real y variación muestran “—” mientras los documentos fuente no tengan atribución WBS autoritativa; S4P no inventa una distribución.</p>
     </Card>
   </>
 }

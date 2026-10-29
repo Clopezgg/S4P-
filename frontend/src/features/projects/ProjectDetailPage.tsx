@@ -302,7 +302,7 @@ export function ProjectDetailPage() {
   )
   if (projectCurrencyMismatch || summaryCurrencyMismatch) {
     return (
-      <ErrorState description="La moneda del proyecto no coincide con la moneda funcional de la compañía activa. NEXORA bloquea la vista financiera para evitar mezclar monedas sin una política FX autoritativa." />
+      <ErrorState description="La moneda del proyecto no coincide con la moneda funcional de la compañía activa. S4P bloquea la vista financiera para evitar mezclar monedas sin una política FX autoritativa." />
     )
   }
   const currency = functionalCurrency

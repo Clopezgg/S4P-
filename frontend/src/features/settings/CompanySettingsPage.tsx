@@ -339,7 +339,7 @@ function CompanyProfileForm({ company }: { company: Company }) {
       </Select>
       {missingRequiredCurrency ? (
         <p className="nx-field__error" role="alert">
-          Debes seleccionar la moneda funcional; NEXORA no asignará HNL automáticamente.
+          Debes seleccionar la moneda funcional; S4P no asignará HNL automáticamente.
         </p>
       ) : null}
       <Button
@@ -529,7 +529,7 @@ function ResourcePostingSettings({ companyId }: { companyId: string }) {
   return (
     <Card title="Posting automático de recursos">
       <p className="nx-field__hint">
-        Estas cuentas son propiedad de la compañía. NEXORA no utiliza códigos contables
+        Estas cuentas son propiedad de la compañía. S4P no utiliza códigos contables
         hardcodeados: si un origen no está configurado y activo, el evento financiero se bloquea
         antes de quedar sin asiento.
       </p>

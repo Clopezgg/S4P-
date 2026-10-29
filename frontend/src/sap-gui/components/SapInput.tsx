@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Input Primitive
+ * S4P SAP GUI Classic — Input Primitive
  * 
  * Campo de entrada compacto estilo SAP GUI Classic.
  * - Altura 28px (desktop)

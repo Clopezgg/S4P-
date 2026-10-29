@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Tree Primitive
+ * S4P SAP GUI Classic — Tree Primitive
  * 
  * Árbol estilo SAP Easy Access.
  * - Expandir/colapsar por grupo

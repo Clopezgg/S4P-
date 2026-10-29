@@ -111,7 +111,7 @@ function BudgetAndForecast({ projectId }: { projectId: string }) {
   const redistribute = useMutation({
     mutationFn: () => projectService.redistributeUnassignedBudget(projectId, {
       lines: redistributionLines.map(({ key: _key, ...line }) => line),
-      notes: 'Redistribución auditada por WBS desde la interfaz de NEXORA.',
+      notes: 'Redistribución auditada por WBS desde la interfaz de S4P.',
     }),
     onSuccess: () => { invalidate(); setRedistributionLines([makeLine()]) },
   })
@@ -152,7 +152,7 @@ function BudgetAndForecast({ projectId }: { projectId: string }) {
   return <div>
     {showCreateBaseline ? <Card title="Crear BASELINE de costos">
       <p className="nx-field__hint"><strong>Este presupuesto representa el COSTO previsto/autorizado de ejecución, no el precio contratado al cliente.</strong> El valor de venta vive en Comercial → Contratos.</p>
-      {wbsNodes.length === 0 ? <EmptyState icon="project" title="Crea primero la WBS" description="NEXORA evita congelar accidentalmente todo el presupuesto como “Sin WBS asignado”. Define la estructura WBS y vuelve aquí." /> : <>
+      {wbsNodes.length === 0 ? <EmptyState icon="project" title="Crea primero la WBS" description="S4P evita congelar accidentalmente todo el presupuesto como “Sin WBS asignado”. Define la estructura WBS y vuelve aquí." /> : <>
         <BudgetLineEditor lines={baselineLines} onChange={setBaselineLines} wbs={wbsNodes} economicCategories={categoriesQuery.data ?? []} costCenters={costCentersQuery.data ?? []} periods={periodsQuery.data ?? []} requireWbs currencyCode={currencyCode} />
         <p><strong>Total BASELINE de costos: {formatMoney(baselineTotal, currencyCode)}</strong></p>
         <Textarea label="Notas del BASELINE" value={notes} onChange={(event) => setNotes(event.target.value)} />

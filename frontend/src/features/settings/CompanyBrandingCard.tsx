@@ -77,7 +77,7 @@ export function CompanyBrandingCard({ companyId }: { companyId: string }) {
   return (
     <Card title="Identidad de comprobantes">
       <p className="nx-field__hint">
-        Logo y firma se almacenan en Evidence privado; NEXORA nunca guarda una URL pública de Blob. Solo afectan comprobantes nuevos: los ya emitidos conservan su snapshot.
+        Logo y firma se almacenan en Evidence privado; S4P nunca guarda una URL pública de Blob. Solo afectan comprobantes nuevos: los ya emitidos conservan su snapshot.
       </p>
       <BrandingAsset companyId={companyId} kind="logo" configured={Boolean(company?.logoEvidenceId)} />
       <BrandingAsset companyId={companyId} kind="signature" configured={Boolean(company?.signatureEvidenceId)} />

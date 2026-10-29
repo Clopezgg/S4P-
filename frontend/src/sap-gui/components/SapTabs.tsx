@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Tab Primitive
+ * S4P SAP GUI Classic — Tab Primitive
  * 
  * Pestañas estilo carpeta SAP GUI Classic (folder tabs).
  * - Esquinas rectas, sin redondeo
