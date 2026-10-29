@@ -90,6 +90,7 @@ export function ProjectsPage() {
       invalidate()
       setQuickCreateOpen(false)
       setQuickProjectName('')
+      setActiveProject(project.id)
       navigate(`/proyectos/${project.id}`)
     },
   })
@@ -181,7 +182,8 @@ export function ProjectsPage() {
             onCreated={(project) => {
               invalidate()
               setWizardOpen(false)
-              navigate(`/proyectos/${project.id}`)
+              setActiveProject(project.id)
+      navigate(`/proyectos/${project.id}`)
             }}
           />
         </Card>
