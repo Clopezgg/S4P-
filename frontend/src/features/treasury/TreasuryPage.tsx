@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Badge,
@@ -62,6 +63,7 @@ const KNOWN_REMITTANCE_SENDERS = [
 const OTHER_REMITTANCE_SENDER = '__OTHER__'
 
 export function TreasuryPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [openModal, setOpenModal] = useState<ModalKind>(null)
   const [remittanceOffset, setRemittanceOffset] = useState(0)
@@ -215,6 +217,25 @@ export function TreasuryPage() {
           <StatCard key={currency} label={`Saldo ${currency}`} value={formatMoney(balance, currency)} />
         ))}
       </div>
+
+      {!accountsQuery.isLoading && !treasuryAccountsQuery.isLoading && (glAccounts.length === 0 || treasuryAccounts.length === 0) ? (
+        <Card title="Configuración necesaria para registrar remesas y pagos">
+          <p className="nx-field__hint">
+            Antes de mover dinero, configura cuentas contables registrables: una de Activo para el banco o caja, y otra de Patrimonio, Pasivo o Ingreso para el origen de la remesa. Después vincula la cuenta bancaria o de caja en Tesorería.
+            La compañía y sus saldos deben ser reales; el sistema no crea movimientos de ejemplo.
+          </p>
+          {glAccounts.length === 0 ? (
+            <Button variant="secondary" onClick={() => navigate('/finanzas/contabilidad')}>
+              Configurar plan de cuentas
+            </Button>
+          ) : null}
+          {treasuryAccounts.length === 0 ? (
+            <Button variant="secondary" onClick={() => setOpenModal('account')}>
+              Vincular cuenta de banco o caja
+            </Button>
+          ) : null}
+        </Card>
+      ) : null}
 
       <Card title="Acciones">
         <div className="nx-treasury__actions">
