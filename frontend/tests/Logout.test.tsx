@@ -36,11 +36,19 @@ describe('S4P complete sign-out', () => {
     vi.clearAllMocks()
     vi.stubGlobal('alert', vi.fn())
     window.localStorage.setItem('nexora.activeCompanyId', 'test-company')
+    let serverSessionRevoked = false
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith('/auth/me') && serverSessionRevoked) {
+        return {
+          ok: false, status: 401, headers: new Headers(),
+          json: async () => ({ detail: 'Session revoked' }),
+        } as Response
+      }
       if (String(input).endsWith('/auth/me')) {
         return { ok: true, status: 200, json: async () => currentUser } as Response
       }
       if (String(input).endsWith('/auth/logout')) {
+        serverSessionRevoked = true
         return { ok: true, status: 204 } as Response
       }
       throw new Error('Unexpected endpoint')
@@ -57,7 +65,8 @@ describe('S4P complete sign-out', () => {
       method: 'POST', credentials: 'include',
     }))
     expect(window.localStorage.getItem('nexora.activeCompanyId')).toBeNull()
-    expect(client.getQueryData(['auth', 'me'])).toBeUndefined()
+    await waitFor(() => expect(client.getQueryData(['auth', 'me'])).toBeUndefined())
+    expect(screen.getByText('Sesión inactiva')).toBeInTheDocument()
     expect(window.alert).not.toHaveBeenCalled()
   })
 

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authService } from '../../services/authService'
 import { ApiError, clearEditCapability } from '../../services/httpClient'
@@ -8,6 +8,7 @@ import { AuthContext, type AuthContextValue } from './auth-context'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
+  const [signedOut, setSignedOut] = useState(false)
 
   // Any authenticated call that comes back 401 means the session is gone.
   // Drop the cached user so the router shows the login screen instead of a
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const meQuery = useQuery<CurrentUser | null>({
     queryKey: ['auth', 'me'],
+    enabled: !signedOut,
     queryFn: async () => {
       try {
         return await authService.me()
@@ -38,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: authService.login,
     onSuccess: (user) => {
+      setSignedOut(false)
       queryClient.setQueryData(['auth', 'me'], user)
     },
   })
@@ -51,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The server has revoked the session and removed the HttpOnly cookie.
       // Exit the web application rather than routing back to S4P's login.
       // Keep the existing legacy storage key compatible until its migration.
+      setSignedOut(true)
       clearEditCapability()
       try {
         window.localStorage.removeItem('nexora.activeCompanyId')
@@ -71,9 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const value: AuthContextValue = {
-    user: meQuery.data ?? null,
+    user: signedOut ? null : meQuery.data ?? null,
     isLoading: meQuery.isLoading,
-    isAuthenticated: Boolean(meQuery.data),
+    isAuthenticated: !signedOut && Boolean(meQuery.data),
     login: (payload) => loginMutation.mutateAsync(payload),
     loginError:
       loginMutation.error instanceof ApiError ? loginMutation.error.message : null,
