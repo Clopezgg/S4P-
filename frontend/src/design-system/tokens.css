@@ -82,7 +82,7 @@
   --nx-touch-target: 44px;
 
   /* ---------------------------------------------------------------------------
-   * NEXORA Design System 2.0 — semantic layer (default: NEXORA HORIZON LIGHT).
+   * S4P Design System 2.0 — semantic layer (default: S4P HORIZON LIGHT).
    * Pantallas y componentes deben consumir estos tokens semánticos, no los
    * primitivos de color ni valores arbitrarios. El Theme Engine sobrescribe
    * únicamente esta capa (ver src/theme/).

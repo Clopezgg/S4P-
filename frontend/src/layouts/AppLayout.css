@@ -305,3 +305,9 @@
 /* SAP GUI owns its shell geometry in sap-gui/components/SapWorkstation.css.
  * Keep the modern AppLayout stylesheet free of SAP shell overrides so theme
  * identity cannot mutate the geometry of a different composition. */
+
+/* Firma institucional S4P */
+.nx-sidebar__brand{min-height:86px;background:#101D35;border-bottom:1px solid #C9A05A55}
+.nx-sidebar__brand-logo{display:block;width:156px;max-width:100%;max-height:75px;object-fit:contain}
+.nx-sidebar__link--active{background:#253954;box-shadow:none}
+.nx-sidebar__link--active::before{background:#C9A05A}

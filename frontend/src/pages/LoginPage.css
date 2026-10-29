@@ -140,3 +140,12 @@
   font-size: var(--nx-text-caption);
   letter-spacing: 0.02em;
 }
+
+/* Identidad S4P */
+.nx-login {background:radial-gradient(circle at 50% 0%,#263954 0%,#101D35 65%,#0A1427 100%)}
+.nx-login__card{background:#F3F1EB;border:1px solid #C9A05A66;border-top:4px solid #C9A05A;box-shadow:0 22px 75px #07142677}
+.nx-login__brand{justify-content:center;padding:0 0 12px;border-bottom:1px solid #C9A05A55}
+.nx-login__brand-logo{display:block;max-width:280px;width:100%;height:auto;object-fit:contain}
+.nx-login__title{color:#101D35}
+.nx-login__submit{background:#101D35;border-color:#101D35;color:#fff}
+.nx-login__submit:hover{background:#253954}

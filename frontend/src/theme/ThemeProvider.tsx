@@ -55,7 +55,7 @@ function applyToDom(themeId: string, density: Density, scale: UiScale) {
   root.dataset.nxStatusbar = anatomy.statusBarMode
   root.dataset.nxDensity = density
   root.dataset.nxContrast = preset.contrast
-  // El Theme Engine gobierna SIEMPRE la presentación: NEXORA Horizon
+  // El Theme Engine gobierna SIEMPRE la presentación: S4P Horizon
   // (default) también re-pinta por variables. No hay un modo "sin tema".
   root.dataset.nxThemed = 'on'
   root.style.colorScheme = preset.isDark ? 'dark' : 'light'
@@ -84,7 +84,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const companyDensity = (activeCompany?.defaultDensity as Density | null) ?? null
 
   // Hosting-only SAP presentation preference. No business data, user
-  // preference, company override or original NEXORA default is modified.
+  // preference, company override or original S4P default is modified.
   // The Docker build can opt S4P into SAP Horizon for brand-new accounts.
   const deploymentThemeId = import.meta.env.VITE_S4P_INITIAL_THEME_ID?.trim()
   const deploymentDefault = deploymentThemeId &&

@@ -459,18 +459,18 @@ const _SURFACE_VAR: Record<'surface' | 'sunken' | 'tinted' | 'transparent', stri
 export const THEME_PRESETS: ThemePreset[] = [
   makePreset({
     id: 's4p-horizon-light',
-    name: 'S4P Horizon',
+    name: 'S4P Institutional',
     description: 'Tema por defecto: superficies blancas, fondo gris azulado, azul eléctrico. Limpio y denso.',
     family: 's4p',
     variant: 'horizon-light',
     palette: {
-      pageBg: '#eef3f9', surface: '#ffffff', surfaceRaised: '#ffffff', surfaceSunken: '#f4f7fb',
+      pageBg: '#F3F1EB', surface: '#ffffff', surfaceRaised: '#ffffff', surfaceSunken: '#EBEDF0',
       text: '#102844', textMuted: '#4f6176', textSubtle: '#7c8da6', border: '#dce5ef', borderStrong: '#b9c9dc',
-      accent: '#1769d2', accentHover: '#1257ad', accentContrast: '#ffffff',
+      accent: '#183B64', accentHover: '#101D35', accentContrast: '#ffffff',
       positive: '#0f9f6e', negative: '#dc3f50', warning: '#c67c11', info: '#1769d2',
     },
     shell: {
-      sidebarBg: '#0b274a', sidebarText: '#c7d7ea', sidebarActiveBg: '#123a68', sidebarActiveText: '#ffffff',
+      sidebarBg: '#101D35', sidebarText: '#F3F1EB', sidebarActiveBg: '#283B57', sidebarActiveText: '#ffffff',
       topbarBg: '#ffffff', topbarText: '#102844', topbarBorder: '#dce5ef',
     },
     tables: { headerBg: '#f4f7fb', headerText: '#4f6176', rowHover: '#f0f5fb', stripe: '#fafcfe', divider: '#e6ecf3' },
@@ -501,7 +501,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   }),
   makePreset({
     id: 's4p-dark',
-    name: 'S4P Dark',
+    name: 'S4P Night',
     description: 'Modo oscuro de S4P para salas de control.',
     family: 's4p',
     variant: 'dark',

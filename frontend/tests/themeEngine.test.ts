@@ -25,7 +25,7 @@ function contrastRatio(hexA: string, hexB: string): number {
 
 describe('Enterprise Theme Architecture (§8-§11, §20)', () => {
   it('ordena SAP GUI como la quinta familia y publica sus IDs estables', () => {
-    expect(THEME_FAMILY_ORDER).toEqual(['nexora', 'horizon', 'quartz', 'belize', 'sap-gui'])
+    expect(THEME_FAMILY_ORDER).toEqual(['s4p', 'horizon', 'quartz', 'belize', 'sap-gui'])
     expect(THEME_PRESETS.filter((preset) => preset.family === 'sap-gui').map((preset) => preset.id)).toEqual([
       'sap-gui-signature',
       'sap-gui-tradeshow',
@@ -119,7 +119,7 @@ describe('Enterprise Theme Architecture (§8-§11, §20)', () => {
     const hv = compileTheme(getThemePreset('horizon-light'))
     const qv = compileTheme(getThemePreset('quartz-light'))
     const bv = compileTheme(getThemePreset('belize-light'))
-    const nv = compileTheme(getThemePreset(DEFAULT_THEME_ID)) // NEXORA
+    const nv = compileTheme(getThemePreset(DEFAULT_THEME_ID)) // S4P
 
     // Separador de cabecera de diálogo: Horizon sin regla, Belize regla dura.
     expect(hv['--nx-dialog-header-border']).toBe('none')
@@ -139,7 +139,7 @@ describe('Enterprise Theme Architecture (§8-§11, §20)', () => {
     expect(hv['--nx-field-label-transform']).toBe('none')
     expect(nv['--nx-field-label-transform']).toBe('none')
 
-    // NEXORA lleva riel de acento en diálogo y object-header; Horizon no.
+    // S4P lleva riel de acento en diálogo y object-header; Horizon no.
     expect(nv['--nx-dialog-accent-rail']).toContain('var(--nx-color-accent)')
     expect(hv['--nx-dialog-accent-rail']).toBe('none')
     expect(nv['--nx-objectheader-accent-rail']).toContain('var(--nx-color-accent)')
@@ -218,8 +218,8 @@ describe('Enterprise Theme Architecture (§8-§11, §20)', () => {
     }
   })
 
-  it('el default sigue siendo NEXORA Horizon y es el primer preset', () => {
-    expect(DEFAULT_THEME_ID).toBe('nexora-horizon-light')
+  it('el default sigue siendo S4P Horizon y es el primer preset', () => {
+    expect(DEFAULT_THEME_ID).toBe('s4p-horizon-light')
     expect(THEME_PRESETS[0].id).toBe(DEFAULT_THEME_ID)
     expect(getThemePreset('no-existe').id).toBe(DEFAULT_THEME_ID)
     expect(getThemePreset(null).id).toBe(DEFAULT_THEME_ID)

@@ -45,7 +45,7 @@ def bootstrap_admin_if_needed(db: Session) -> None:
     user = user_repository.create_user(
         db,
         email=settings.bootstrap_admin_email,
-        full_name="Administrador Nexora",
+        full_name="Administrador S4P",
         password_hash=hash_password(settings.bootstrap_admin_password),
     )
     role_repository.assign_role(db, user_id=user.id, role_id=admin_role.id)

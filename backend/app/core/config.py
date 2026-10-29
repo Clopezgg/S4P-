@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: str = "development"
-    app_name: str = "Nexora Group"
+    app_name: str = "S4P Enterprise Platform"
     database_url: str = "postgresql+psycopg://nexora:nexora@localhost:5432/nexora_dev"
     secret_key: str = "dev-secret-key-change-me"
     frontend_url: str = "http://localhost:5173"
