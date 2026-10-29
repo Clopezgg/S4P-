@@ -33,13 +33,16 @@ def restore_to_test_database(target_dsn: str) -> None:
     if not isinstance(parts, list) or not parts or len(parts) > 9999:
         raise RuntimeError("Invalid backup chunk manifest")
 
-    source_env, source_id = s4p_backup.db_environment(os.environ.get("DATABASE_URL", ""))
-    del source_env
     target_env, target_id = s4p_backup.db_environment(target_dsn)
-    if source_id == target_id:
-        raise RuntimeError("Refusing to overwrite the source S4P database")
     if target_id[0] not in ("localhost", "127.0.0.1"):
         raise RuntimeError("Restore target must be a local isolated PostgreSQL instance")
+    # Disaster recovery must work even when the primary Render database has
+    # expired and its DATABASE_URL is no longer available.
+    source_url = os.environ.get("DATABASE_URL")
+    if source_url:
+        _, source_id = s4p_backup.db_environment(source_url)
+        if source_id == target_id:
+            raise RuntimeError("Refusing to overwrite the source S4P database")
     key = s4p_backup.key_bytes()
 
     with tempfile.TemporaryDirectory(prefix="s4p-backup-restore-") as tmp:
