@@ -3,13 +3,13 @@ import base64
 import hashlib
 import json
 from io import BytesIO
-from urllib.error import HTTPError
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 import pytest
-from azure.core.exceptions import ClientAuthenticationError, ResourceExistsError, ResourceNotFoundError
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.core.config import Settings
 from app.integrations.azure_blob import get_evidence_container_client
