@@ -111,12 +111,14 @@ def create_encrypted_backup() -> dict:
                 parts.append({"key": key, "sha256": hashlib.sha256(chunk).hexdigest(),
                               "bytes": len(chunk)})
 
+        with encrypted.open("rb") as archived:
+            encrypted_digest = hashlib.file_digest(archived, "sha256").hexdigest()
         manifest = {
             "format": "s4p-aes256-gcm-parts-v1",
             "createdAt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "parts": parts,
             "encryptedBytes": encrypted.stat().st_size,
-            "encryptedSHA256": hashlib.file_digest(encrypted.open("rb"), "sha256").hexdigest(),
+            "encryptedSHA256": encrypted_digest,
         }
         manifest_key = f"{prefix}/manifest.json"
         manifest_body = json.dumps(manifest, separators=(",", ":"), sort_keys=True).encode()
