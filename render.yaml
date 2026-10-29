@@ -39,8 +39,16 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
         sync: false
+      # Ed25519 private signing key stays only on Render. Supabase stores
+      # the corresponding public verification key and its own API secrets.
       - key: EVIDENCE_BACKEND
-        value: none
+        value: supabase_edge
+      - key: EVIDENCE_CONTAINER_NAME
+        value: s4p-evidence-private
+      - key: SUPABASE_EDGE_BRIDGE_URL
+        value: https://klnfxzyccohplnzbdecy.supabase.co/functions/v1/s4p-evidence-bridge
+      - key: SUPABASE_EDGE_SIGNING_KEY_B64
+        sync: false
 
 databases:
   - name: s4p-postgres-staging
