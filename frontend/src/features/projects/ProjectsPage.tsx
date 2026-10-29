@@ -23,6 +23,7 @@ import type { Project, ProjectStatus } from '../../types/project'
 import { PROJECT_STATUS_LABELS, projectStatusLabel } from '../../utils/statusLabels'
 import { useActiveContext } from '../context/useActiveContext'
 import { ProjectWizard } from './ProjectWizard'
+import { CompanyBootstrapForm } from '../settings/CompanyBootstrapForm'
 
 const FILTERABLE_STATUSES: ProjectStatus[] = [
   'PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'CLOSED', 'CANCELLED',
@@ -32,7 +33,7 @@ export function ProjectsPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { context, setActiveProject } = useActiveContext()
-  const { activeCompany, activeCompanyId, isLoading: companiesLoading, isError: companiesError, refetch } = useActiveCompany()
+  const { companies, activeCompany, activeCompanyId, isLoading: companiesLoading, isError: companiesError, refetch } = useActiveCompany()
   const [wizardOpen, setWizardOpen] = useState(false)
   const [filterStatus, setFilterStatus] = useState('')
   const [showArchived, setShowArchived] = useState(false)
@@ -97,7 +98,22 @@ export function ProjectsPage() {
 
   if (companiesLoading) return <LoadingState label="Cargando compañía…" />
   if (companiesError) return <ErrorState description="No se pudo cargar la compañía." onRetry={() => refetch()} />
-  if (!activeCompanyId || !activeCompany) return <EmptyState icon="project" title="Sin compañía" description="Configura una compañía antes de crear proyectos." />
+  if (!activeCompanyId || !activeCompany) {
+    if (companies.length === 0) {
+      return (
+        <div>
+          <header className="nx-page__header">
+            <h1 className="nx-dashboard__title">Proyectos</h1>
+            <p className="nx-field__hint">Para crear proyectos, fases WBS, contratos y pagos primero se debe registrar una compañía.</p>
+          </header>
+          <Card title="Configuración inicial · crear compañía">
+            <CompanyBootstrapForm />
+          </Card>
+        </div>
+      )
+    }
+    return <EmptyState icon="project" title="Selecciona una compañía" description="Selecciona la empresa activa en la barra superior para gestionar proyectos." />
+  }
 
   return (
     <div>
