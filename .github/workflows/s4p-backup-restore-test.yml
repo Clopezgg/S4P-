@@ -73,7 +73,7 @@ jobs:
               tampered.write_bytes(ciphertext)
               try:
                   module.decrypt_file(tampered,p/'invalid.dump',key)
-              except ValueError:
+              except InvalidTag:
                   pass
               else:
                   raise AssertionError('Tampered encrypted backup must fail authentication')
