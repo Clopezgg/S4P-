@@ -316,6 +316,7 @@ def test_production_settings_reject_the_development_signing_key():
     with pytest.raises(ValidationError, match="SECRET_KEY"):
         Settings(
             app_env="production",
+            database_url="postgresql+psycopg://ci:ci@db.example.internal:5432/s4p",
             secret_key="dev-secret-key-change-me",
             edit_access_required=False,
         )
@@ -325,6 +326,7 @@ def test_production_settings_require_protected_edit_server_secrets():
     with pytest.raises(ValidationError, match="EDIT_ACCESS_TOKEN"):
         Settings(
             app_env="production",
+            database_url="postgresql+psycopg://ci:ci@db.example.internal:5432/s4p",
             secret_key=secrets.token_urlsafe(48),
             edit_access_required=True,
             edit_access_token_salt="",
