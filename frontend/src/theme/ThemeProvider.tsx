@@ -83,7 +83,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const companyThemeId = activeCompany?.defaultThemeId ?? null
   const companyDensity = (activeCompany?.defaultDensity as Density | null) ?? null
 
-  const activeThemeId = preview?.themeId ?? userThemeId ?? companyThemeId ?? DEFAULT_THEME_ID
+  // Hosting-only SAP presentation preference. No business data, user
+  // preference, company override or original NEXORA default is modified.
+  // The Docker build can opt S4P into SAP Horizon for brand-new accounts.
+  const deploymentThemeId = import.meta.env.VITE_S4P_INITIAL_THEME_ID?.trim()
+  const deploymentDefault = deploymentThemeId &&
+    THEME_PRESETS.some((preset) => preset.id === deploymentThemeId)
+    ? deploymentThemeId
+    : DEFAULT_THEME_ID
+  const activeThemeId = preview?.themeId ?? userThemeId ?? companyThemeId ?? deploymentDefault
   const activeDensity: Density =
     preview?.density ?? userDensity ?? companyDensity ?? getThemePreset(activeThemeId).densityDefault ?? DEFAULT_DENSITY
   const activeFamily = getThemePreset(activeThemeId).family
