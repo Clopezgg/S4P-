@@ -79,7 +79,7 @@ describe('LoginPage', () => {
     expect(await screen.findByText(/correo o contraseña incorrectos/i)).toBeInTheDocument()
   })
   it('never submits credentials to an HTML-only preview and offers the connected ERP', async () => {
-    const fetchMock = vi.fn(async () => ({
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => ({
       ok: true, status: 200,
       headers: new Headers({ 'content-type': 'text/html' }),
       text: async () => '<!doctype html>',
