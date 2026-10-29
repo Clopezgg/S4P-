@@ -94,7 +94,7 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('link', { name: /abrir s4p con acceso al servidor/i })).toHaveAttribute(
       'href', 'https://s4p-erp-api.onrender.com/login',
     )
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledWith('/api/readyz', expect.objectContaining({ method: 'GET' }))
     expect(fetchMock.mock.calls.some((args) => String(args[0]).endsWith('/api/auth/login'))).toBe(false)
   })
 

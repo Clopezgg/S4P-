@@ -57,11 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         // Local storage can be disabled in private browsing.
       }
-      // Replace the current history entry with a blank browser page. Safari
-      // does not allow scripts to close tabs that users opened themselves.
-      exitApplication()
-      // Discard sensitive query results from this browser tab.
+      // Erase cached private data before leaving, not after navigation
+      // begins. This prevents a browser from retaining stale user context.
+      queryClient.setQueryData(['auth', 'me'], null)
       queryClient.clear()
+      // Safari cannot close a manually opened tab. Leave S4P entirely.
+      exitApplication()
     },
     onError: () => {
       // Do not claim that sign-out completed if session revocation failed.

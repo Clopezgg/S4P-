@@ -142,7 +142,7 @@ def test_audit_feed_includes_actor_name_and_email(client, db_session):
     assert len(rows) == 1
     entry = rows[0]
     # Human audit view needs a name, not just a UUID.
-    assert entry["actorFullName"] == "Administrador Nexora"
+    assert entry["actorFullName"] == "Administrador S4P"
     assert entry["actorEmail"] == BOOTSTRAP_ADMIN_EMAIL
     assert entry["actorUserId"] is not None
     # Technical fields still present for the detail drawer.
