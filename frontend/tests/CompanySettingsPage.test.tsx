@@ -72,7 +72,7 @@ function stubFetch(company: ReturnType<typeof makeCompany>) {
 }
 
 describe('CompanySettingsPage', () => {
-  it('shows an honest empty state when there are no companies yet', async () => {
+  it('offers first-company onboarding when the database is empty', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation((input: RequestInfo | URL) => {
@@ -93,7 +93,9 @@ describe('CompanySettingsPage', () => {
 
     render(renderApp('/control/configuracion'))
 
-    expect(await screen.findByText(/no hay compañías registradas/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /configuración inicial de s4p/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/nombre de la compañía/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /crear compañía y habilitar operaciones/i })).toBeDisabled()
   })
 
   it('shows code/functional currency read-only and persists legal name + fiscal id through the real PATCH API', async () => {
