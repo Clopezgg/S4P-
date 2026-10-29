@@ -1,0 +1,29 @@
+# OPTIONAL / NOT ACTIVE: encrypted offsite daily S4P backup worker.
+# Do not sync until a paid Render cron plan and production credential setup
+# are explicitly approved. This file is deliberately separate from render.yaml.
+services:
+  - type: cron
+    name: s4p-encrypted-db-backup
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backup
+    dockerContext: .
+    plan: starter
+    region: virginia
+    schedule: "20 5 * * *"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: s4p-postgres-staging
+          property: connectionString
+      - key: S4P_BACKUP_S3_ENDPOINT
+        value: https://klnfxzyccohplnzbdecy.storage.supabase.co/storage/v1/s3
+      - key: S4P_BACKUP_S3_REGION
+        value: us-east-1
+      - key: S4P_BACKUP_S3_BUCKET
+        value: s4p-db-backups-private
+      - key: S4P_BACKUP_S3_ACCESS_KEY_ID
+        sync: false
+      - key: S4P_BACKUP_S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S4P_BACKUP_AES_KEY_B64
+        sync: false
