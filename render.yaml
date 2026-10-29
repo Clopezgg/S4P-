@@ -1,0 +1,47 @@
+# S4P backend — Render Blueprint
+# Git source: Clopezgg/S4P-
+# Render automatically resolves DATABASE_URL from its managed Postgres resource.
+# This file does not contain passwords or manually assembled connection strings.
+#
+# NOTE: The existing resources were created outside a Blueprint. This file
+# does not apply until linked/synced through Render Blueprints. Preview
+# changes and confirm resource adoption to avoid duplicate services.
+services:
+  - type: web
+    name: s4p-erp-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    autoDeployTrigger: off
+    healthCheckPath: /api/readyz
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: s4p-postgres-staging
+          property: connectionString
+      - key: APP_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://s4p-erp-api.onrender.com
+      - key: SECRET_KEY
+        generateValue: true
+      - key: EDIT_ACCESS_REQUIRED
+        value: "true"
+      - key: EDIT_ACCESS_TOKEN_SALT
+        sync: false
+      - key: EDIT_ACCESS_TOKEN_DIGEST
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: EVIDENCE_BACKEND
+        value: none
+
+databases:
+  - name: s4p-postgres-staging
+    plan: free
+    region: virginia
+    databaseName: s4p_postgres_staging
