@@ -1,6 +1,6 @@
 # S4P: documentación, finanzas y protección de datos
 
-Actualizado 2026-10-28. **Esta guía distingue configurado de certificado.**
+Actualizado 2026-10-29. **Esta guía distingue configurado de certificado.**
 
 ## 1. Evidencias privadas (Supabase)
 Creados y verificados en el proyecto Supabase `klnfxzyccohplnzbdecy`:
@@ -8,22 +8,17 @@ Creados y verificados en el proyecto Supabase `klnfxzyccohplnzbdecy`:
 - Bucket `s4p-db-backups-private`, `public=false` (solo copias cifradas).
 - El examen de seguridad de Supabase no devolvió avisos inmediatamente tras crear el primer bucket.
 
-El código FastAPI ya soporta `EVIDENCE_BACKEND=supabase` mediante S3 privado con RBAC propio. En Render se registraron solamente endpoint y región, **sin las credenciales**. Mientras falten claves, debe permanecer `EVIDENCE_BACKEND=none` para no anunciar un servicio ficticio.
+### Evidencias activas en producción — confirmado 2026-10-29 UTC
 
-Para activarlo en **Render Environment**, obtener el par S3 en Supabase Dashboard → Storage → S3 Configuration → Access Keys. Configurar secretos directamente allí:
+El backend Render `s4p-erp-api` utiliza `EVIDENCE_BACKEND=supabase_edge` y el bucket privado `s4p-evidence-private`. No hace falta generar claves S3 manuales: el puente Supabase Edge `s4p-evidence-bridge` verifica solicitudes Ed25519 firmadas desde Render. **La clave privada de firma se guarda solo como variable secreta de Render; la clave administrativa Supabase permanece dentro del runtime Supabase Edge**. Ningún token administrativo se incluye en React ni en GitHub.
 
-| Variable | Valor |
-|---|---|
-| `EVIDENCE_BACKEND` | `supabase` (poner solo tras añadir las credenciales) |
-| `EVIDENCE_CONTAINER_NAME` | `s4p-evidence-private` |
-| `SUPABASE_S3_ENDPOINT` | `https://klnfxzyccohplnzbdecy.storage.supabase.co/storage/v1/s3` |
-| `SUPABASE_S3_REGION` | `us-east-1` |
-| `SUPABASE_S3_ACCESS_KEY_ID` | Identificador S3 privado |
-| `SUPABASE_S3_SECRET_ACCESS_KEY` | Secreto S3 privado |
+Archivos: `supabase/functions/s4p-evidence-bridge/index.ts`, `backend/app/integrations/supabase_edge_storage.py`, `backend/verify_evidence_storage.py`, `backend/tests/test_supabase_edge_storage.py`. La API de evidencias mantiene las autorizaciones originales de empresa/proyecto de NEXORA. Los archivos solo pasan por FastAPI para imponer RBAC y no se publican URLs directas de Storage.
 
-No pegar secretos en GitHub, documentos ni chat. Cambiar `EVIDENCE_BACKEND` solo al mismo tiempo que las claves; `/api/readyz` falla cerrado si el bucket no es alcanzable.
+**Prueba real confirmada:** el despliegue Render del commit `79b4915d9ad01e160d95601b719c398528bbbda6` alcanzó el estado `live`; los logs registraron `PASS: private evidence backend upload/download/delete verified`. Se subió un PDF sintético al bucket privado, se recuperó byte por byte y se eliminó; la posterior consulta de Supabase devolvió cero objetos de evidencia, lo esperado tras la limpieza. `/api/readyz` devuelve HTTP 200 comprobando PostgreSQL y alcanzabilidad del bucket. Pruebas de contrato del puente firmadas: GitHub Actions `40816616310` aprobadas. No se han creado evidencias de negocio artificiales.
 
-**Validación pendiente:** una carga real desde la interfaz, lectura, restricciones entre empresas y eliminación compensatoria, con revisión de logs. La prueba con cliente S3 simulado verifica la compatibilidad del adaptador, pero no la conexión real.
+Para rotar el secreto de firma, **generar un par Ed25519 nuevo y coordinar su clave pública en Supabase Edge y su clave privada en Render en la misma ventana de despliegue**; verificar con la prueba sintética antes de declarar el servicio listo. Nunca registrar la clave privada, ni pegarla en GitHub, ni reutilizar secretos de usuario.
+
+**Pendiente para certificación funcional total:** prueba con una sesión de administrador real desde navegador móvil, adjuntar un documento a una entidad real y revisar permisos entre múltiples empresas, sin sustituir el test automatizado por un 200 de salud. El almacenamiento ya funciona en el servidor.
 
 ## 2. Finanzas
 El workflow `S4P financial transaction certification` ejecuta pruebas sobre PostgreSQL 16 aislado (compras, contabilidad, tesorería, inventario, caja y conciliación), sin acceso a fondos reales. La certificación de **producción** requiere además pruebas de solo lectura de `readyz`, permisos y registros, y una secuencia de transacciones de demostración autorizada y reversible, usando una empresa de test sin datos reales.
@@ -48,7 +43,7 @@ Variables requeridas para la tarea de backup (solo secrets de un ejecutor de con
 Usar `python scripts/s4p_backup.py backup` con PostgreSQL client tools y `boto3 cryptography` instalados. Comprobar cada copia mediante restauración de prueba **fuera** de la instancia productiva; registrar fecha, resultado, integridad y retención. El cifrado no sustituye política de retención, alertas ni backups administrados.
 
 ## Criterios para cerrar
-- Evidencia: subir, recuperar, validar RBAC/empresa, borrar y comprobar persistencia tras redeploy.
+- Evidencia: almacenamiento privado con subida/descarga/borrado reales aprobado; resta validación por navegador y usuarios/empresas reales, con auditoría y persistencia tras un nuevo despliegue.
 - Finanzas: CI verde + pruebas de negocio con empresa sintética y reversión/auditoría sin datos reales.
 - Permanencia: base no caducable, copia externa diaria real, alerta ante fallo y una restauración ensayada.
 - Nunca considerar `Live` del servidor como certificación de estas tres capacidades.
