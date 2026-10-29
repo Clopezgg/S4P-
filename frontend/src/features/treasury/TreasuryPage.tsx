@@ -30,6 +30,7 @@ import { formatMoney } from '../../utils/currency'
 import { useAuth } from '../auth/auth-context'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { businessTodayIso } from '../../utils/businessDate'
+import { CompanyBootstrapForm } from '../settings/CompanyBootstrapForm'
 import './TreasuryPage.css'
 
 type ModalKind = 'account' | 'remittance' | 'expense' | 'transfer' | null
@@ -89,46 +90,6 @@ export function TreasuryPage() {
     enabled: Boolean(activeCompanyId),
   })
 
-  const quickStart = useMutation({
-    mutationFn: async () => {
-      const company = await masterDataService.createCompany({
-        name: 'Empresa de ejemplo',
-        functionalCurrencyCode: 'HNL',
-      })
-      const bank = await masterDataService.createAccount({
-        companyId: company.id,
-        code: '1100',
-        name: 'Bancos',
-        accountType: 'ASSET',
-      })
-      await masterDataService.createAccount({
-        companyId: company.id,
-        code: '3100',
-        name: 'Aportes de socios',
-        accountType: 'EQUITY',
-      })
-      await masterDataService.createAccount({
-        companyId: company.id,
-        code: '5100',
-        name: 'Gastos administrativos',
-        accountType: 'EXPENSE',
-      })
-      await treasuryService.createAccount({
-        companyId: company.id,
-        name: 'Banco Principal',
-        kind: 'BANK',
-        currencyCode: 'HNL',
-        glAccountId: bank.id,
-      })
-      return company
-    },
-    onSuccess: (company) => {
-      setActiveCompanyId(company.id)
-      setRemittanceOffset(0)
-      queryClient.invalidateQueries({ queryKey: ['master-data', 'companies'] })
-    },
-  })
-
   if (companiesLoading) return <LoadingState label="Cargando compañías…" />
   if (companiesError) {
     return (
@@ -147,9 +108,9 @@ export function TreasuryPage() {
           title="Aún no hay ninguna compañía configurada"
           description="Crea la primera compañía y su catálogo mínimo de cuentas para empezar a operar Tesorería."
         />
-        <Button loading={quickStart.isPending} onClick={() => quickStart.mutate()}>
-          Crear compañía y cuentas de inicio
-        </Button>
+        <Card title="Registrar compañía real para Tesorería">
+          <CompanyBootstrapForm />
+        </Card>
       </div>
     )
   }
