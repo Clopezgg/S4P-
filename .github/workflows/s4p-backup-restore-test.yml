@@ -1,0 +1,90 @@
+name: S4P encrypted backup and restore drill
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/s4p_backup.py'
+      - '.github/workflows/s4p-backup-restore-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  restore-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexora
+          POSTGRES_PASSWORD: nexora
+          POSTGRES_DB: s4p_backup_source
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U nexora -d s4p_backup_source"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install encryption tool
+        run: python -m pip install 'cryptography>=44,<48'
+      - name: Create throwaway source and restore databases
+        env:
+          PGPASSWORD: nexora
+        run: |
+          psql -h localhost -U nexora -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE s4p_backup_restore;'
+          psql -h localhost -U nexora -d s4p_backup_source -v ON_ERROR_STOP=1 -c "CREATE TABLE accounting_sample(id integer PRIMARY KEY, amount numeric(18,2) NOT NULL); INSERT INTO accounting_sample VALUES (1,100.25),(2,-50.50);"
+      - name: Prove AES-GCM tamper detection and PostgreSQL restore
+        env:
+          DATABASE_URL: postgresql+psycopg://nexora:nexora@localhost:5432/s4p_backup_source
+          PGPASSWORD: nexora
+        run: |
+          python - <<'PY'
+          import base64
+          import importlib.util
+          import os
+          from pathlib import Path
+          import secrets
+          import subprocess
+          import tempfile
+          spec = importlib.util.spec_from_file_location('backup', 'scripts/s4p_backup.py')
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          key = secrets.token_bytes(32)
+          os.environ['S4P_BACKUP_AES_KEY_B64'] = base64.b64encode(key).decode()
+          env, source_id = module.db_environment(os.environ['DATABASE_URL'])
+          with tempfile.TemporaryDirectory() as t:
+              p = Path(t)
+              source = p/'source.dump'
+              encrypted = p/'encrypted.s4penc'
+              recovered = p/'recovered.dump'
+              subprocess.run(['pg_dump','-Fc','--no-owner','--no-acl','-f',str(source)],env=env,check=True)
+              module.encrypt_file(source,encrypted,key)
+              module.decrypt_file(encrypted,recovered,key)
+              assert source.read_bytes()==recovered.read_bytes()
+              ciphertext=bytearray(encrypted.read_bytes())
+              ciphertext[len(module.MAGIC)+15] ^= 1
+              tampered=p/'tampered.s4penc'
+              tampered.write_bytes(ciphertext)
+              try:
+                  module.decrypt_file(tampered,p/'invalid.dump',key)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError('Tampered encrypted backup must fail authentication')
+              restore_env=env.copy()
+              restore_env['PGDATABASE']='s4p_backup_restore'
+              subprocess.run(['pg_restore','--exit-on-error','--no-owner','--no-acl','-d','s4p_backup_restore',str(recovered)],env=restore_env,check=True)
+          PY
+      - name: Verify exact restored business records
+        env:
+          PGPASSWORD: nexora
+        run: |
+          actual=$(psql -h localhost -U nexora -d s4p_backup_restore -Atc "SELECT COUNT(*) || ':' || SUM(amount)::text FROM accounting_sample")
+          test "$actual" = "2:49.75"
+          echo 'PASS: encrypted authenticated dump restored in an isolated PostgreSQL database.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'NOTE: This is a disaster-recovery DRILL, not evidence of configured scheduled offsite production backups.' >> "$GITHUB_STEP_SUMMARY"
