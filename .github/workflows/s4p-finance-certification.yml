@@ -1,0 +1,67 @@
+name: S4P financial transaction certification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/**'
+      - 'backend/tests/test_procurement_flow.py'
+      - 'backend/tests/test_treasury_financial_flows.py'
+      - 'backend/tests/test_posting_engine.py'
+      - 'backend/tests/test_treasury_invariants.py'
+      - '.github/workflows/s4p-finance-certification.yml'
+permissions:
+  contents: read
+jobs:
+  finance-certification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexora
+          POSTGRES_PASSWORD: nexora
+          POSTGRES_DB: nexora_finance
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U nexora -d nexora_finance"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql+psycopg://nexora:nexora@localhost:5432/nexora_finance
+      APP_ENV: testing
+      SECRET_KEY: github-actions-only-not-production-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend and test dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Create isolated transactional database
+        env:
+          PGPASSWORD: nexora
+        run: psql -h localhost -U nexora -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE nexora_finance_s4p;'
+      - name: Run financial purchasing, posting, treasury and inventory tests
+        run: |
+          pytest -q \
+            tests/test_procurement_flow.py \
+            tests/test_treasury_financial_flows.py \
+            tests/test_treasury_invariants.py \
+            tests/test_treasury_operations.py \
+            tests/test_posting_engine.py \
+            tests/test_ap_ar.py \
+            tests/test_inventory.py \
+            tests/test_cash_flow_actual.py
+      - name: Print certification scope
+        if: success()
+        run: |
+          echo 'Passed: isolated PostgreSQL transactional integration suite.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Not covered: live production funds, payments or user data; no production writes performed.' >> "$GITHUB_STEP_SUMMARY"
