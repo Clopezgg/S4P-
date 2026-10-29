@@ -5,7 +5,7 @@ export function SapTitleBar() {
   const { activeCompany } = useActiveCompany()
   return (
     <div className="nx-sap-titlebar" role="banner" aria-label="Barra de título SAP GUI">
-      <strong>S4P — Gestión empresarial</strong>
+      <strong>S4P — Enterprise Platform</strong>
       <span>{activeCompany?.name ?? 'Empresa no seleccionada'}</span>
     </div>
   )
