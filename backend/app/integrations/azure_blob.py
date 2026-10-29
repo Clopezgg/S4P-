@@ -15,6 +15,10 @@ class EvidenceStorageNotConfigured(RuntimeError):
 
 def get_evidence_container_client(settings: Settings):
     # Preserve the existing evidence contract while selecting the configured provider.
+    if settings.evidence_backend == "supabase_edge":
+        from app.integrations.supabase_edge_storage import SupabaseEdgeEvidenceContainer
+
+        return SupabaseEdgeEvidenceContainer(settings)
     if settings.evidence_backend == "supabase":
         from app.integrations.supabase_storage import SupabaseEvidenceContainer
 
