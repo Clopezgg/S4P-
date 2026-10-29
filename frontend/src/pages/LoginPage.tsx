@@ -42,6 +42,27 @@ export function LoginPage() {
     setApiWaking(false)
     const wakeTimer = window.setTimeout(() => setApiWaking(true), 2500)
     try {
+      // Fail closed on standalone Render static previews: Vite/SPA fallback
+      // sometimes returns index.html with HTTP 200 for missing /api routes.
+      // Check a real JSON readiness response BEFORE sending credentials.
+      const readiness = await fetch('/api/readyz', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+      if (
+        !readiness.ok ||
+        !readiness.headers.get('content-type')?.toLowerCase().includes('application/json')
+      ) {
+        setFormError('Este enlace es una vista previa sin servidor de acceso conectado. No se enviaron tus credenciales.')
+        return
+      }
+      const health: unknown = await readiness.json()
+      if (!health || typeof health !== 'object' || !('status' in health) || health.status !== 'ok') {
+        setFormError('El servidor de acceso todavía no está listo. No se enviaron tus credenciales.')
+        return
+      }
       await login(values)
       const redirectTo =
         (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/inicio'
