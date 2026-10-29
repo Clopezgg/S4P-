@@ -1,0 +1,22 @@
+name: S4P backup container build
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile.backup'
+      - 'scripts/s4p_backup.py'
+      - '.github/workflows/s4p-backup-image.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-backup-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build portable encrypted backup container
+        run: docker build -f Dockerfile.backup -t s4p-backup:ci .
+      - name: Ensure container starts as nonroot and CLI is available
+        run: |
+          docker run --rm --entrypoint sh s4p-backup:ci -c 'test "$(id -u)" = 10001 && python /app/s4p_backup.py --help'
