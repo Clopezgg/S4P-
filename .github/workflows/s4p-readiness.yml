@@ -1,0 +1,36 @@
+name: S4P production readiness smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/s4p-readiness.yml'
+permissions:
+  contents: read
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verify the actual API is ready (not just the static preview)
+        env:
+          S4P_API: https://s4p-erp-api.onrender.com
+        run: |
+          set -euo pipefail
+          for i in 1 2 3; do
+            status=$(curl --silent --show-error --location --max-time 25 \
+              --output /tmp/s4p-health --write-out '%{http_code}' "$S4P_API/api/readyz") || status=000
+            if [ "$status" = 200 ]; then
+              python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/s4p-health'))
+          assert data.get('status') == 'ok', 'Readiness response is not healthy'
+          PY
+              echo "API readiness verified"
+              exit 0
+            fi
+            echo "API is NOT ready (HTTP $status); attempt $i of 3"
+            sleep 10
+          done
+          echo "::error::Backend is not production-ready; do NOT announce ERP as complete."
+          exit 1
