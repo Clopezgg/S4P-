@@ -42,8 +42,10 @@ class Settings(BaseSettings):
     edit_access_window_seconds: int = 900
     edit_access_max_uses: int = 5
 
-    # "none" (deshabilitado) | "supabase" | "azure_blob" (compatibilidad).
+    # "none" | "supabase" (S3) | "supabase_edge" (signed bridge) | "azure_blob".
     evidence_backend: str = "none"
+    supabase_edge_bridge_url: str = ""
+    supabase_edge_signing_key_b64: str = Field(default="", repr=False)
     supabase_s3_endpoint: str = ""
     supabase_s3_region: str = ""
     supabase_s3_access_key_id: str = Field(default="", repr=False)
@@ -83,7 +85,24 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_storage(self) -> "Settings":
-        if self.evidence_backend == "supabase":
+        if self.evidence_backend == "supabase_edge":
+            import base64
+
+            endpoint = urlparse(self.supabase_edge_bridge_url)
+            if (
+                endpoint.scheme != "https" or not endpoint.netloc
+                or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment
+                or not endpoint.path.rstrip("/").endswith("/functions/v1/s4p-evidence-bridge")
+                or self.evidence_container_name != "s4p-evidence-private"
+            ):
+                raise ValueError("Supabase Edge requires an HTTPS function URL and private bucket")
+            try:
+                key = base64.b64decode(self.supabase_edge_signing_key_b64, validate=True)
+            except Exception as exc:
+                raise ValueError("Supabase Edge requires a valid signing key") from exc
+            if len(key) != 32:
+                raise ValueError("Supabase Edge requires a 32-byte Ed25519 signing key")
+        elif self.evidence_backend == "supabase":
             endpoint = urlparse(self.supabase_s3_endpoint)
             if (
                 endpoint.scheme != "https" or not endpoint.netloc
