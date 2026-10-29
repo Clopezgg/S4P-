@@ -1,4 +1,4 @@
-# NEXORA GROUP — Reglas permanentes del proyecto
+# S4P — Reglas permanentes del proyecto
 
 Estas reglas gobiernan este repositorio y tienen prioridad sobre cualquier
 hábito o patrón aprendido de proyectos anteriores. Si el contexto de una
@@ -7,12 +7,12 @@ verdad de la misión.
 
 ## 1. Naturaleza del proyecto
 
-- **NEXORA GROUP es greenfield.** Se construye desde cero absoluto.
+- **S4P evoluciona desde un código ya integrado.** Evitar pérdidas de funciones y datos.
 - **NO Frappe.** No se reutiliza, importa ni referencia código de Frappe.
 - **NO ERPNext.** No se reutiliza, importa ni referencia código de ERPNext.
 - **NO código legacy.** Ningún archivo, patrón, migración, workflow, test o
   Dockerfile del sistema anterior (`Gesti-n-de-Construcci-n-Residencial` /
-  `NEXORA_WORKSPACE`) se copia o adapta automáticamente a este repo.
+  `S4P_WORKSPACE`) se copia o adapta automáticamente a este repo.
 - El sistema anterior es **únicamente referencia funcional READ-ONLY**: solo
   se consulta si el usuario lo pide explícitamente, nunca se copia código ni
   arquitectura desde ahí.
@@ -83,12 +83,12 @@ plataforma inicial del bootstrap y quedó completamente descartada — ver
 
 Este proyecto ya no avanza por fases sueltas: opera bajo una **ORDEN MAESTRA
 ÚNICA** (registrada en `docs/MASTER_PLAN.md`) que define la construcción
-completa de NEXORA GROUP como ERP empresarial de construcción. Si el
+completa de S4P como ERP empresarial de construcción. Si el
 contexto de una sesión se pierde, **este archivo + `docs/MASTER_PLAN.md` +
 `docs/REQUIREMENTS_TRACEABILITY.md`** son la fuente de verdad — no se
 reinterpreta el alcance desde cero, se retoma desde estos documentos.
 
-NEXORA se inspira conceptualmente en el modelo integrado de SAP (master
+S4P se inspira conceptualmente en el modelo integrado de SAP (master
 data, accounting, controlling, treasury, procurement, inventory, projects,
 assets, workflows, reporting, UX por rol) pero NO es un clon de SAP ni de su
 UI propietaria.

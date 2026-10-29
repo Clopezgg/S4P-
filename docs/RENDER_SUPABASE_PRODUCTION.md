@@ -3,7 +3,7 @@
 This document replaces prior Cloudflare-first hosting suggestions for the CURRENT deployment. The SAP visual identity, React, TypeScript, FastAPI, PostgreSQL and all financial/domain constraints remain intact.
 
 ## Verified topology (2026-10-28)
-- Source: https://github.com/Clopezgg/S4P- (origin nexora-group is not modified).
+- Source: https://github.com/Clopezgg/S4P- (the S4P repository is authoritative).
 - Canonical combined web+API service: https://s4p-erp-api.onrender.com (not ready as of writing).
 - Render service ID: srv-dbh8ihec6qcc73em0ho0, Dockerfile.render: builds SPA and FastAPI together, autoDeploy disabled until validated.
 - Public static preview: https://s4p-sap-preview.onrender.com (not production; no valid /api backend).
@@ -40,4 +40,4 @@ This document replaces prior Cloudflare-first hosting suggestions for the CURREN
 - Render static preview is frontend-only; do not use as canonical login URL.
 - No secret is needed for `frontend/dist`; it accesses same-origin `/api` when hosted in Dockerfile.render.
 - Render free Postgres expires. Supabase free quotas / limited backup durability require a plan before entrusting irreplaceable financial records.
-- Existing NEXORA source repository remains unchanged.
+- Existing S4P source repository remains unchanged.

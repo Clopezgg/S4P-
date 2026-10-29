@@ -6,7 +6,7 @@
 calculado al crear, 0 = raíz). Ejemplo real soportado:
 
 ```
-TORRE NEXORA (project)
+TORRE S4P (project)
 ├── 01 PRELIMINARES (level 0)
 │   └── 01.01 TRAZO Y NIVELACIÓN (level 1)
 ├── 02 CIMENTACIÓN (level 0)

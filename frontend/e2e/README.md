@@ -35,7 +35,7 @@ npm run test:e2e
    `backend/Dockerfile`'s `CMD`), then starts `uvicorn` on port 8010
    against it, with `FRONTEND_URL` set to the E2E frontend origin (so
    CORS and the CSRF Origin guard both accept it), a real bootstrap admin
-   (`admin@nexora.group` / `NexoraAdmin123!`) created on first boot, a
+   (`admin@nexora.group` / `S4PAdmin123!`) created on first boot, a
    fresh process-local Protected Edit credential, and the optional Azurite
    connection supplied by `E2E_AZURE_STORAGE_CONNECTION_STRING`.
 2. `webServer[1]` runs `vite` on port 5175, proxying `/api` to the E2E

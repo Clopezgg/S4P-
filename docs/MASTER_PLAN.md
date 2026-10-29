@@ -1,4 +1,4 @@
-# NEXORA GROUP — MASTER PLAN
+# S4P — MASTER PLAN
 
 Fuente de verdad de la ORDEN MAESTRA única (recibida en la sesión que
 generó este documento). Si el contexto de Claude se reinicia, este archivo

@@ -1,6 +1,6 @@
-# NEXORA GROUP — Canonical Agent Handoff
+# S4P — Canonical Agent Handoff
 
-**Repositorio:** `Clopezgg/nexora-group`  
+**Repositorio:** `Clopezgg/S4P-`  
 **Rama de producción:** `main`  
 **Fuente final de verdad:** el HEAD remoto actual de `main`, no ramas históricas ni documentos de recuperación.
 
@@ -14,11 +14,11 @@ Antes de cualquier trabajo futuro:
 4. comprobar `docs/DEFERRED.md`, `docs/REQUIREMENTS_TRACEABILITY.md` y la certificación de release más reciente;
 5. no revivir ramas antiguas salvo auditoría forense de commits que no estén integrados.
 
-Nunca declarar NEXORA “100 %” solo porque compile o porque un check aislado esté verde. La certificación exige código, tests, infraestructura y producción coherentes para el mismo SHA.
+Nunca declarar S4P “100 %” solo porque compile o porque un check aislado esté verde. La certificación exige código, tests, infraestructura y producción coherentes para el mismo SHA.
 
 ## Arquitectura empresarial canónica
 
-NEXORA es un ERP financiero y operativo multiempresa orientado a proyectos de construcción:
+S4P es un ERP financiero y operativo multiempresa orientado a proyectos de construcción:
 
 `GRUPO → EMPRESAS → PROYECTOS → WBS/PRESUPUESTO → CONTRATOS/COMPRAS → AP/AR → TREASURY → GL → REPORTES → DOCUMENTOS/EVIDENCE → AUDITORÍA`
 

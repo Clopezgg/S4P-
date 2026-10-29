@@ -1,4 +1,4 @@
-# NEXORA GROUP — Production Readiness Gate (Definición Absoluta de 100%)
+# S4P — Production Readiness Gate (Definición Absoluta de 100%)
 
 ## Certificación de cierre PR #135 — 2026-09-12
 

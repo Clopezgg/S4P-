@@ -1,10 +1,10 @@
 # Theme Engine
 
-Nexora ofrece cinco familias visuales, en este orden estable: **NEXORA**, **Horizon**, **Quartz**, **Belize** y **SAP GUI**. Un tema sólo controla presentación; no modifica datos, cifras, permisos, rutas, Company Scope, Project Scope, Protected Edit, contabilización, workflows ni contratos API.
+S4P ofrece cinco familias visuales, en este orden estable: **S4P**, **Horizon**, **Quartz**, **Belize** y **SAP GUI**. Un tema sólo controla presentación; no modifica datos, cifras, permisos, rutas, Company Scope, Project Scope, Protected Edit, contabilización, workflows ni contratos API.
 
 ## SAP GUI
 
-La quinta familia se reconstruyó en React y CSS usando como referencia visual el archivo `sap-widgets.jpl` proporcionado por el usuario. Se inspeccionaron sus familias `SAP-Signature` y `SAP-Tradeshow`, widgets de Screen, Tree, Tabs, Titled Box, Field, Button, Dialog y toolbar, sus relaciones de color, dimensiones y eventos declarativos. Nexora no ejecuta ni distribuye el paquete, no rasteriza pantallas completas y no depende de SAP GUI, SAP backend, SAPUI5, RFC/BAPI o ABAP. Sin afiliación con SAP. Mapeo explícito widget por widget en `docs/SAP_GUI_JPL_MAPPING.md`.
+La quinta familia se reconstruyó en React y CSS usando como referencia visual el archivo `sap-widgets.jpl` proporcionado por el usuario. Se inspeccionaron sus familias `SAP-Signature` y `SAP-Tradeshow`, widgets de Screen, Tree, Tabs, Titled Box, Field, Button, Dialog y toolbar, sus relaciones de color, dimensiones y eventos declarativos. S4P no ejecuta ni distribuye el paquete, no rasteriza pantallas completas y no depende de SAP GUI, SAP backend, SAPUI5, RFC/BAPI o ABAP. Sin afiliación con SAP. Mapeo explícito widget por widget en `docs/SAP_GUI_JPL_MAPPING.md`.
 
 Los IDs persistentes son:
 
@@ -15,7 +15,7 @@ Los IDs persistentes son:
 
 Los cuatro presets recomiendan densidad `compact`, conservan `comfortable` y `finance-dense`, y exponen `data-nx-family="sap-gui"`, `data-nx-anatomy`, `data-nx-sap-variant` más datasets estructurales (`data-nx-shell`, `data-nx-navigation`, `data-nx-menubar`, `data-nx-commandbar`, `data-nx-toolbar`, `data-nx-screen`, `data-nx-tabs`, `data-nx-panel`, `data-nx-field`, `data-nx-button`, `data-nx-table`, `data-nx-dialog`, `data-nx-statusbar`) en el elemento raíz. `ThemeAnatomy` es autoridad ejecutable: shell, navegación, menubar, command bar, toolbar, screen, headers, tree, tabs, panels, fields, selects, buttons, tables, dialogs, status bar, densidad e iconografía; el CSS razona por anatomía, no solo por familia/variante (`compileTheme()` emite `--nx-anatomy-*`).
 
-**Horizon (familia) ≠ SAP GUI Horizon (variante).** La familia `Horizon` es la familia moderna actual de Nexora; la variante `sap-gui-horizon` vive bajo `family='sap-gui'` y es una workstation SAP modernizada.
+**Horizon (familia) ≠ SAP GUI Horizon (variante).** La familia `Horizon` es la familia moderna actual de S4P; la variante `sap-gui-horizon` vive bajo `family='sap-gui'` y es una workstation SAP modernizada.
 
 ## Workstation (`frontend/src/layouts/sap/`)
 
@@ -25,7 +25,7 @@ Los cuatro presets recomiendan densidad `compact`, conservan `comfortable` y `fi
 
 Seleccionar manualmente SAP GUI desde otra familia abre **Cambiar a SAP GUI** antes de alterar el draft o el preview. Cancelar conserva la interfaz previa; aceptar inicia un preview global de Signature sin persistir. Cambiar entre las cuatro variantes SAP o salir hacia otra familia no vuelve a preguntar. Cargar una preferencia SAP ya guardada tampoco muestra el diálogo.
 
-La cascada existente permanece: preview → preferencia de usuario → predeterminado de compañía → NEXORA default. Sólo **Guardar como mi preferencia** persiste el draft; la compañía puede guardar cualquiera de los cuatro IDs mediante la configuración existente. El backend ya almacena IDs visuales como strings limitados, por lo que no requiere migración.
+La cascada existente permanece: preview → preferencia de usuario → predeterminado de compañía → S4P default. Sólo **Guardar como mi preferencia** persiste el draft; la compañía puede guardar cualquiera de los cuatro IDs mediante la configuración existente. El backend ya almacena IDs visuales como strings limitados, por lo que no requiere migración.
 
 ## Adaptación
 
