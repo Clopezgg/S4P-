@@ -49,10 +49,16 @@ export function LoginPage() {
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setFormError('Correo o contraseña incorrectos.')
+      } else if (error instanceof ApiError && error.status === 423) {
+        setFormError('La cuenta está temporalmente bloqueada por seguridad. Intenta más tarde.')
+      } else if (error instanceof ApiError && error.status === 429) {
+        setFormError('Demasiados intentos de acceso. Espera unos minutos antes de volver a intentar.')
+      } else if (error instanceof ApiError && [502, 503, 504].includes(error.status)) {
+        setFormError('El servidor de acceso no está disponible. No se enviaron cambios; intenta nuevamente más tarde.')
       } else {
-        // Nunca exponer 405/500/stack traces al usuario (§10). El detalle
-        // técnico ya queda en logs del cliente/servidor.
-        setFormError('No fue posible iniciar sesión. Intenta nuevamente en unos momentos.')
+        // Nunca exponer 405/500/stack traces, ni sugerir erróneamente que
+        // la contraseña es incorrecta ante un problema de infraestructura.
+        setFormError('No fue posible contactar el servicio de acceso. Intenta nuevamente en unos momentos.')
       }
     } finally {
       window.clearTimeout(wakeTimer)
