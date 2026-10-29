@@ -199,6 +199,7 @@ def test_session_cookie_uses_first_party_samesite_lax_in_production(monkeypatch,
 
     prod_settings = Settings(
         app_env="production",
+        database_url="postgresql+psycopg://ci:ci@db.example.internal:5432/s4p",
         secret_key="s" * 40,
         edit_access_required=False,
         frontend_url="https://app.example.com",
