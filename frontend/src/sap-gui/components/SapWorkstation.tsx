@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Workstation Shell
+ * S4P SAP GUI Classic — Workstation Shell
  * 
  * Composición completa de la estación de trabajo:
  * - Title Bar
@@ -113,18 +113,15 @@ export const SapWorkstation = forwardRef<HTMLDivElement, SapWorkstationProps>(
           {/* Sidebar / Easy Access Tree */}
           <aside 
             className="nx-sap-sidebar" 
-            aria-label="NEXORA Easy Access"
+            aria-label="S4P Easy Access"
             role="complementary"
           >
-            <div className="nx-sap-sidebar__brand" aria-label="NEXORA Easy Access">
+            <div className="nx-sap-sidebar__brand" aria-label="S4P Easy Access">
               <span className="nx-sap-sidebar__brand-mark" aria-hidden="true">
-                <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
-                  <rect x="4" y="4" width="24" height="24" rx="2" fill="currentColor"/>
-                  <text x="16" y="22" textAnchor="middle" fontSize="14" fontWeight="bold" fill="white" fontFamily="Arial">NX</text>
-                </svg>
+                <img src="/s4p-mark.svg" width="30" height="30" alt="" />
               </span>
               <span className="nx-sap-sidebar__brand-copy">
-                <span className="nx-sap-sidebar__brand-name">NEXORA Easy Access</span>
+                <span className="nx-sap-sidebar__brand-name">S4P Easy Access</span>
                 <span className="nx-sap-sidebar__brand-tagline">Navegación empresarial</span>
               </span>
             </div>

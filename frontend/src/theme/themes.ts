@@ -19,13 +19,13 @@
 
 export type Density = 'comfortable' | 'compact' | 'finance-dense'
 export type UiScale = 90 | 100 | 110
-export type ThemeFamily = 'horizon' | 'quartz' | 'belize' | 'nexora' | 'sap-gui'
+export type ThemeFamily = 'horizon' | 'quartz' | 'belize' | 's4p' | 'sap-gui'
 export type ThemeContrast = 'normal' | 'high'
 
-export const THEME_FAMILY_ORDER: ThemeFamily[] = ['nexora', 'horizon', 'quartz', 'belize', 'sap-gui']
+export const THEME_FAMILY_ORDER: ThemeFamily[] = ['s4p', 'horizon', 'quartz', 'belize', 'sap-gui']
 
 export interface ThemeAnatomy {
-  id: 'nexora-modern' | 'sap-gui-signature' | 'sap-gui-tradeshow' | 'sap-gui-horizon' | 'sap-gui-horizon-dark'
+  id: 's4p-modern' | 'sap-gui-signature' | 'sap-gui-tradeshow' | 'sap-gui-horizon' | 'sap-gui-horizon-dark'
   shellMode: 'modern' | 'workstation'
   navigationMode: 'sidebar' | 'tree'
   menuBarMode: 'none' | 'classic' | 'classic-modern'
@@ -48,7 +48,7 @@ export interface ThemeAnatomy {
 }
 
 const MODERN_ANATOMY: ThemeAnatomy = {
-  id: 'nexora-modern', shellMode: 'modern', navigationMode: 'sidebar', menuBarMode: 'none',
+  id: 's4p-modern', shellMode: 'modern', navigationMode: 'sidebar', menuBarMode: 'none',
   commandBarMode: 'integrated', toolbarMode: 'modern', contentFrameMode: 'canvas',
   pageHeaderMode: 'modern', objectHeaderMode: 'card', treeMode: 'flat', tabsMode: 'modern',
   panelMode: 'card', fieldMode: 'modern', selectMode: 'modern', buttonMode: 'modern',
@@ -181,7 +181,7 @@ export interface ThemeIconography {
 export interface ThemeStructure {
   /** Separador de la cabecera de diálogos/drawers. */
   dialogHeaderBorder: string
-  /** Barra superior de acento en el diálogo (NEXORA) o `none`. */
+  /** Barra superior de acento en el diálogo (S4P) o `none`. */
   dialogAccentRail: string
   /** Opacidad del velo de overlay (0–1). */
   overlayScrim: number
@@ -360,8 +360,8 @@ const FAMILY_TRAITS: Record<ThemeFamily, FamilyTraits> = {
       objectHeaderAccentRail: 'none',
     },
   },
-  // NEXORA — identidad propia: híbrido Horizon (radio) + densidad ejecutiva.
-  nexora: {
+  // S4P — identidad propia: híbrido Horizon (radio) + densidad ejecutiva.
+  s4p: {
     shape: { radiusXs: '4px', radiusSm: '6px', radiusMd: '9px', radiusLg: '14px', borderWidth: '1px' },
     elevation: (dark) => ({
       card: dark ? '0 1px 2px rgba(0,0,0,0.45)' : '0 1px 2px rgba(11,39,74,0.10)',
@@ -458,10 +458,10 @@ const _SURFACE_VAR: Record<'surface' | 'sunken' | 'tinted' | 'transparent', stri
 
 export const THEME_PRESETS: ThemePreset[] = [
   makePreset({
-    id: 'nexora-horizon-light',
-    name: 'NEXORA Horizon',
+    id: 's4p-horizon-light',
+    name: 'S4P Horizon',
     description: 'Tema por defecto: superficies blancas, fondo gris azulado, azul eléctrico. Limpio y denso.',
-    family: 'nexora',
+    family: 's4p',
     variant: 'horizon-light',
     palette: {
       pageBg: '#eef3f9', surface: '#ffffff', surfaceRaised: '#ffffff', surfaceSunken: '#f4f7fb',
@@ -477,10 +477,10 @@ export const THEME_PRESETS: ThemePreset[] = [
     charts: { grid: '#e6ecf3', axis: '#7c8da6', series: ['#1769d2', '#0f9f6e', '#dc3f50', '#c67c11'] },
   }),
   makePreset({
-    id: 'nexora-executive',
-    name: 'NEXORA Executive',
+    id: 's4p-executive',
+    name: 'S4P Executive',
     description: 'Serio, tipografía compacta, para el comité financiero.',
-    family: 'nexora',
+    family: 's4p',
     variant: 'executive',
     fontFamily: "'Inter', Georgia, 'Times New Roman', serif",
     shape: { radiusMd: '4px', radiusLg: '6px' },
@@ -500,10 +500,10 @@ export const THEME_PRESETS: ThemePreset[] = [
     charts: { grid: '#e2ddd2', axis: '#8a8578', series: ['#7a5c1e', '#3f7d3f', '#a03030', '#3a5c8a'] },
   }),
   makePreset({
-    id: 'nexora-dark',
-    name: 'NEXORA Dark',
-    description: 'Modo oscuro de NEXORA para salas de control.',
-    family: 'nexora',
+    id: 's4p-dark',
+    name: 'S4P Dark',
+    description: 'Modo oscuro de S4P para salas de control.',
+    family: 's4p',
     variant: 'dark',
     isDark: true,
     palette: {
@@ -743,7 +743,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     id: 'high-contrast',
     name: 'Horizon HCB (alto contraste negro)',
     description: 'Fondo negro, texto blanco, bordes definidos. No depende solo del color.',
-    family: 'nexora',
+    family: 's4p',
     variant: 'hcb',
     isDark: true,
     contrast: 'high',
@@ -767,7 +767,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     id: 'high-contrast-white',
     name: 'Horizon HCW (alto contraste blanco)',
     description: 'Fondo blanco, texto negro, bordes definidos. Accesibilidad.',
-    family: 'nexora',
+    family: 's4p',
     variant: 'hcw',
     contrast: 'high',
     fontFamily: SYSTEM,
@@ -788,7 +788,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   }),
 ]
 
-export const DEFAULT_THEME_ID = 'nexora-horizon-light'
+export const DEFAULT_THEME_ID = 's4p-horizon-light'
 export const DEFAULT_DENSITY: Density = 'comfortable'
 export const DEFAULT_UI_SCALE: UiScale = 100
 export const UI_SCALES: UiScale[] = [90, 100, 110]

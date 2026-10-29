@@ -1,7 +1,7 @@
 import './tokens.css'
 import './primitives/Button.css'
 import './primitives/primitives.css'
-import './nexora-theme.css'
+import './s4p-theme.css'
 
 export { Button } from './primitives/Button'
 export { Icon } from './primitives/Icon'

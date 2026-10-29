@@ -20,7 +20,7 @@ import { CompanyBrandingCard } from './CompanyBrandingCard'
 import './ThemeSettingsCard.css'
 
 const FAMILY_LABEL: Record<ThemeFamily, string> = {
-  nexora: 'NEXORA', horizon: 'Horizon', quartz: 'Quartz', belize: 'Belize', 'sap-gui': 'SAP GUI',
+  s4p: 'S4P', horizon: 'Horizon', quartz: 'Quartz', belize: 'Belize', 'sap-gui': 'SAP GUI',
 }
 
 function SapGuiThemePreview({ variant }: { variant: string }) {
@@ -32,7 +32,7 @@ function SapGuiThemePreview({ variant }: { variant: string }) {
       data-sap-preview={variant}
       data-nx-preview-variant={variant}
     >
-      <div className="nx-theme-preview__sap-title">NEXORA — Gestión empresarial</div>
+      <div className="nx-theme-preview__sap-title">S4P — Gestión empresarial</div>
       <div className="nx-theme-preview__sap-menu">Sistema&nbsp;&nbsp; Editar&nbsp;&nbsp; Navegar&nbsp;&nbsp; Extras&nbsp;&nbsp; Ayuda</div>
       <div className="nx-theme-preview__sap-toolbar" aria-label="Barra de herramientas SAP GUI">
         <span>✓</span><span>←</span><span>→</span><span className="nx-theme-preview__sap-command">Buscar comando</span><span>⋯</span>
@@ -79,7 +79,7 @@ function ThemePreviewApp({ themeId, density, scale }: { themeId: string; density
       {preset.family === 'sap-gui' ? <SapGuiThemePreview variant={preset.variant} /> : (
       <div className="nx-theme-preview__shell">
         <div className="nx-theme-preview__sidebar">
-          <span className="nx-theme-preview__brand">NEXORA</span>
+          <span className="nx-theme-preview__brand">S4P</span>
           <span className="nx-theme-preview__nav nx-theme-preview__nav--active">Finanzas</span>
           <span className="nx-theme-preview__nav">Proyectos</span>
           <span className="nx-theme-preview__nav">Tesorería</span>
@@ -257,7 +257,7 @@ export function ThemeSettingsCard({
         {setCompanyDefault.isSuccess ? <p className="nx-field__hint" role="status">Predeterminado de la compañía actualizado.</p> : null}
       </Card>
       <Modal open={confirmSapOpen} title="Cambiar a SAP GUI" onClose={() => setConfirmSapOpen(false)}>
-        <p>SAP GUI transforma completamente la presentación de Nexora.</p>
+        <p>SAP GUI transforma completamente la presentación de S4P.</p>
         <p>
           La navegación, formularios, tablas, encabezados, diálogos y densidad cambiarán al sistema visual SAP GUI seleccionado.
         </p>

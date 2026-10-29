@@ -16,7 +16,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-/** Login oficial NEXORA — Opción 1, moderna minimalista. Una sola tarjeta
+/** Login oficial S4P — Opción 1, moderna minimalista. Una sola tarjeta
  * centrada, misma identidad en desktop y en iPhone (una columna, safe-area,
  * completable con una mano). Sin panel hero, sin SSO no funcional, sin
  * "olvidaste tu contraseña" mientras no exista autoservicio real (§8). */
@@ -91,13 +91,12 @@ export function LoginPage() {
     <div className="nx-login">
       <main className="nx-login__card" aria-labelledby="nx-login-title">
         <div className="nx-login__brand">
-          <span className="nx-login__brand-mark" aria-hidden="true" />
-          <span className="nx-login__brand-name">NEXORA GROUP</span>
+          <img className="nx-login__brand-logo" src="/s4p-logo-light.svg" alt="S4P Enterprise Platform" />
         </div>
 
         <div className="nx-login__head">
           <h1 id="nx-login-title" className="nx-login__title">
-            Bienvenido a NEXORA
+            Bienvenido a S4P
           </h1>
           <p className="nx-login__subtitle">Ingresa para continuar.</p>
         </div>

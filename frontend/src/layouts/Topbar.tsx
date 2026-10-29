@@ -81,7 +81,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
               ))}
             </Select>
           ) : (
-            <span className="nx-topbar__company-name">{activeCompany?.name ?? 'NEXORA GROUP'}</span>
+            <span className="nx-topbar__company-name">{activeCompany?.name ?? 'S4P'}</span>
           )}
         </div>
         <div className="nx-topbar__context">

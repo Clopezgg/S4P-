@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-icon.svg'],
       manifest: {
-        name: 'Nexora Group — Gestión Empresarial y Control de Construcción',
-        short_name: 'Nexora',
-        description: 'Plataforma administrativa Nexora Group: tesorería, proyectos, abastecimiento y control de obra.',
+        name: 'S4P — Gestión Empresarial y Control de Construcción',
+        short_name: 'S4P',
+        description: 'Plataforma administrativa S4P: tesorería, proyectos, abastecimiento y control de obra.',
         theme_color: '#0B1F3A',
         background_color: '#0B1F3A',
         display: 'standalone',
@@ -33,7 +33,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Nexora is an online transactional ERP. Never precache the SPA HTML
+        // S4P is an online transactional ERP. Never precache the SPA HTML
         // or JavaScript/CSS application shell: doing so can keep an old bundle
         // alive after a deployment and make it call the obsolete same-origin
         // /api proxy. Static Web Apps owns navigation fallback and HTTP cache
