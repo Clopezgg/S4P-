@@ -1,8 +1,2 @@
 <!doctype html>
-<html lang="es"><head><meta charset="UTF-8"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#101D35"/><meta name="description" content="S4P Enterprise Platform: gestión empresarial integrada."/><title>S4P | Enterprise Platform</title></head><body><div id="root"></div><script>
-      // The public preview is static and has no /api. The real S4P ERP serves
-      // React and FastAPI on one origin to keep secure session cookies first-party.
-      if (window.location.hostname === 's4p-sap-preview.onrender.com') {
-        window.location.replace('https://s4p-erp-api.onrender.com/login')
-      }
-    </script><script type="module" src="/src/main.tsx"></script></body></html>
+<html lang="es"><head><meta charset="UTF-8"/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#101D35"/><meta name="description" content="S4P Enterprise Platform: gestión empresarial integrada."/><title>S4P | Enterprise Platform</title></head><body><div id="root"></div><script src="/s4p-preview-redirect.js"></script><script type="module" src="/src/main.tsx"></script></body></html>
