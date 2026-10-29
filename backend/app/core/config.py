@@ -107,6 +107,21 @@ class Settings(BaseSettings):
     def validate_production_secrets(self) -> "Settings":
         if not self.is_production:
             return self
+        # Never silently point a production ERP at the development database.
+        # A Render Blueprint supplies this secret via fromDatabase; keeping
+        # this check in the app makes misconfigured deployments fail safely.
+        if not os.environ.get("DATABASE_URL", "").strip():
+            raise ValueError("DATABASE_URL must be configured for production")
+        parsed_db = urlparse(self.database_url)
+        if (
+            parsed_db.scheme != "postgresql+psycopg"
+            or not parsed_db.hostname
+            or parsed_db.hostname in {"localhost", "127.0.0.1", "::1"}
+            or not parsed_db.username
+            or not parsed_db.password
+            or not parsed_db.path.strip("/")
+        ):
+            raise ValueError("Production DATABASE_URL must be an authenticated remote PostgreSQL connection")
         if self.secret_key == "dev-secret-key-change-me" or len(self.secret_key) < 32:
             raise ValueError("SECRET_KEY must be a unique value of at least 32 characters in production")
         if self.edit_access_required and not self.edit_access_configured:
