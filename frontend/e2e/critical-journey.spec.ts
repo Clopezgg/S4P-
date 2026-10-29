@@ -518,7 +518,7 @@ test('Critical Journey: login through GL/reports/audit, one continuous real reco
     )
     expect(voucherResponse.ok()).toBeTruthy()
     expect(voucherResponse.headers()['content-type']).toContain('application/pdf')
-    expect(voucherResponse.headers()['content-disposition']).toContain('NEXORA-Comprobante-')
+    expect(voucherResponse.headers()['content-disposition']).toContain('S4P-Comprobante-')
 
     await page.goto('/finanzas/conciliacion')
     await expect(page.getByRole('heading', { name: 'Conciliación bancaria' })).toBeVisible({ timeout: 10_000 })

@@ -11,7 +11,7 @@ interface AliasedItem {
 
 /**
  * Command field estilo workstation: [✓] [←] [→] [ campo ] [▾].
- * Solo comandos Nexora reales: módulos visibles por RBAC (filtro local) +
+ * Solo comandos S4P reales: módulos visibles por RBAC (filtro local) +
  * resultados remotos de globalSearch (documentos, asientos, proveedores…).
  * Sin códigos SAP ficticios (/nFB60, ME21N, F110). Keyboard-first.
  */

@@ -40,7 +40,7 @@ describe('AppLayout shell', () => {
     stubAuthenticatedFetch(themeId)
     render(renderApp('/inicio'))
 
-    expect(await screen.findByText('NEXORA — Gestión empresarial')).toBeInTheDocument()
+    expect(await screen.findByText('S4P — Enterprise Platform')).toBeInTheDocument()
     expect(screen.getByRole('menubar', { name: 'Barra de menús SAP GUI' })).toBeInTheDocument()
     expect(screen.getByRole('banner', { name: 'Barra de herramientas SAP GUI' })).toBeInTheDocument()
     expect(screen.getByRole('tree', { name: 'Navegación principal', hidden: true })).toBeInTheDocument()
@@ -55,7 +55,7 @@ describe('AppLayout shell', () => {
 
     expect(screen.queryByRole('menubar', { name: 'Barra de menús SAP GUI' })).not.toBeInTheDocument()
     expect(screen.queryByRole('status', { name: 'Contexto SAP GUI' })).not.toBeInTheDocument()
-    expect(screen.queryByText('NEXORA — Gestión empresarial')).not.toBeInTheDocument()
+    expect(screen.queryByText('S4P — Enterprise Platform')).not.toBeInTheDocument()
   })
 
   it('opens the mobile nav drawer from the topbar toggle', async () => {

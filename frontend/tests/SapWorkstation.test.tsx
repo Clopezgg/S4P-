@@ -83,7 +83,7 @@ describe('SapWorkstation — árbol Easy Access', () => {
     setViewport(1440)
     stubSapFetch()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     expect(await findTreeGroup('Inicio')).toHaveAttribute('aria-expanded', 'true')
     expect(treeGroup('Finanzas')).toHaveAttribute('aria-expanded', 'false')
@@ -96,7 +96,7 @@ describe('SapWorkstation — árbol Easy Access', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
     await findTreeGroup('Inicio')
 
     await user.click(treeGroup('Inicio'))
@@ -123,7 +123,7 @@ describe('SapWorkstation — árbol Easy Access', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
     await findTreeGroup('Finanzas')
 
     treeGroup('Finanzas').focus()
@@ -152,7 +152,7 @@ describe('SapWorkstation — árbol Easy Access', () => {
     setViewport(1440)
     stubSapFetch()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     // Sin permiso de CRM: nada comercial visible.
     expect(screen.queryByRole('treeitem', { name: 'Leads' })).not.toBeInTheDocument()
@@ -167,7 +167,7 @@ describe('SapWorkstation — árbol Easy Access', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     // Abrir el drawer móvil desde el toggle de la Topbar (hay dos botones
     // 'Abrir navegación': Topbar + toolbar SAP; aquí importa el de la Topbar).
@@ -195,7 +195,7 @@ describe('SapWorkstation — menubar real', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     expect(screen.queryByRole('menuitem', { name: 'Favoritos' })).not.toBeInTheDocument()
     for (const label of ['Sistema', 'Editar', 'Navegar', 'Extras', 'Ayuda']) {
@@ -223,7 +223,7 @@ describe('SapWorkstation — menubar real', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     await user.click(screen.getByRole('menuitem', { name: 'Navegar' }))
     const menu = await screen.findByRole('menu', { name: 'Navegar' }, { timeout: 5000 })
@@ -240,7 +240,7 @@ describe('SapWorkstation — menubar real', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     await user.click(screen.getByRole('menuitem', { name: 'Extras' }))
     await user.click(await screen.findByRole('menuitem', { name: /Búsqueda global/ }, { timeout: 5000 }))
@@ -258,7 +258,7 @@ describe('SapWorkstation — command field real', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     const command = screen.getByLabelText('Comando: buscar módulo, documento o acción')
     await user.click(command)
@@ -277,7 +277,7 @@ describe('SapWorkstation — command field real', () => {
     stubSapFetch()
     const user = userEvent.setup()
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     const command = screen.getByLabelText('Comando: buscar módulo, documento o acción')
     await user.click(command)
@@ -297,7 +297,7 @@ describe('SapWorkstation — anatomía, screen frame y status bar', () => {
   it('expone datasets estructurales y el screen frame titula la pantalla real', async () => {
     stubSapFetch('sap-gui-horizon')
     render(renderApp('/inicio'))
-    await screen.findByText('NEXORA — Gestión empresarial', undefined, { timeout: 5000 })
+    await screen.findByText('S4P — Enterprise Platform', undefined, { timeout: 5000 })
 
     const root = document.documentElement.dataset
     expect(root.nxFamily).toBe('sap-gui')

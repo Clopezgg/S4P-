@@ -1,11 +1,11 @@
 /**
- * NEXORA SAP GUI Classic — Design Tokens
+ * S4P SAP GUI Classic — Design Tokens
  * 
  * Sistema de tokens para reconstruir la experiencia visual y operacional
  * de SAP GUI Classic (estación de trabajo empresarial) dentro del navegador.
  * 
  * Basado en SAP GUI for Windows — Signature / Tradeshow / Horizon
- * Sin usar activos propietarios de SAP. Identidad: NEXORA GROUP.
+ * Sin usar activos propietarios de SAP. Identidad: S4P.
  */
 
 :root[data-nx-family='sap-gui'] {

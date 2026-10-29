@@ -137,7 +137,7 @@ def tabular_pdf(
         topMargin=1.2 * cm,
         bottomMargin=1.2 * cm,
         title=title,
-        author="NEXORA GROUP",
+        author="S4P",
     )
     styles = getSampleStyleSheet()
     story = [

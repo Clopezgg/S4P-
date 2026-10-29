@@ -37,7 +37,7 @@ describe('VoucherVerificationPage (público)', () => {
     expect(screen.getByText(/L\s*18,662\.00/)).toBeInTheDocument()
     expect(screen.getByText('AB12CD34EF56')).toBeInTheDocument()
     // No hay login: la página pública se renderiza directamente.
-    expect(screen.queryByRole('heading', { name: /bienvenido a nexora/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /bienvenido a s4p/i })).not.toBeInTheDocument()
   })
 
   it('muestra "no verificado" cuando el token no existe', async () => {

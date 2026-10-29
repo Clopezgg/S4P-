@@ -1,4 +1,4 @@
-"""Comprobante de pago NEXORA — documento empresarial (orden maestra correctiva §26-§53).
+"""Comprobante de pago S4P — documento empresarial (orden maestra correctiva §26-§53).
 
 Generado con reportlab Platypus: soporta nombres largos, acentos, conceptos,
 planes de pago, evidencia, branding privado y multipágina. Nunca se imprimen
@@ -144,7 +144,7 @@ def _page_furniture(document_number: str, verification_code: str):
         canvas.drawString(
             2 * cm,
             y,
-            f"NEXORA GROUP  ·  Comprobante {document_number}  ·  Verificación {verification_code}",
+            f"S4P  ·  Comprobante {document_number}  ·  Verificación {verification_code}",
         )
         canvas.drawRightString(width - 2 * cm, y, f"Página {doc.page}")
         canvas.restoreState()
@@ -440,7 +440,7 @@ def generate_voucher_pdf(
     verification_code = approval_verification_code(
         document_number=document.document_number, approved_by=approved_by, issued_on=issued_on
     )
-    company_name = company.name if company else "NEXORA GROUP"
+    company_name = company.name if company else "S4P"
     token = voucher_verification_service.get_or_create_token(
         db,
         accounting_document_id=document.id,
@@ -506,9 +506,9 @@ def generate_voucher_pdf(
     identity: list = []
     if logo_image is not None:
         identity.extend([logo_image, Spacer(1, 3)])
-    identity.append(Paragraph("NEXORA GROUP", styles["brand"]))
+    identity.append(Paragraph("S4P", styles["brand"]))
     trade = issuance.company_trade_name_snapshot or issuance.company_name_snapshot
-    if trade and trade != "NEXORA GROUP":
+    if trade and trade != "S4P":
         identity.append(Paragraph(trade, styles["value"]))
     if issuance.company_legal_name_snapshot:
         identity.append(Paragraph(issuance.company_legal_name_snapshot, styles["identity"]))
@@ -773,7 +773,7 @@ def generate_voucher_pdf(
         topMargin=1.8 * cm,
         bottomMargin=2.1 * cm,
         title=f"Comprobante {document.document_number}",
-        author="NEXORA GROUP",
+        author="S4P",
         subject=f"Comprobante de pago {document.document_number}",
     )
     doc.pageCompression = 0

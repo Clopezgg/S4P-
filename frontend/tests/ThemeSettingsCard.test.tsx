@@ -48,7 +48,7 @@ describe('ThemeSettingsCard', () => {
 
     const family = (await screen.findByLabelText('Familia')) as HTMLSelectElement
     expect([...family.options].map((option) => option.text)).toEqual([
-      'NEXORA', 'Horizon', 'Quartz', 'Belize', 'SAP GUI',
+      'S4P', 'Horizon', 'Quartz', 'Belize', 'SAP GUI',
     ])
 
     await user.selectOptions(family, 'sap-gui')
@@ -63,16 +63,16 @@ describe('ThemeSettingsCard', () => {
     const user = userEvent.setup()
     render(renderApp('/control/configuracion'))
     await screen.findByText('Apariencia (Theme Engine)')
-    expect(document.documentElement.dataset.nxTheme).toBe('nexora-horizon-light')
+    expect(document.documentElement.dataset.nxTheme).toBe('s4p-horizon-light')
 
     await user.selectOptions(screen.getByLabelText('Familia'), 'sap-gui')
     expect(await screen.findByRole('dialog', { name: 'Cambiar a SAP GUI' })).toBeInTheDocument()
-    expect(document.documentElement.dataset.nxTheme).toBe('nexora-horizon-light')
-    expect((screen.getByLabelText('Familia') as HTMLSelectElement).value).toBe('nexora')
+    expect(document.documentElement.dataset.nxTheme).toBe('s4p-horizon-light')
+    expect((screen.getByLabelText('Familia') as HTMLSelectElement).value).toBe('s4p')
 
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
     expect(screen.queryByRole('dialog', { name: 'Cambiar a SAP GUI' })).not.toBeInTheDocument()
-    expect(document.documentElement.dataset.nxTheme).toBe('nexora-horizon-light')
+    expect(document.documentElement.dataset.nxTheme).toBe('s4p-horizon-light')
     expect(puts).toHaveLength(0)
   })
 
@@ -188,7 +188,7 @@ describe('ThemeSettingsCard', () => {
 
   it('inherits the active company theme instead of the first company theme', async () => {
     stubFetch({ companies: [
-      { id: 'c1', name: 'A', defaultThemeId: 'nexora-horizon-light', defaultDensity: null },
+      { id: 'c1', name: 'A', defaultThemeId: 's4p-horizon-light', defaultDensity: null },
       { id: 'c2', name: 'B', defaultThemeId: 'sap-gui-signature', defaultDensity: 'compact' },
     ] })
     const user = userEvent.setup()

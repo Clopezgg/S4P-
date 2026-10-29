@@ -92,7 +92,7 @@ export function TreasuryPage() {
   const quickStart = useMutation({
     mutationFn: async () => {
       const company = await masterDataService.createCompany({
-        name: 'Constructora Nexora',
+        name: 'Empresa de ejemplo',
         functionalCurrencyCode: 'HNL',
       })
       const bank = await masterDataService.createAccount({

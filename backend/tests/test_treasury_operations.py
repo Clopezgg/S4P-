@@ -242,7 +242,7 @@ def test_voucher_pdf_is_generated_for_a_treasury_outflow(client):
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "application/pdf"
     assert response.headers["content-disposition"].startswith(
-        'attachment; filename="NEXORA-Comprobante-'
+        'attachment; filename="S4P-Comprobante-'
     )
     assert response.headers["content-disposition"].endswith('.pdf"')
     assert response.content.startswith(b"%PDF")
@@ -259,7 +259,7 @@ def test_voucher_pdf_is_generated_for_a_treasury_outflow(client):
     assert "Asiento contable" in text
     assert "conforme" in text  # bloque de firmas "Recib\xed conforme"
     # prepared_by es el nombre del usuario, nunca su UUID.
-    assert "Administrador Nexora" in text
+    assert "Administrador S4P" in text
     # ORDEN MAESTRA §13: el asiento contable NO domina la primera página —
     # va después del bloque de firmas (última sección de la página 1).
     assert text.index("Recib") < text.index("Asiento contable")

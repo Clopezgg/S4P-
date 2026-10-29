@@ -1038,7 +1038,7 @@ def download_voucher(
     # Persistir el token de verificación creado/actualizado para el QR.
     db.commit()
     safe_number = re.sub(r"[^A-Za-z0-9_-]+", "-", document.document_number).strip("-")
-    filename = f"NEXORA-Comprobante-{safe_number or document.id}.pdf"
+    filename = f"S4P-Comprobante-{safe_number or document.id}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
