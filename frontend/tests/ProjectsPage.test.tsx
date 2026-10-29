@@ -37,6 +37,32 @@ describe('ProjectsPage', () => {
     expect(screen.queryByText('Sin proyectos')).not.toBeInTheDocument()
   })
 
+  it('creates the first company from Projects and enables the guided project wizard', async () => {
+    const company = { id: 'first-company', name: 'S4P Construcción', code: 'S4P', functionalCurrencyCode: 'HNL' }
+    let created = false
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/auth/me')) return Promise.resolve({
+        ok: true, status: 200,
+        json: async () => ({ id: 'u1', email: 'admin@s4p.test', fullName: 'Admin', roles: ['Administrator'] }),
+      } as Response)
+      if (url.includes('/master-data/companies')) {
+        if (init?.method === 'POST') {
+          created = true
+          return Promise.resolve({ ok: true, status: 201, json: async () => company } as Response)
+        }
+        return Promise.resolve({ ok: true, status: 200, json: async () => created ? [company] : [] } as Response)
+      }
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response)
+    }))
+
+    render(renderApp('/proyectos'))
+    const user = userEvent.setup()
+    await user.type(await screen.findByLabelText(/nombre de la compañía/i), company.name)
+    await user.click(screen.getByRole('button', { name: /crear compañía y habilitar operaciones/i }))
+    expect(await screen.findByRole('button', { name: 'Nuevo proyecto' })).toBeInTheDocument()
+  })
+
   it('lists real projects for the selected company', async () => {
     stubFetch({
       '/master-data/companies': [{ id: 'c1', name: 'Constructora Nexora', code: null, legalName: null, functionalCurrencyCode: 'HNL', country: null, fiscalId: null }],
