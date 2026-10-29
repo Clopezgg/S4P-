@@ -64,7 +64,7 @@ def check_signature(req, signer):
 
 
 def test_edge_bridge_full_contract(adapter_and_signer):
-    adapter, signer = adapter_and_signer()
+    adapter, signer = adapter_and_signer
     issued = []
     def mock_urlopen(req, timeout):
         check_signature(req, signer)
@@ -93,7 +93,7 @@ def test_edge_bridge_full_contract(adapter_and_signer):
 
 
 def test_edge_bridge_duplicate_and_missing_errors(adapter_and_signer):
-    adapter, _signer = adapter_and_signer()
+    adapter, _signer = adapter_and_signer
     def duplicate(req, timeout):
         raise HTTPError(URL, 409, "exists", {}, BytesIO(b"internal"))
     with patch("app.integrations.supabase_edge_storage.urlopen", side_effect=duplicate):
