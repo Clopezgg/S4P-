@@ -25,6 +25,7 @@ import type {
 } from '../../types/masterData'
 import { statusLabel } from '../../utils/statusLabels'
 import { BuildInfoCard } from './BuildInfoCard'
+import { CompanyBootstrapForm } from './CompanyBootstrapForm'
 import { ThemeSettingsCard } from './ThemeSettingsCard'
 
 function CompanyProfileForm({ company }: { company: Company }) {
@@ -620,11 +621,14 @@ export function CompanySettingsPage() {
   }
   if (companies.length === 0) {
     return (
-      <EmptyState
-        icon="tool"
-        title="No hay compañías registradas"
-        description="Crea una compañía antes de editar su perfil."
-      />
+      <div>
+        <header className="nx-page__header">
+          <h1 className="nx-dashboard__title">Configuración inicial de S4P</h1>
+        </header>
+        <Card title="Crear la primera compañía">
+          <CompanyBootstrapForm />
+        </Card>
+      </div>
     )
   }
 
