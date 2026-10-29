@@ -80,7 +80,7 @@ infra = contains(infra_patterns)
 frontend = contains(frontend_patterns)
 
 certification_patterns = (
-    ".github/nexora-guardians/",
+    ".github/s4p-guardians/",
     ".github/workflows/nexora-ultra-gates.yml",
     ".github/workflows/nexora-deep-testing.yml",
     "backend/tests/test_financial_properties.py",
@@ -124,7 +124,7 @@ if out:
 summary = os.environ.get("GITHUB_STEP_SUMMARY")
 if summary:
     with open(summary, "a", encoding="utf-8") as fp:
-        fp.write("# NEXORA Risk Classification\n\n")
+        fp.write("# S4P Risk Classification\n\n")
         fp.write(f"**Risk level:** `{risk}/4`\n\n")
         fp.write(f"**Files changed:** `{len(files)}`\n\n")
         fp.write("| Domain | Triggered |\n|---|---:|\n")
@@ -142,7 +142,7 @@ if summary:
         for f in files:
             fp.write(f"- `{f}`\n")
 
-print(f"NEXORA_RISK={risk}")
+print(f"S4P_RISK={risk}")
 print(f"FILES={len(files)}")
 print("FINANCIAL=", financial)
 print("AUTH=", auth)

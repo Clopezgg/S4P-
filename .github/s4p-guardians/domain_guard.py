@@ -204,7 +204,7 @@ for path in changed:
     if "pull_request_target:" in text:
         errors.append(
             f"{path}: pull_request_target requiere auditoría manual; "
-            "prohibido por defecto en NEXORA."
+            "prohibido por defecto en S4P."
         )
 
     for line in text.splitlines():
@@ -249,7 +249,7 @@ for path in changed:
 # REPORT
 # ------------------------------------------------------------
 
-print("=== NEXORA DOMAIN GUARDIAN ===")
+print("=== S4P DOMAIN GUARDIAN ===")
 print(f"Changed files: {len(changed)}")
 
 if warnings:
