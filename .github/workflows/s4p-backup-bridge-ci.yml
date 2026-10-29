@@ -1,0 +1,50 @@
+name: S4P encrypted backup bridge and runtime
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/services/backup_worker.py'
+      - 'backend/tests/test_backup_worker.py'
+      - 'backend/app/main.py'
+      - 'Dockerfile.render'
+      - 'supabase/functions/s4p-db-backup-bridge/index.ts'
+      - '.github/workflows/s4p-backup-bridge-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENV: testing
+      DATABASE_URL: postgresql+psycopg://nexora:nexora@localhost:5432/nexora_test
+      SECRET_KEY: ci-only-backup-worker-not-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Lint and verify encrypted offsite chunks
+        run: |
+          ruff check app/services/backup_worker.py tests/test_backup_worker.py
+          python -m compileall -q app/services/backup_worker.py
+          pytest -q tests/test_backup_worker.py
+  pg-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify Debian Trixie PostgreSQL client supports Render PG16
+        run: |
+          docker run --rm python:3.12-slim-trixie sh -c '
+            apt-get update -qq && apt-get install -y -qq --no-install-recommends postgresql-client >/dev/null
+            pg_dump --version
+            version=$(pg_dump --version | grep -Eo "[0-9]+" | head -1)
+            test "$version" -ge 16
+          '
