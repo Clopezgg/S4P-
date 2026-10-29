@@ -1,3 +1,5 @@
+import os
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -68,7 +70,25 @@ async def lifespan(_app: FastAPI):
         bootstrap_admin_if_needed(db)
     finally:
         db.close()
-    yield
+
+    # Opt-in encrypted offsite backup worker: never blocks app startup and
+    # never writes to the ERP business tables. A daemon checks on boot and
+    # hourly while this Render instance is alive; duplicate days are skipped
+    # using a private Supabase Storage completion marker.
+    backup_stop = None
+    if os.environ.get("S4P_BACKUP_SCHEDULE_ENABLED") == "1":
+        from app.services.backup_worker import backup_daemon
+
+        backup_stop = threading.Event()
+        threading.Thread(
+            target=backup_daemon, args=(backup_stop,), daemon=True,
+            name="s4p-offsite-backup",
+        ).start()
+    try:
+        yield
+    finally:
+        if backup_stop:
+            backup_stop.set()
 
 
 def create_app() -> FastAPI:
