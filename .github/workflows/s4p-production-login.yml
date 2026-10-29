@@ -49,7 +49,6 @@ jobs:
 
           ready = call("/api/readyz")
           assert ready.get("status") == "ok", "Backend or DB not ready"
-          unauth = call("/api/auth/me", expected=401) if False else None
           # Explicit unauthenticated /me check before obtaining any cookie.
           req = urllib.request.Request(origin + "/api/auth/me")
           try:
@@ -64,7 +63,9 @@ jobs:
           })
           assert login.get("email", "").casefold() == os.environ["S4P_SMOKE_EMAIL"].casefold()
           cookie = next((c for c in jar if c.name == "nexora_session"), None)
-          assert cookie and cookie.secure, "Expected Secure HttpOnly session cookie"
+          assert cookie and cookie.secure, "Expected Secure session cookie"
+          assert cookie.has_nonstandard_attr("HttpOnly"), "Expected HttpOnly session cookie"
+          assert cookie._rest.get("SameSite", "").lower() == "lax", "Expected SameSite=Lax session cookie"
           me = call("/api/auth/me")
           assert me.get("id") == login.get("id")
           call("/api/auth/logout", method="POST", payload={}, expected=204)
