@@ -39,7 +39,9 @@ export const SapTree = ({ groups: allGroups, onNavigate, variant = 'sidebar' }: 
   const typeaheadTimer = useRef<number | undefined>(undefined);
   const isDrawer = variant === 'drawer';
 
-  const [visibleGroups] = useState(allGroups);
+  // Keep permission-scoped navigation synchronized with async auth updates.
+  // A one-time useState snapshot could leave newly granted modules invisible.
+  const visibleGroups = allGroups;
   const normalized = query.trim().toLowerCase();
   const searching = normalized.length > 0;
 
