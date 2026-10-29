@@ -4,6 +4,7 @@ from app.core.config import Settings
 
 _BASE_PRODUCTION = {
     "app_env": "production",
+    "database_url": "postgresql+psycopg://ci:ci@db.example.internal:5432/s4p",
     "secret_key": "s" * 32,
     "edit_access_token_salt": "test-salt",
     "edit_access_token_digest": "test-digest",
@@ -23,3 +24,8 @@ def test_production_rejects_frontend_origin_with_path():
 def test_production_accepts_exact_https_frontend_origin():
     settings = Settings(**_BASE_PRODUCTION, frontend_url="https://example.com")
     assert settings.frontend_url == "https://example.com"
+
+
+def test_production_rejects_default_localhost_database():
+    with pytest.raises(ValueError, match="Production DATABASE_URL must be an authenticated remote PostgreSQL connection"):
+        Settings(**{**_BASE_PRODUCTION, "database_url": "postgresql+psycopg://user:password@localhost:5432/s4p"}, frontend_url="https://app.example.com")
