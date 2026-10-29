@@ -142,6 +142,55 @@ def create_encrypted_backup() -> dict:
         return {"skipped": False, "chunks": len(parts), "encryptedBytes": manifest["encryptedBytes"]}
 
 
+
+def verify_latest_encrypted_backup() -> bool:
+    """Read the actual offsite archive back and authenticate/decode its GCM tag.
+
+    Uses pg_restore --list for structural validation only; NEVER restores
+    into production and never exposes the unencrypted archive to the network.
+    """
+    import s4p_backup
+
+    bridge = _bridge()
+    latest = _json_call(bridge, "status")
+    if not latest.get("available"):
+        raise RuntimeError("No completed offsite backup to verify")
+    manifest_key = latest.get("manifestKey")
+    if not isinstance(manifest_key, str) or not manifest_key.startswith("db-backups/") or not manifest_key.endswith("/manifest.json"):
+        raise RuntimeError("Invalid remote backup manifest path")
+    manifest = json.loads(bridge._request("download", name=manifest_key))
+    parts = manifest.get("parts")
+    if manifest.get("format") != "s4p-aes256-gcm-parts-v1" or not isinstance(parts, list) or not parts or len(parts) > 9999:
+        raise RuntimeError("Invalid encrypted backup manifest")
+    with tempfile.TemporaryDirectory(prefix="s4p-backup-verify-") as temp:
+        folder = pathlib.Path(temp)
+        os.chmod(folder, 0o700)
+        encrypted = folder / "backup.s4penc"
+        unencrypted = folder / "backup.dump"
+        whole_digest = hashlib.sha256()
+        size = 0
+        with encrypted.open("wb") as output:
+            for number, part in enumerate(parts, 1):
+                expected_key = manifest_key.removesuffix("manifest.json") + f"part-{number:04d}.bin"
+                if not isinstance(part, dict) or part.get("key") != expected_key:
+                    raise RuntimeError("Invalid encrypted backup part reference")
+                chunk = bridge._request("download", name=expected_key)
+                if hashlib.sha256(chunk).hexdigest() != part.get("sha256") or len(chunk) != part.get("bytes"):
+                    raise RuntimeError("Encrypted backup remote part checksum mismatch")
+                output.write(chunk)
+                whole_digest.update(chunk)
+                size += len(chunk)
+        if size != manifest.get("encryptedBytes") or whole_digest.hexdigest() != manifest.get("encryptedSHA256"):
+            raise RuntimeError("Encrypted backup aggregate checksum mismatch")
+        s4p_backup.decrypt_file(encrypted, unencrypted, s4p_backup.key_bytes())
+        subprocess.run(
+            ["pg_restore", "--list", str(unencrypted)],
+            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=120,
+        )
+    logger.info("PASS: remote encrypted backup decrypted and pg_restore archive listing verified")
+    return True
+
 def backup_daemon(stop_event):
     """On Render Free: check on startup, then hourly while process stays alive.
 
@@ -151,6 +200,7 @@ def backup_daemon(stop_event):
     while not stop_event.is_set():
         try:
             create_encrypted_backup()
+            verify_latest_encrypted_backup()
         except Exception:
             logger.exception("S4P offsite backup failed; will retry at next check")
         stop_event.wait(3600)
