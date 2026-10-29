@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authService } from '../../services/authService'
-import { ApiError } from '../../services/httpClient'
+import { ApiError, clearEditCapability } from '../../services/httpClient'
+import { exitApplication } from './exitApplication'
 import type { CurrentUser } from '../../types/auth'
 import { AuthContext, type AuthContextValue } from './auth-context'
 
@@ -47,7 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return authService.logout()
     },
     onSuccess: () => {
-      queryClient.setQueryData(['auth', 'me'], null)
+      // The server has revoked the session and removed the HttpOnly cookie.
+      // Exit the web application rather than routing back to S4P's login.
+      // Keep the existing legacy storage key compatible until its migration.
+      clearEditCapability()
+      try {
+        window.localStorage.removeItem('nexora.activeCompanyId')
+      } catch {
+        // Local storage can be disabled in private browsing.
+      }
+      // Replace the current history entry with a blank browser page. Safari
+      // does not allow scripts to close tabs that users opened themselves.
+      exitApplication()
+      // Discard sensitive query results from this browser tab.
+      queryClient.clear()
+    },
+    onError: () => {
+      // Do not claim that sign-out completed if session revocation failed.
+      window.alert('No se pudo confirmar el cierre de sesión. Su sesión sigue activa; intente salir nuevamente.')
     },
   })
 
