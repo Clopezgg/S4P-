@@ -1,0 +1,21 @@
+name: S4P corporate identity audit
+on:
+  push:
+    paths:
+      - 'frontend/**'
+      - 'backend/app/**'
+      - 'brand/**'
+      - 'scripts/check_s4p_brand.py'
+      - '.github/workflows/s4p-brand-audit.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify S4P branding and compatibility exclusions
+        run: python3 scripts/check_s4p_brand.py
