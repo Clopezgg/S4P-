@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.78.0";
 
 // Private service-to-service bridge. The signing key lives ONLY on Render;
 // this public Ed25519 verification key cannot authorize operations on its own.
-const PUBLIC_KEY_B64 = "b7Tt58iA+Lw2DhjZ69+2ut1I3xHtMrpWU/TlFk0YwhA=";
+const PUBLIC_KEY_B64 = "vESU6HRr1NmdsxuWoWsyryu0J51XXXKNMrEoU6eskDY=";
 const BUCKET = "s4p-evidence-private";
 const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED = new Set(["application/pdf","image/jpeg","image/png","image/webp","image/heic","image/heif"]);
