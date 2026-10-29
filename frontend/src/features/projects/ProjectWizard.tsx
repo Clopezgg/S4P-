@@ -84,13 +84,17 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
       }
       const run = setupRunId ? await projectService.getSetupRun(setupRunId) : await projectService.createSetupRun(payload, crypto.randomUUID())
       setSetupRunId(run.id)
-      const alreadyStaged = await documentService.listEvidence(companyId, 'PROJECT_SETUP_STAGED', run.id)
-      const stagedFiles = new Set(alreadyStaged.map((evidence) => `${evidence.originalFilename}:${evidence.sizeBytes}`))
-      await Promise.all(
-        files
-          .filter((file) => !stagedFiles.has(`${file.name}:${file.size}`))
-          .map((file) => documentService.uploadEvidence(companyId, file, 'OTHER', 'PROJECT_SETUP_STAGED', run.id)),
-      )
+      // A project without attachments needs only project:create. Never require
+      // document.evidence:read or configured blob storage when no files were chosen.
+      if (files.length > 0) {
+        const alreadyStaged = await documentService.listEvidence(companyId, 'PROJECT_SETUP_STAGED', run.id)
+        const stagedFiles = new Set(alreadyStaged.map((evidence) => `${evidence.originalFilename}:${evidence.sizeBytes}`))
+        await Promise.all(
+          files
+            .filter((file) => !stagedFiles.has(`${file.name}:${file.size}`))
+            .map((file) => documentService.uploadEvidence(companyId, file, 'OTHER', 'PROJECT_SETUP_STAGED', run.id)),
+        )
+      }
       const completed = await projectService.executeSetupRun(run.id)
       if (!completed.projectId) throw new Error('La configuración no devolvió un proyecto creado.')
       return projectService.get(completed.projectId)
