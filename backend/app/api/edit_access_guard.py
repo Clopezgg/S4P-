@@ -50,9 +50,20 @@ def _requires_protected_edit(method: str, path: str) -> bool:
         return path not in _EXEMPT_PATHS
     if method != "POST":
         return False
+    # Executing a first-time project setup creates a new project, not a
+    # change to an existing record or a cash/stock movement. The endpoint
+    # separately enforces project:create, company scope, owner and idempotency.
+    # Do not exempt other /execute commands (including financial actions).
+    parts = [part for part in path.split("/") if part]
+    if (
+        method == "POST"
+        and len(parts) == 5
+        and parts[:3] == ["api", "projects", "setup-runs"]
+        and parts[-1] == "execute"
+    ):
+        return False
     if path in _PROTECTED_POST_PATHS or path.startswith(_PROTECTED_POST_PREFIXES):
         return True
-    parts = [part for part in path.split("/") if part]
     return bool(parts and parts[-1].lower() in _PROTECTED_COMMANDS)
 
 
