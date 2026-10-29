@@ -25,25 +25,24 @@ El workflow `S4P financial transaction certification` ejecuta pruebas sobre Post
 
 No se debe automatizar transferencia de dinero ni escribir movimientos de prueba en el libro de producción sin un ámbito de demostración explícito.
 
-## 3. Base permanente y copias de seguridad
-Render PostgreSQL free `s4p-postgres-staging` expira **2026-11-27** y no incluye copias administradas. **No es duradero ni adecuado para datos financieros reales.**
+## 3. Respaldo cifrado real y base permanente
 
-Ya existe `scripts/s4p_backup.py`: ejecuta `pg_dump -Fc` autenticado, cifra con AES-256-GCM, carga un blob a un bucket S3 privado y valida que exista; `restore-verify` solo permite restaurar contra otra base local separada. El CI incluye prueba de cifrado, detección de manipulación y restauración exacta. Nada de esto implica que exista hoy un backup de producción.
+### Copias cifradas ya operativas (29 octubre 2026 UTC)
 
-**Para activar backups** se necesita un ejecutor con acceso a la base de Render (misma región/red privada), credenciales S3 y clave AES de 32 bytes protegida. No usar cron gratuito supuestamente persistente: Render cron jobs tienen cargo mínimo mensual y requieren autorizarlo; tampoco es seguro abrir PostgreSQL a Internet para GitHub Actions. Un servicio cron de pago o migrar a una base duradera con backups gestionados son opciones posteriores a autorización explícita de costos.
+El servicio Render tiene `S4P_BACKUP_SCHEDULE_ENABLED=1` y el secreto `S4P_BACKUP_AES_KEY_B64` configurados **privadamente**. Durante el arranque y cada hora mientras el contenedor esté activo, el trabajador `backend/app/services/backup_worker.py` consulta si han transcurrido al menos 23 horas desde la última copia. El job de GitHub `S4P production external read-only smoke` despierta/verifica periódicamente el servicio y permite alertar si un respaldo envejece más de 36 horas mediante `GET /api/backupz`. Como Render Free puede dormir, no constituye un cron de tiempo garantizado.
 
-Variables requeridas para la tarea de backup (solo secrets de un ejecutor de confianza):
-- `DATABASE_URL` (una cuenta de respaldo de lectura suficiente, no compartida públicamente).
-- `S4P_BACKUP_AES_KEY_B64`: clave AES de 32 bytes en Base64, guardada **también en un segundo lugar seguro**; sin ella no se puede restaurar.
-- `S4P_BACKUP_S3_ENDPOINT`: endpoint HTTPS S3.
-- `S4P_BACKUP_S3_REGION`: región.
-- `S4P_BACKUP_S3_BUCKET=s4p-db-backups-private`.
-- `S4P_BACKUP_S3_ACCESS_KEY_ID`, `S4P_BACKUP_S3_SECRET_ACCESS_KEY`: credenciales privadas del destino.
+**Primera copia real confirmada:** registro Render `PASS: encrypted offsite PostgreSQL snapshot committed, chunks=1 bytes=410325` a las 04:32:49 UTC. Supabase respondió 3 objetos privados en `s4p-db-backups-private`: un fragmento cifrado con AES-256-GCM, un manifiesto con hashes SHA-256 y `db-backups/latest.json` publicado solo tras verificaciones remotas. El contenido descifrado nunca sale de Render. Una nueva verificación descargará y descifrará la copia real con `pg_restore --list` para confirmar el formato, sin restaurar ninguna fila en producción.
 
-Usar `python scripts/s4p_backup.py backup` con PostgreSQL client tools y `boto3 cryptography` instalados. Comprobar cada copia mediante restauración de prueba **fuera** de la instancia productiva; registrar fecha, resultado, integridad y retención. El cifrado no sustituye política de retención, alertas ni backups administrados.
+La infraestructura usa `supabase/functions/s4p-db-backup-bridge/index.ts` (función privada con firmas Ed25519), `scripts/s4p_backup.py` (AES-256-GCM), `backend/app/services/backup_worker.py` y `backend/restore_from_supabase.py` para restauración **solamente en PostgreSQL local aislado**. El código y el contenedor tienen pruebas automatizadas aprobadas, incluidas pruebas criptográficas que rechazan copias manipuladas y un simulacro de `pg_restore` en PostgreSQL desechable.
+
+**Recuperación de emergencia:** conservar fuera de Render y de GitHub el archivo de claves privado entregado por ChatGPT, que incluye `S4P_BACKUP_AES_KEY_B64` y la clave de firma del puente Edge. **Sin ambos secretos, descargar o descifrar copias podría resultar imposible.** No subirlo al repositorio. En un equipo de recuperación con Python, dependencias y `pg_restore` instalados, preparar `EVIDENCE_BACKEND=supabase_edge`, `EVIDENCE_CONTAINER_NAME=s4p-evidence-private`, `SUPABASE_EDGE_BRIDGE_URL`, ambos secretos y ejecutar `python backend/restore_from_supabase.py --target-database-url postgresql+psycopg://usuario:clave@localhost:5432/s4p_restore_isolated`. La base destino debe ser local, vacía y aislada. Este procedimiento completo sobre datos reales deberá ensayarse en una instancia de recuperación independiente.
+
+### Riesgo pendiente: base PostgreSQL temporal
+
+La base activa `s4p-postgres-staging` continúa en Render Free y expira el **27 de noviembre de 2026**. Las copias externas ahora protegen información contra pérdida definitiva, **pero no evitan la interrupción del ERP** si la base gratuita desaparece. La continuidad de operaciones requiere contratar/provisionar un PostgreSQL persistente con política de restauración, o migrar con prueba transaccional a Supabase Postgres sin transferir secretos a GitHub. No crear planes facturables sin aprobación explícita.
 
 ## Criterios para cerrar
 - Evidencia: almacenamiento privado con subida/descarga/borrado reales aprobado; resta validación por navegador y usuarios/empresas reales, con auditoría y persistencia tras un nuevo despliegue.
 - Finanzas: CI verde + pruebas de negocio con empresa sintética y reversión/auditoría sin datos reales.
-- Permanencia: base no caducable, copia externa diaria real, alerta ante fallo y una restauración ensayada.
+- Permanencia: copia externa cifrada real establecida y monitoreo de frescura; siguen pendientes PostgreSQL sin caducidad y ensayo de restauración completa sobre copia de producción en un entorno aislado.
 - Nunca considerar `Live` del servidor como certificación de estas tres capacidades.
