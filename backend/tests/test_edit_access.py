@@ -77,6 +77,12 @@ def test_protected_edit_classifies_sensitive_post_actions_not_login_or_read():
     assert not _requires_protected_edit("GET", "/api/projects/x")
     assert not _requires_protected_edit("POST", "/api/auth/login")
     assert not _requires_protected_edit("POST", "/api/projects")
+    # A setup-run execute creates a new project and must not need an edit PIN.
+    assert not _requires_protected_edit(
+        "POST", "/api/projects/setup-runs/8c7f2d1d-7eca-4acd-a257-34e54a010001/execute"
+    )
+    # Existing financial and arbitrary execute commands stay protected.
+    assert _requires_protected_edit("POST", "/api/payments/x/execute")
     assert _requires_protected_edit("POST", "/api/projects/x/status")
     assert _requires_protected_edit("POST", "/api/approvals/x/decide")
     assert _requires_protected_edit("POST", "/api/accounting/x/reverse")
