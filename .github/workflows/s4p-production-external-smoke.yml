@@ -64,5 +64,9 @@ jobs:
           assert s == 401 and 'application/json' in typ, 'Unauthenticated session endpoint must return 401 JSON'
           s, typ, body = request('/api/healthz')
           assert s == 200 and json.loads(body).get('status') == 'ok'
-          print('PASS: real HTTPS page, PostgreSQL + configured private storage readiness, health and session protection')
+          s, typ, body = request('/api/backupz')
+          assert s == 200 and 'application/json' in typ and json.loads(body).get('status') == 'ok', (
+              'Recent encrypted offsite database backup is missing or stale'
+          )
+          print('PASS: HTTPS app, private Supabase evidence, recent encrypted backup, database and session protection')
           PY
