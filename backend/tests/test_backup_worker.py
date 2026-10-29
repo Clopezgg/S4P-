@@ -4,6 +4,7 @@ No production database, cloud secrets or real Supabase bucket is used here.
 The real pg_dump/AES-GCM restore integration is separately covered by the
 S4P encrypted backup and restore drill workflow.
 """
+import hashlib
 import json
 import sys
 import types
@@ -96,3 +97,42 @@ def test_status_rejects_corrupt_timestamp():
     bridge = FakeBridge(previous={"manifestKey": "some-key", "createdAt": "invalid"})
     with pytest.raises(RuntimeError, match="timestamp"):
         backup_worker.backup_due(bridge)
+
+
+def test_verify_latest_offsite_snapshot_authenticates_and_checks_pg_archive(monkeypatch):
+    bridge = FakeBridge()
+    monkeypatch.setattr(backup_worker, "_bridge", lambda: bridge)
+    prefix = "db-backups/20261029/" + "e" * 32 + "/"
+    chunk = b"ENCRYPTED_SYNTHETIC_CHUNK"
+    part = prefix + "part-0001.bin"
+    manifest_key = prefix + "manifest.json"
+    manifest = {
+        "format": "s4p-aes256-gcm-parts-v1",
+        "parts": [{"key": part, "sha256": hashlib.sha256(chunk).hexdigest(), "bytes": len(chunk)}],
+        "encryptedBytes": len(chunk),
+        "encryptedSHA256": hashlib.sha256(chunk).hexdigest(),
+    }
+    bridge.objects[part] = chunk
+    bridge.objects[manifest_key] = json.dumps(manifest).encode()
+    bridge.previous = {"manifestKey": manifest_key, "createdAt": "2026-10-29T05:00:00Z"}
+
+    fake_backup = types.ModuleType("s4p_backup")
+    fake_backup.key_bytes = lambda: b"k" * 32
+
+    def decrypt(src, dst, key):
+        assert src.read_bytes() == chunk
+        assert key == b"k" * 32
+        dst.write_bytes(b"PG_CUSTOM_ARCHIVE")
+    fake_backup.decrypt_file = decrypt
+    monkeypatch.setitem(sys.modules, "s4p_backup", fake_backup)
+
+    def fake_restore(args, **kwargs):
+        assert args[:2] == ["pg_restore", "--list"]
+        assert Path(args[2]).read_bytes() == b"PG_CUSTOM_ARCHIVE"
+        assert kwargs["timeout"] == 120
+    monkeypatch.setattr(backup_worker.subprocess, "run", fake_restore)
+    assert backup_worker.verify_latest_encrypted_backup() is True
+
+    bridge.objects[part] = b"CORRUPT"
+    with pytest.raises(RuntimeError, match="checksum"):
+        backup_worker.verify_latest_encrypted_backup()
