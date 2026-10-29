@@ -15,9 +15,8 @@ function hex(buffer: ArrayBuffer): string {
 }
 function validKey(key: string): boolean {
   const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
-  const businessKey = new RegExp("^" + uuid + "/" + uuid + "-[^/]{1,255}$", "i");
-  if (businessKey.test(key) && !/[\\x00-\\x1f\\x7f]/.test(key) && !key.includes("\\")) return true;
-  return /^__s4p_storage_smoke__\/[0-9a-f]{32}\.pdf$/.test(key);
+  const businessKey = new RegExp("^"+uuid+"/"+uuid+"-[^/\\x00-\\x1f]{1,255}$","i");
+  return businessKey.test(key) || /^__s4p_storage_smoke__\/[0-9a-f]{32}\.pdf$/.test(key);
 }
 const publicBytes = Uint8Array.from(atob(PUBLIC_KEY_B64), c=>c.charCodeAt(0));
 const verificationKey = await crypto.subtle.importKey(
