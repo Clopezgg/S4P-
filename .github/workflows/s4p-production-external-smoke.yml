@@ -1,6 +1,9 @@
 name: S4P production external read-only smoke
 on:
   workflow_dispatch:
+  schedule:
+    # Every 6 hours: verify live PostgreSQL and signed private Supabase evidence readiness.
+    - cron: '23 1,7,13,19 * * *'
   push:
     branches: [main]
     paths:
@@ -61,5 +64,5 @@ jobs:
           assert s == 401 and 'application/json' in typ, 'Unauthenticated session endpoint must return 401 JSON'
           s, typ, body = request('/api/healthz')
           assert s == 200 and json.loads(body).get('status') == 'ok'
-          print('PASS: real HTTPS page, live PostgreSQL readiness, health, secure unauthenticated access')
+          print('PASS: real HTTPS page, PostgreSQL + configured private storage readiness, health and session protection')
           PY
