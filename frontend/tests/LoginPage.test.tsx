@@ -53,6 +53,21 @@ describe('LoginPage', () => {
   })
 
   it('shows a safe, human message on failed credentials (never a status code)', async () => {
+    // Readiness is a separate GET and must return real JSON before the
+    // login request; an SPA fallback HTML must never receive a password.
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).includes('/api/readyz')) {
+        return {
+          ok: true, status: 200,
+          headers: new Headers({ 'content-type': 'application/json' }),
+          json: async () => ({ status: 'ok' }),
+        } as Response
+      }
+      return {
+        ok: false, status: 401, headers: new Headers(),
+        json: async () => ({ detail: 'Invalid credentials' }),
+      } as Response
+    }))
     const user = userEvent.setup()
     render(renderApp('/login'))
     await screen.findByRole('heading', { name: /bienvenido a nexora/i })
