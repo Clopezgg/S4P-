@@ -1,0 +1,78 @@
+name: S4P production login certification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  login-certification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    environment: production
+    env:
+      S4P_BASE_URL: https://s4p-erp-api.onrender.com
+      S4P_SMOKE_EMAIL: ${{ secrets.S4P_SMOKE_EMAIL }}
+      S4P_SMOKE_PASSWORD: ${{ secrets.S4P_SMOKE_PASSWORD }}
+    steps:
+      - name: Verify readiness, real login, session cookie and logout
+        run: |
+          set -euo pipefail
+          if [ -z "$S4P_SMOKE_EMAIL" ] || [ -z "$S4P_SMOKE_PASSWORD" ]; then
+            echo "::error::Configure S4P_SMOKE_EMAIL and S4P_SMOKE_PASSWORD as protected GitHub environment secrets. No default credentials are allowed."
+            exit 1
+          fi
+          python3 - <<'PY'
+          import http.cookiejar
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from urllib.parse import urlparse
+
+          origin = os.environ["S4P_BASE_URL"].rstrip("/")
+          assert urlparse(origin).scheme == "https"
+          jar = http.cookiejar.CookieJar()
+          opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+          def call(path, method="GET", payload=None, expected=200):
+              body = json.dumps(payload).encode() if payload is not None else None
+              headers = {"Accept": "application/json"}
+              if body is not None:
+                  headers.update({"Content-Type": "application/json", "Origin": origin})
+              req = urllib.request.Request(origin + path, data=body, method=method, headers=headers)
+              try:
+                  with opener.open(req, timeout=25) as r:
+                      result = r.read()
+                      if r.status != expected:
+                          raise AssertionError(f"{path}: HTTP {r.status}, expected {expected}")
+                      return json.loads(result) if result else None
+              except urllib.error.HTTPError as e:
+                  raise AssertionError(f"{path}: HTTP {e.code}, expected {expected}") from None
+
+          ready = call("/api/readyz")
+          assert ready.get("status") == "ok", "Backend or DB not ready"
+          unauth = call("/api/auth/me", expected=401) if False else None
+          # Explicit unauthenticated /me check before obtaining any cookie.
+          req = urllib.request.Request(origin + "/api/auth/me")
+          try:
+              opener.open(req, timeout=25)
+          except urllib.error.HTTPError as exc:
+              assert exc.code == 401, f"Expected 401 for unauthenticated /me, got {exc.code}"
+          else:
+              raise AssertionError("Unauthenticated /me must reject access")
+          login = call("/api/auth/login", method="POST", payload={
+              "email": os.environ["S4P_SMOKE_EMAIL"],
+              "password": os.environ["S4P_SMOKE_PASSWORD"],
+          })
+          assert login.get("email", "").casefold() == os.environ["S4P_SMOKE_EMAIL"].casefold()
+          cookie = next((c for c in jar if c.name == "nexora_session"), None)
+          assert cookie and cookie.secure, "Expected Secure HttpOnly session cookie"
+          me = call("/api/auth/me")
+          assert me.get("id") == login.get("id")
+          call("/api/auth/logout", method="POST", payload={}, expected=204)
+          try:
+              opener.open(urllib.request.Request(origin + "/api/auth/me"), timeout=25)
+          except urllib.error.HTTPError as exc:
+              assert exc.code == 401, "Logout did not invalidate session"
+          else:
+              raise AssertionError("Logout did not invalidate the session")
+          print("PASS: readiness, unauthenticated guard, login, secure session, logout")
+          PY
