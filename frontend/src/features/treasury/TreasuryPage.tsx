@@ -63,7 +63,6 @@ const OTHER_REMITTANCE_SENDER = '__OTHER__'
 
 export function TreasuryPage() {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
   const [openModal, setOpenModal] = useState<ModalKind>(null)
   const [remittanceOffset, setRemittanceOffset] = useState(0)
 
