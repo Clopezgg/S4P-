@@ -6,14 +6,13 @@ from io import BytesIO
 from unittest.mock import patch
 from urllib.error import HTTPError
 
+import pytest
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-import pytest
 
 from app.core.config import Settings
 from app.integrations.azure_blob import get_evidence_container_client
-
 
 URL = "https://klnfxzyccohplnzbdecy.supabase.co/functions/v1/s4p-evidence-bridge"
 KEY = "12345678-1234-4234-8234-123456789abc/87654321-1234-4234-8234-abcdef123456-evidence.pdf"
