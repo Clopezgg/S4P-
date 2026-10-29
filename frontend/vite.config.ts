@@ -10,11 +10,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-icon.svg'],
       manifest: {
-        name: 'S4P — Gestión Empresarial y Control de Construcción',
+        name: 'S4P Enterprise Platform',
         short_name: 'S4P',
-        description: 'Plataforma administrativa S4P: tesorería, proyectos, abastecimiento y control de obra.',
-        theme_color: '#0B1F3A',
-        background_color: '#0B1F3A',
+        description: 'S4P Enterprise Platform: proyectos, finanzas, operaciones y analítica.',
+        theme_color: '#101D35',
+        background_color: '#101D35',
         display: 'standalone',
         start_url: '/',
         icons: [

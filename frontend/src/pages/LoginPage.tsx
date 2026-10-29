@@ -25,6 +25,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [formError, setFormError] = useState<string | null>(null)
+  const [showConnectedLink, setShowConnectedLink] = useState(false)
   const [apiWaking, setApiWaking] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -39,6 +40,7 @@ export function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     setFormError(null)
+    setShowConnectedLink(false)
     setApiWaking(false)
     const wakeTimer = window.setTimeout(() => setApiWaking(true), 2500)
     try {
@@ -55,7 +57,8 @@ export function LoginPage() {
         !readiness.ok ||
         !readiness.headers.get('content-type')?.toLowerCase().includes('application/json')
       ) {
-        setFormError('Este enlace es una vista previa sin servidor de acceso conectado. No se enviaron tus credenciales.')
+        setFormError('Esta vista previa no está conectada al servidor. Sus credenciales no fueron enviadas.')
+        setShowConnectedLink(true)
         return
       }
       const health: unknown = await readiness.json()
@@ -146,6 +149,16 @@ export function LoginPage() {
             <p className="nx-login__notice nx-login__notice--error" role="alert">
               {formError}
             </p>
+          ) : null}
+
+          {showConnectedLink ? (
+            <a
+              className="nx-login__connected-link"
+              href="https://s4p-erp-api.onrender.com/login"
+              rel="noopener noreferrer"
+            >
+              Abrir S4P con acceso al servidor
+            </a>
           ) : null}
 
           <Button type="submit" loading={isLoggingIn} className="nx-login__submit">

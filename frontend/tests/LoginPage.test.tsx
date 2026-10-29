@@ -78,4 +78,24 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText(/correo o contraseña incorrectos/i)).toBeInTheDocument()
   })
+  it('never submits credentials to an HTML-only preview and offers the connected ERP', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true, status: 200,
+      headers: new Headers({ 'content-type': 'text/html' }),
+      text: async () => '<!doctype html>',
+    } as Response))
+    vi.stubGlobal('fetch', fetchMock)
+    const user = userEvent.setup()
+    render(renderApp('/login'))
+    await screen.findByRole('heading', { name: /bienvenido a s4p/i })
+    await user.type(screen.getByLabelText(/correo electrónico/i), 'admin@example.test')
+    await user.type(screen.getByLabelText(/contraseña/i), 'never-send-this-password')
+    await user.click(screen.getByRole('button', { name: /iniciar sesión/i }))
+    expect(await screen.findByRole('link', { name: /abrir s4p con acceso al servidor/i })).toHaveAttribute(
+      'href', 'https://s4p-erp-api.onrender.com/login',
+    )
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls.some((args) => String(args[0]).endsWith('/api/auth/login'))).toBe(false)
+  })
+
 })

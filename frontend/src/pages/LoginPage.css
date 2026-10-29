@@ -1,4 +1,4 @@
-/* Login NEXORA — Opción 1, moderna minimalista.
+/* Login S4P — Opción 1, moderna minimalista.
  * Misma identidad en desktop y iPhone; una sola tarjeta centrada. */
 
 .nx-login {
@@ -149,3 +149,6 @@
 .nx-login__title{color:#101D35}
 .nx-login__submit{background:#101D35;border-color:#101D35;color:#fff}
 .nx-login__submit:hover{background:#253954}
+
+.nx-login__connected-link{display:block;text-align:center;border-radius:7px;padding:12px;background:#101D35;color:#F3F1EB;font-weight:700;text-decoration:none;border:1px solid #C9A05A}
+.nx-login__connected-link:hover,.nx-login__connected-link:focus-visible{background:#253954;outline:2px solid #C9A05A;outline-offset:2px}
