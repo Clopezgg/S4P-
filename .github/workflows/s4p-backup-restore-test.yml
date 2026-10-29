@@ -45,6 +45,7 @@ jobs:
         run: |
           python - <<'PY'
           import base64
+          from cryptography.exceptions import InvalidTag
           import importlib.util
           import os
           from pathlib import Path
