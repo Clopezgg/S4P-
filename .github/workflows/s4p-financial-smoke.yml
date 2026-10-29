@@ -1,0 +1,54 @@
+name: S4P quick financial regressions
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/tests/test_cash_flow_actual.py'
+      - 'backend/app/services/cash_flow_actual_service.py'
+      - '.github/workflows/s4p-financial-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  financial-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexora
+          POSTGRES_PASSWORD: nexora
+          POSTGRES_DB: nexora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexora -d nexora_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql+psycopg://nexora:nexora@localhost:5432/nexora_test
+      APP_ENV: testing
+      SECRET_KEY: ci-only-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: |
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Create test database expected by conftest
+        env:
+          PGPASSWORD: nexora
+        run: psql -h localhost -U nexora -d postgres -v ON_ERROR_STOP=1 -c 'CREATE DATABASE nexora_test_s4p;'
+      - name: Validate historical remittance cash-flow invariants
+        run: |
+          pytest -q \
+            tests/test_cash_flow_actual.py::test_historical_remittance_buckets_by_economic_date_not_posting_time \
+            tests/test_cash_flow_actual.py::test_batch_of_historical_remittances_spreads_across_their_real_weeks
