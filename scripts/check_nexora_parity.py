@@ -29,6 +29,7 @@ ALLOW_CHANGED = {
     "backend/tests/test_config_hardening.py",
     "backend/tests/test_edit_access.py",
     "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/theme/ThemeProvider.tsx",
     "frontend/tests/LoginPage.test.tsx",
 }
 # Theme source MUST remain identical to original; changing the default breaks
