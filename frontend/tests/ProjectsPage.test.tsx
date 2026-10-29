@@ -26,13 +26,14 @@ function stubFetch(routes: Record<string, unknown>) {
 }
 
 describe('ProjectsPage', () => {
-  it('explains that a company is required when there are none (no fabricated data)', async () => {
+  it('lets a new administrator create a company before starting project setup', async () => {
     stubFetch({ '/master-data/companies': [] })
 
     render(renderApp('/proyectos'))
 
-    expect(await screen.findByText('Sin compañía')).toBeInTheDocument()
-    expect(screen.getByText('Configura una compañía antes de crear proyectos.')).toBeInTheDocument()
+    expect(await screen.findByText(/configuración inicial · crear compañía/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/nombre de la compañía/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /crear compañía y habilitar operaciones/i })).toBeDisabled()
     expect(screen.queryByText('Sin proyectos')).not.toBeInTheDocument()
   })
 
