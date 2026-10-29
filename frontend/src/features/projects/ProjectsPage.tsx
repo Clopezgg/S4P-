@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   Badge,
@@ -35,6 +35,8 @@ export function ProjectsPage() {
   const { context, setActiveProject } = useActiveContext()
   const { companies, activeCompany, activeCompanyId, isLoading: companiesLoading, isError: companiesError, refetch } = useActiveCompany()
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  const [quickProjectName, setQuickProjectName] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [filterText, setFilterText] = useState('')
@@ -77,6 +79,20 @@ export function ProjectsPage() {
     queryClient.invalidateQueries({ queryKey: ['procurement', 'contracts'] })
     queryClient.invalidateQueries({ queryKey: ['contract-payments'] })
   }
+
+  const quickCreate = useMutation({
+    mutationFn: () => projectService.create({
+      companyId: activeCompanyId as string,
+      name: quickProjectName.trim(),
+      currencyCode: activeCompany?.functionalCurrencyCode as string | undefined,
+    }),
+    onSuccess: (project) => {
+      invalidate()
+      setQuickCreateOpen(false)
+      setQuickProjectName('')
+      navigate(`/proyectos/${project.id}`)
+    },
+  })
 
   const columns: TableColumn<Project>[] = [
     { key: 'code', header: 'Código', render: (row) => row.code ?? '—' },
@@ -122,8 +138,36 @@ export function ProjectsPage() {
           <h1 className="nx-dashboard__title">Proyectos</h1>
           <p className="nx-field__hint">Empresa activa: {activeCompany.name}. El alta guiada puede dejar WBS, presupuesto, contrato, plan y documentos listos antes de activar.</p>
         </div>
-        <Button onClick={() => setWizardOpen((open) => !open)}>{wizardOpen ? 'Cerrar asistente' : 'Nuevo proyecto'}</Button>
+        <div className="nx-page__actions">
+          <Button variant="secondary" onClick={() => { setQuickCreateOpen((open) => !open); setWizardOpen(false) }}>
+            {quickCreateOpen ? 'Cerrar alta rápida' : 'Crear proyecto básico'}
+          </Button>
+          <Button onClick={() => { setWizardOpen((open) => !open); setQuickCreateOpen(false) }}>
+            {wizardOpen ? 'Cerrar asistente' : 'Proyecto con configuración completa'}
+          </Button>
+        </div>
       </header>
+
+      {quickCreateOpen ? (
+        <Card title="Nuevo proyecto · alta básica">
+          <form onSubmit={(event) => { event.preventDefault(); if (activeCompanyId && quickProjectName.trim() && !quickCreate.isPending) quickCreate.mutate() }}>
+            <p className="nx-field__hint">
+              Crea el proyecto como borrador con su nombre. Después puedes configurar fases WBS, presupuesto, contratos y pagos sin adjuntar archivos para comenzar.
+            </p>
+            <Input
+              label="Nombre del proyecto"
+              value={quickProjectName}
+              required
+              maxLength={255}
+              onChange={(event) => setQuickProjectName(event.target.value)}
+            />
+            {quickCreate.isError ? <p role="alert" className="nx-field__error">{(quickCreate.error as Error).message}</p> : null}
+            <Button type="submit" disabled={!quickProjectName.trim() || quickCreate.isPending} loading={quickCreate.isPending}>
+              Guardar proyecto básico
+            </Button>
+          </form>
+        </Card>
+      ) : null}
 
       {wizardOpen ? (
         <Card title="Nuevo proyecto — configuración operacional">
