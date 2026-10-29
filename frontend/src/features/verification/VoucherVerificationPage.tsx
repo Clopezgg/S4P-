@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
   reversed: 'Reversado',
 }
 
-/** Página pública de verificación de comprobantes (§42). NEXORA Horizon Light.
+/** Página pública de verificación de comprobantes (§42). S4P Horizon Light.
  * Sin datos bancarios, evidencia ni identificadores técnicos. */
 export function VoucherVerificationPage() {
   const { token } = useParams<{ token: string }>()
@@ -38,7 +38,7 @@ export function VoucherVerificationPage() {
   return (
     <div className="nx-verify">
       <main className="nx-verify__card">
-        <div className="nx-verify__brand">NEXORA GROUP</div>
+        <div className="nx-verify__brand"><img src="/s4p-logo-light.svg" alt="S4P Enterprise Platform" style={{ width: 190, maxWidth: '100%', height: 'auto' }} /></div>
 
         {query.isLoading ? (
           <p className="nx-verify__muted">Verificando comprobante…</p>
@@ -47,7 +47,7 @@ export function VoucherVerificationPage() {
             <h1 className="nx-verify__title nx-verify__title--bad">Comprobante no verificado</h1>
             <p className="nx-verify__muted">
               No encontramos un comprobante con ese código de verificación. Solicita el documento
-              original a NEXORA GROUP.
+              original a S4P.
             </p>
           </>
         ) : (
@@ -85,7 +85,7 @@ export function VoucherVerificationPage() {
             </dl>
           </>
         )}
-        <p className="nx-verify__foot">Verificación pública emitida por NEXORA GROUP.</p>
+        <p className="nx-verify__foot">Verificación pública emitida por S4P.</p>
       </main>
     </div>
   )

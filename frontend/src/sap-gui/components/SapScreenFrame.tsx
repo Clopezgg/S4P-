@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Screen Frame
+ * S4P SAP GUI Classic — Screen Frame
  * 
  * Frame global para pantallas transaccionales:
  * - Título de pantalla
@@ -22,7 +22,7 @@ export function SapScreenFrame() {
 
   // Búsqueda directa (~50 rutas): sin memo para no violar
   // react-hooks/preserve-manual-memoization sobre la constante de módulo.
-  let screen = { group: 'NEXORA', title: 'Pantalla' };
+  let screen = { group: 'S4P', title: 'Pantalla' };
   for (const group of navGroups) {
     for (const item of group.items) {
       if (location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)) {

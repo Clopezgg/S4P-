@@ -6,7 +6,7 @@ class UserPreferencesResponse(CamelModel):
 
     El default de la compañía NO se resuelve aquí: el frontend lo toma del
     objeto de la compañía activa (`CompanyResponse.defaultThemeId` /
-    `defaultDensity`) y aplica la cascada usuario > compañía > 'nexora-classic'.
+    `defaultDensity`) y aplica la cascada usuario > compañía > 's4p-horizon-light'.
     """
 
     theme_id: str | None = None

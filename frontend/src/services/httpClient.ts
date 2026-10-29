@@ -44,7 +44,7 @@ function resolveApiBaseUrl(): string {
 
   if (import.meta.env.PROD) {
     if (!configured) {
-      throw new Error('VITE_API_BASE_URL is required for the Nexora production build')
+      throw new Error('VITE_API_BASE_URL is required for the S4P production build')
     }
     // Production must be first-party: either a same-origin absolute path
     // (served by the Static Web Apps linked backend as `/api`, which keeps

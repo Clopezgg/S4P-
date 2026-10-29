@@ -84,7 +84,7 @@ async function verifySapGuiConfirmation({ page }: { page: Page }) {
   await login(page)
   await unlockProtectedEdit(page)
   await ensureCompany(page.request)
-  await setTheme(page, 'nexora-horizon-light')
+  await setTheme(page, 's4p-horizon-light')
   await page.goto('/control/configuracion')
   await page.waitForLoadState('networkidle')
 

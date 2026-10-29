@@ -808,7 +808,14 @@ export const DENSITY_LABEL: Record<Density, string> = {
 }
 
 export function getThemePreset(id: string | null | undefined): ThemePreset {
-  return THEME_PRESETS.find((preset) => preset.id === id) ?? THEME_PRESETS[0]
+  // Accept previously persisted theme IDs so existing users keep their appearance.
+  const legacyId: Record<string, string> = {
+    'nexora-horizon-light': 's4p-horizon-light',
+    'nexora-executive': 's4p-executive',
+    'nexora-dark': 's4p-dark',
+  }
+  const canonical = id ? (legacyId[id] ?? id) : DEFAULT_THEME_ID
+  return THEME_PRESETS.find((preset) => preset.id === canonical) ?? THEME_PRESETS[0]
 }
 
 /**

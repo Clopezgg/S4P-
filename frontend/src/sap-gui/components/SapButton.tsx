@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Button Primitive
+ * S4P SAP GUI Classic — Button Primitive
  * 
  * Botón compacto estilo SAP GUI Classic (JPL Signature / Tradeshow).
  * - Altura fija 28px (desktop)

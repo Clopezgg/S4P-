@@ -1,7 +1,7 @@
 /* Enterprise Theme Engine — capa de aplicación.
    §68: solo presentación (color / tipografía / radio / densidad).
 
-   El Theme Engine gobierna SIEMPRE: NEXORA Horizon Light (default) también
+   El Theme Engine gobierna SIEMPRE: S4P Horizon Light (default) también
    re-pinta por variables. Todas las superficies globales del shell
    (canvas, topbar, sidebar, cards, tablas, formularios, botones) leen los
    tokens `--nx-theme-*`. No quedan capas CSS compitiendo con valores
@@ -171,7 +171,7 @@
 }
 
 /* Forms — anatomía estructural por familia (§31-§34):
-   Horizon/Quartz/NEXORA = caja completa; Belize = subrayado (input plano con
+   Horizon/Quartz/S4P = caja completa; Belize = subrayado (input plano con
    sólo borde inferior, herencia SAP). El fondo (superficie vs sunken) y las
    versalitas de etiqueta también vienen del preset. */
 :root[data-nx-themed='on'] body .nx-input,
@@ -332,7 +332,7 @@
   color: var(--nx-shell-sidebar-active-text, #fff);
   box-shadow: none;
 }
-/* Horizon/NEXORA: barra de acento a la izquierda. Quartz/Belize: sin barra,
+/* Horizon/S4P: barra de acento a la izquierda. Quartz/Belize: sin barra,
    el bloque teñido ya marca la selección (jerarquía por superficie). */
 :root[data-nx-family='quartz'] body .nx-sidebar__link--active::before,
 :root[data-nx-family='belize'] body .nx-sidebar__link--active::before {
@@ -416,7 +416,7 @@
    ESTRUCTURA DE COMPONENTES COMPUESTOS POR FAMILIA (ORDEN MAESTRA §31-§34)
    Diferencias de ANATOMÍA, no de color: reglas de cabecera, velos, bandas,
    rieles de acento. Horizon = sombra suave sin regla; Quartz = plano con
-   hairline; Belize = reglas duras + bandas teñidas; NEXORA = riel de acento.
+   hairline; Belize = reglas duras + bandas teñidas; S4P = riel de acento.
    =========================================================================== */
 
 /* --- Diálogos (Modal) --- */
@@ -449,8 +449,8 @@
   border-bottom: var(--nx-dialog-header-border, 1px solid var(--nx-theme-border));
 }
 
-/* --- Filter bar: banda teñida (Belize/NEXORA), sunken (Quartz) o
-       transparente (Horizon). NEXORA además lleva riel de acento. --- */
+/* --- Filter bar: banda teñida (Belize/S4P), sunken (Quartz) o
+       transparente (Horizon). S4P además lleva riel de acento. --- */
 :root[data-nx-themed='on'] body .nx-filter-bar {
   background: var(--nx-filterbar-bg, transparent);
   border: 0;

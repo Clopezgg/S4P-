@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Workstation Types
+ * S4P SAP GUI Classic — Workstation Types
  * 
  * Tipos compartidos para el sistema SAP Workstation.
  */

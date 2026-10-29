@@ -1,5 +1,5 @@
 /**
- * NEXORA SAP GUI Classic — Legacy Exports
+ * S4P SAP GUI Classic — Legacy Exports
  * 
  * Re-exporta desde el nuevo sistema sap-gui para compatibilidad.
  */
