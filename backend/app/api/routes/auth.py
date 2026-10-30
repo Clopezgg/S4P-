@@ -13,11 +13,22 @@ from app.services import auth_service, permission_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _public_display_name(full_name: str) -> str:
+    """Compatibility for the retired generic bootstrap label, not a user rename.
+
+    Persistent user identity and historical audit actors are deliberately kept
+    intact. Do not apply this transformation to arbitrary personal names.
+    """
+    if full_name.strip().casefold() in {"administrador nexora", "administrador nexora group"}:
+        return "Administrador S4P"
+    return full_name
+
+
 def _response(db: Session, user: User, roles: list[str]) -> CurrentUserResponse:
     return CurrentUserResponse(
         id=user.id,
         email=user.email,
-        full_name=user.full_name,
+        full_name=_public_display_name(user.full_name),
         roles=roles,
         permissions=permission_service.list_user_permissions(db, user_id=user.id),
     )
