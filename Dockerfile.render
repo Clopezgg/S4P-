@@ -3,7 +3,7 @@ WORKDIR /build
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
-ENV VITE_API_BASE_URL=/api VITE_S4P_INITIAL_THEME_ID=sap-gui-horizon
+ENV VITE_API_BASE_URL=/api VITE_S4P_INITIAL_THEME_ID=s4p-horizon-light
 RUN npm run build
 
 FROM python:3.12-slim-trixie
@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends postgresql-clie
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 FRONTEND_DIST_DIR=/app/frontend-dist
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
-    && groupadd --gid 10001 nexora \
-    && useradd --uid 10001 --gid 10001 --create-home nexora
+    && groupadd --gid 10001 s4p \
+    && useradd --uid 10001 --gid 10001 --create-home s4p
 COPY --chown=10001:10001 backend/ ./
 COPY --chown=10001:10001 scripts/s4p_backup.py /app/s4p_backup.py
 COPY --from=frontend --chown=10001:10001 /build/dist /app/frontend-dist
