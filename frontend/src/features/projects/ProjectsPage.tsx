@@ -177,6 +177,7 @@ export function ProjectsPage() {
       {wizardOpen ? (
         <Card title={residentialPreset ? 'Nueva residencia — preparación integral desde cero' : 'Nuevo proyecto — configuración operacional'}>
           <ProjectWizard
+            key={residentialPreset ? 'residential' : 'general'}
             companyId={activeCompanyId}
             functionalCurrencyCode={activeCompany.functionalCurrencyCode as string}
             customers={customers}
