@@ -12,6 +12,7 @@ import { useAuth } from '../features/auth/auth-context'
 import { useActiveCompany } from '../hooks/useActiveCompany'
 import { useTheme } from '../theme/theme-context'
 import { globalSearch } from '../services/searchService'
+import { displayUserName } from '../utils/identityLabels'
 import './AppLayout.css'
 
 /**
@@ -82,7 +83,7 @@ export function AppLayout() {
         <NavList variant="drawer" onNavigate={() => setMobileNavOpen(false)} />
         <div className="nx-drawer__footer">
           <div className="nx-drawer__user">
-            <span className="nx-drawer__user-name">{user?.fullName ?? user?.email}</span>
+            <span className="nx-drawer__user-name">{displayUserName(user?.fullName, user?.email)}</span>
             {user?.roles?.[0] ? (
               <span className="nx-drawer__user-role">{user.roles[0]}</span>
             ) : null}

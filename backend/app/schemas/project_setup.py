@@ -50,9 +50,16 @@ class ProjectSetupContract(CamelModel):
 class ProjectSetupRequest(CamelModel):
     project: ProjectCreateRequest
     wbs: ProjectSetupWbs = Field(default_factory=ProjectSetupWbs)
+    wbs_template: Literal['RESIDENTIAL_HOUSE_V1'] | None = None
     baseline_amount: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=2)
     contract: ProjectSetupContract | None = None
     activate: bool = False
+
+    @model_validator(mode='after')
+    def validate_wbs_configuration(self):
+        if self.wbs_template and self.wbs.code:
+            raise ValueError('Una plantilla residencial no puede combinarse con una WBS raíz manual')
+        return self
 
 
 class ProjectSetupRunResponse(CamelModel):

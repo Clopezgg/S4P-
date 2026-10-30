@@ -338,22 +338,17 @@ export function ProjectDetailPage() {
         />
       ) : null}
       {summary ? (
-        <Card title="Resumen comercial y rentabilidad">
+        <Card title="Centro de control de la obra">
           <div className="nx-home__grid">
-            <StatCard label="Valor comercial contratado" value={money(summary.contractValue, currency)} />
-            <StatCard label="Presupuesto BASELINE" value={money(summary.baselineBudget, currency)} />
             <StatCard label="Presupuesto vigente" value={money(summary.currentBudget, currency)} />
-            <StatCard label="Costo contratado de ejecución" value={money(summary.executionContractValue, currency)} />
-            <StatCard label="Órdenes de compra comprometidas" value={money(summary.poCommitted, currency)} />
-            <StatCard label="Pagado a contratos de ejecución" value={money(summary.executionContractPaid, currency)} />
-            <StatCard label="Saldo contractual de ejecución" value={money(summary.executionContractBalance, currency)} />
-            <StatCard label="Devengado" value={money(summary.accrued, currency)} />
-            <StatCard label="Pagado" value={money(summary.paid, currency)} />
-            <StatCard label="Costo real GL" value={money(summary.actualCost, currency)} />
-            <StatCard label="Utilidad esperada" value={money(summary.expectedProfit, currency)} />
-            <StatCard label="Utilidad actual" value={money(summary.actualProfit, currency)} />
+            <StatCard label="Costo real contable" value={money(summary.actualCost, currency)} />
+            <StatCard label="Saldo de contratos de ejecución" value={money(summary.executionContractBalance, currency)} />
             <StatCard label="Avance físico" value={percent(summary.progressPercent)} />
           </div>
+          <p className="nx-field__hint">
+            Los importes provienen de registros reales de la empresa. Abra la pestaña Finanzas para
+            consultar compromisos, pagos, facturación, rentabilidad y control presupuestario.
+          </p>
           {summary.contractValue === null ? (
             <p className="nx-field__hint">
               El valor comercial aparecerá cuando exista un contrato de venta asociado; no se
@@ -455,6 +450,21 @@ export function ProjectDetailPage() {
           <Link to="/proyectos/presupuestos">Configurar presupuesto</Link>
           <Link to="/proyectos/avances">Registrar avance físico</Link>
           <Link to="/proyectos/ordenes-de-cambio">Gestionar cambio</Link>
+        </div>
+      </Card>
+      <Card title="Financiamiento, compras y comprobantes">
+        <p className="nx-field__hint">
+          La tesorería registra los fondos y sus cuentas de origen, no ingresos ficticios
+          del proyecto. Impute compras y obligaciones a esta obra para consultar costos
+          reales y conservar evidencia auditable.
+        </p>
+        <div className="nx-treasury__actions">
+          <Link to="/finanzas/tesoreria" onClick={() => setActiveProject(project.id)}>Registrar aportes y remesas</Link>
+          <Link to="/abastecimiento/proveedores" onClick={() => setActiveProject(project.id)}>Proveedores y contratistas</Link>
+          <Link to="/abastecimiento/contratos" onClick={() => setActiveProject(project.id)}>Contratos de ejecución</Link>
+          <Link to="/finanzas/libro-contractual" onClick={() => setActiveProject(project.id)}>Cuotas, pagos y liquidaciones</Link>
+          <Link to="/finanzas/comprobantes" onClick={() => setActiveProject(project.id)}>Recibos y comprobantes</Link>
+          <Link to="/control/documentos" onClick={() => setActiveProject(project.id)}>Documentos de la obra</Link>
         </div>
       </Card>
       <Card title="Ciclo comercial del proyecto">

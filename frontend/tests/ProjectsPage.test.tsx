@@ -178,9 +178,67 @@ describe('ProjectsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
+    await userEvent.selectOptions(screen.getByLabelText('Estructura inicial de fases'), 'manual')
     await userEvent.type(screen.getByLabelText('Código WBS'), '1.0')
 
     expect(screen.getByText('Completa código y nombre WBS o deja ambos vacíos.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Crear como borrador' })).toBeDisabled()
+  })
+})
+
+
+describe('Residential project startup', () => {
+  it('creates the 13-phase template as one idempotent command with no fictitious money', async () => {
+    let createdPayload: Record<string, unknown> | null = null
+    const company = { id: 'c1', name: 'Gestión de Proyectos Residenciales', functionalCurrencyCode: 'HNL' }
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url.includes('/auth/me')) return Promise.resolve({
+        ok: true, status: 200,
+        json: async () => ({ id: 'u1', email: 'admin@s4p.test', fullName: 'Administrador S4P', roles: ['Administrator'] }),
+      } as Response)
+      if (url.includes('/master-data/companies')) return Promise.resolve({
+        ok: true, status: 200, json: async () => [company],
+      } as Response)
+      if (url.endsWith('/projects/setup-runs') && init?.method === 'POST') {
+        createdPayload = JSON.parse(String(init.body))
+        return Promise.resolve({
+          ok: true, status: 201, json: async () => ({
+            id: 'run-residential', companyId: 'c1', status: 'DRAFT',
+            activate: false, projectId: null, failureStep: null, failureMessage: null,
+            stagedDocumentCount: 0,
+          }),
+        } as Response)
+      }
+      if (url.endsWith('/projects/setup-runs/run-residential/execute')) return Promise.resolve({
+        ok: true, status: 200, json: async () => ({
+          id: 'run-residential', companyId: 'c1', status: 'COMPLETED',
+          activate: false, projectId: 'residence-1', failureStep: null,
+          failureMessage: null, stagedDocumentCount: 0,
+        }),
+      } as Response)
+      if (url.endsWith('/projects/residence-1')) return Promise.resolve({
+        ok: true, status: 200, json: async () => ({
+          id: 'residence-1', companyId: 'c1', name: 'Casa de campo',
+          status: 'PLANNING',
+        }),
+      } as Response)
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response)
+    }))
+
+    render(renderApp('/proyectos'))
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva residencia · 13 fases' }))
+    await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Casa de campo')
+    await userEvent.click(screen.getByRole('button', { name: 'Crear como borrador' }))
+
+    await waitFor(() => expect(createdPayload).toMatchObject({
+      project: { companyId: 'c1', name: 'Casa de campo', currencyCode: 'HNL' },
+      wbs: {},
+      wbsTemplate: 'RESIDENTIAL_HOUSE_V1',
+      activate: false,
+    }))
+    expect(Object.keys(createdPayload ?? {})).not.toContain('baselineAmount')
+    expect(Object.keys(createdPayload ?? {})).not.toContain('contract')
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls.some(([url]) => String(url).includes('/evidence'))).toBe(false)
   })
 })

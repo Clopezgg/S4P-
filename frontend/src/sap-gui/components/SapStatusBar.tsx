@@ -5,6 +5,7 @@ import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { useActiveContext } from '../../features/context/useActiveContext'
 import { fiscalService } from '../../services/fiscalService'
 import { editAccessService } from '../../services/editAccessService'
+import { displayUserName } from '../../utils/identityLabels'
 
 const PERIOD_STATUS_LABEL: Record<string, string> = {
   OPEN: 'Abierto',
@@ -47,7 +48,7 @@ export function SapStatusBar() {
       <span>{context.activeProjectId ? 'Proyecto activo' : 'Vista empresa · sin proyecto'}</span>
       <span>{periodText}</span>
       <span>{unlocked ? 'Edición desbloqueada' : 'Edición bloqueada'}</span>
-      <span>{user?.fullName ?? user?.email ?? 'Usuario'}</span>
+      <span>{displayUserName(user?.fullName, user?.email)}</span>
     </div>
   )
 }

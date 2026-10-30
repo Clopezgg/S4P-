@@ -28,6 +28,7 @@ import type { CommandItem } from '../../design-system/primitives/CommandPalette'
 import { Drawer } from '../../design-system/primitives/Overlays';
 import { SapButton } from './SapButton';
 import { Topbar } from '../../layouts/Topbar';
+import { displayUserName } from '../../utils/identityLabels';
 import '../../sap-gui/tokens/sap-gui-tokens.css';
 import './SapWorkstation.css';
 
@@ -154,7 +155,7 @@ export const SapWorkstation = forwardRef<HTMLDivElement, SapWorkstationProps>(
           <SapTree groups={filterNavGroups(user?.permissions)} variant="drawer" onNavigate={() => setMobileNavOpen(false)} />
           <div className="nx-sap-drawer__footer">
             <div className="nx-sap-drawer__user">
-              <span className="nx-sap-drawer__user-name">{user?.fullName ?? user?.email}</span>
+              <span className="nx-sap-drawer__user-name">{displayUserName(user?.fullName, user?.email)}</span>
               {user?.roles?.[0] ? (
                 <span className="nx-sap-drawer__user-role">{user.roles[0]}</span>
               ) : null}

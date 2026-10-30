@@ -4,6 +4,7 @@ import { useAuth } from '../../features/auth/auth-context'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { useActiveContext } from '../../features/context/useActiveContext'
 import type { SapMenuBarProps } from './sapWorkstation.types'
+import { displayUserName } from '../../utils/identityLabels'
 
 interface MenuEntry {
   id: string
@@ -66,7 +67,7 @@ export function SapMenuBar({ groups, onOpenSearch, onOpenNav }: SapMenuBarProps)
           action: focusProjectSelect,
         },
         { id: 'preferencias', label: 'Preferencias de apariencia', action: () => navigate('/control/configuracion') },
-        { id: 'salir', label: `Cerrar sesión (${user?.fullName ?? user?.email ?? 'usuario'})`, action: () => logout() },
+        { id: 'salir', label: `Cerrar sesión (${displayUserName(user?.fullName, user?.email)})`, action: () => logout() },
       ],
     },
     {

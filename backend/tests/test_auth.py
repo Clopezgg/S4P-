@@ -232,3 +232,12 @@ def test_csrf_guard_allows_the_configured_frontend_origin(client):
         headers={"Origin": "http://localhost:5173"},
     )
     assert response.status_code == 200, response.text
+
+
+def test_public_auth_identity_only_normalizes_generic_legacy_bootstrap_display():
+    from app.api.routes.auth import _public_display_name
+
+    assert _public_display_name("Administrador Nexora") == "Administrador S4P"
+    assert _public_display_name("administrador nexora group") == "Administrador S4P"
+    assert _public_display_name("Carlos Nexora") == "Carlos Nexora"
+    assert _public_display_name("Administrador Nexora Regional") == "Administrador Nexora Regional"
