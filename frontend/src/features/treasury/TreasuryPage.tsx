@@ -54,14 +54,6 @@ const REMITTANCE_ORIGIN_ACCOUNT_TYPES: Record<RemittanceOriginType, string> = {
   FINANCING: 'LIABILITY',
   OTHER_INCOME: 'REVENUE',
 }
-const KNOWN_REMITTANCE_SENDERS = [
-  'Karen Vannessa Lopez Gonzalez',
-  'Maria del Rosario Lopez Gonzalez',
-  'Davie Morales Rodriguez',
-  'Mavel Griselda Tejada',
-] as const
-const OTHER_REMITTANCE_SENDER = '__OTHER__'
-
 export function TreasuryPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -512,8 +504,7 @@ function RemittanceModal({
     (account) => account.accountType === REMITTANCE_ORIGIN_ACCOUNT_TYPES.CAPITAL_CONTRIBUTION,
   )
   const [counterAccountId, setCounterAccountId] = useState(initialCounter?.id ?? '')
-  const [senderOption, setSenderOption] = useState('')
-  const [customSender, setCustomSender] = useState('')
+  const [sender, setSender] = useState('')
   const [provider, setProvider] = useState('')
   const [channel, setChannel] = useState('TRANSFER')
   const [reference, setReference] = useState('')
@@ -531,7 +522,6 @@ function RemittanceModal({
     (account) => account.id === effectiveTreasuryAccountId,
   )
   const selectedCurrency = selectedTreasuryAccount?.currencyCode ?? functionalCurrencyCode
-  const sender = senderOption === OTHER_REMITTANCE_SENDER ? customSender.trim() : senderOption
   const eligibleCounterAccounts = useMemo(
     () => counterAccounts.filter(
       (account) => account.accountType === REMITTANCE_ORIGIN_ACCOUNT_TYPES[originType],
@@ -582,7 +572,7 @@ function RemittanceModal({
               treasuryAccountId: effectiveTreasuryAccountId,
               counterAccountId: effectiveCounterAccountId,
               originType,
-              sender,
+              sender: sender.trim(),
               provider: provider || null,
               channel: channel || null,
               reference: reference || null,
@@ -670,34 +660,15 @@ function RemittanceModal({
             placeholder="Ej. transferencia o comprobante bancario"
           />
         </label>
-        <Select
-          name="senderOption"
+        <Input
+          name="sender"
           label="Remitente"
-          value={senderOption}
-          onChange={(event) => {
-            setSenderOption(event.target.value)
-            if (event.target.value !== OTHER_REMITTANCE_SENDER) setCustomSender('')
-          }}
+          value={sender}
+          onChange={(event) => setSender(event.target.value)}
+          placeholder="Nombre completo de quien envía los fondos"
+          maxLength={255}
           required
-        >
-          <option value="">Selecciona el remitente</option>
-          {KNOWN_REMITTANCE_SENDERS.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-          <option value={OTHER_REMITTANCE_SENDER}>Otro — ingresar nombre completo</option>
-        </Select>
-        {senderOption === OTHER_REMITTANCE_SENDER ? (
-          <Input
-            name="customSender"
-            label="Nombre completo del remitente"
-            value={customSender}
-            onChange={(event) => setCustomSender(event.target.value)}
-            placeholder="Escribe el nombre completo"
-            required
-          />
-        ) : null}
+        />
         <label className="nx-field">
           <span className="nx-field__label">Banco / proveedor del envío</span>
           <input
