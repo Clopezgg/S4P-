@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.errors import InvalidFinancialReferenceError
+from app.domain.residential_wbs import RESIDENTIAL_WBS_PHASES
 from app.models.evidence import Evidence
 from app.models.project_setup import ProjectSetupRun
 from app.models.supplier import Supplier
@@ -97,16 +98,31 @@ def execute(db: Session, *, run: ProjectSetupRun, correlation_id: str) -> Projec
 
     wbs = p.get("wbs") or {}
     wbs_id = None
-    if wbs.get("code"):
+
+    def create_wbs(code: str, name: str, *, parent_id: uuid.UUID | None = None):
         node = _at_step(
             "WBS",
             lambda: project_control_repository.create_wbs_node(
-                db, project_id=project.id, code=wbs["code"], name=wbs["name"],
+                db, project_id=project.id, code=code, name=name, parent_id=parent_id,
                 planned_start=project.planned_start, planned_finish=project.planned_end,
             ),
         )
-        wbs_id = node.id
-        audit_service.record(db, actor_user_id=run.requested_by, action="project.wbs.create", entity_type="project.wbs", entity_id=node.id, company_id=run.company_id, project_id=project.id, before=None, after={"code": node.code, "name": node.name, "setupRunId": str(run.id)}, correlation_id=correlation_id)
+        audit_service.record(
+            db, actor_user_id=run.requested_by, action="project.wbs.create",
+            entity_type="project.wbs", entity_id=node.id, company_id=run.company_id,
+            project_id=project.id, before=None,
+            after={"code": node.code, "name": node.name, "setupRunId": str(run.id)},
+            correlation_id=correlation_id,
+        )
+        return node
+
+    if p.get("wbs_template") == "RESIDENTIAL_HOUSE_V1":
+        root = create_wbs("00", "Construcción residencial")
+        wbs_id = root.id
+        for code, name in RESIDENTIAL_WBS_PHASES:
+            create_wbs(code, name, parent_id=root.id)
+    elif wbs.get("code"):
+        wbs_id = create_wbs(wbs["code"], wbs["name"]).id
 
     if p.get("baseline_amount") is not None:
         _at_step(
