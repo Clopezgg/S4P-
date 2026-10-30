@@ -457,6 +457,21 @@ export function ProjectDetailPage() {
           <Link to="/proyectos/ordenes-de-cambio">Gestionar cambio</Link>
         </div>
       </Card>
+      <Card title="Financiamiento, compras y comprobantes">
+        <p className="nx-field__hint">
+          La tesorería registra los fondos y sus cuentas de origen, no ingresos ficticios
+          del proyecto. Impute compras y obligaciones a esta obra para consultar costos
+          reales y conservar evidencia auditable.
+        </p>
+        <div className="nx-treasury__actions">
+          <Link to="/finanzas/tesoreria" onClick={() => setActiveProject(project.id)}>Registrar aportes y remesas</Link>
+          <Link to="/abastecimiento/proveedores" onClick={() => setActiveProject(project.id)}>Proveedores y contratistas</Link>
+          <Link to="/abastecimiento/contratos" onClick={() => setActiveProject(project.id)}>Contratos de ejecución</Link>
+          <Link to="/finanzas/libro-contractual" onClick={() => setActiveProject(project.id)}>Cuotas, pagos y liquidaciones</Link>
+          <Link to="/finanzas/comprobantes" onClick={() => setActiveProject(project.id)}>Recibos y comprobantes</Link>
+          <Link to="/control/documentos" onClick={() => setActiveProject(project.id)}>Documentos de la obra</Link>
+        </div>
+      </Card>
       <Card title="Ciclo comercial del proyecto">
         <div className="nx-treasury__actions">
           <Link to="/comercial/contratos">Contrato con cliente</Link>
