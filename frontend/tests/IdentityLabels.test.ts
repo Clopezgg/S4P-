@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { displayUserName } from '../src/utils/identityLabels'
 
-describe('S4P user identity labels', () => {
-  it('shows S4P for the exact imported generic administrator name', () => {
-    expect(displayUserName('Administrador Nexora', 'admin@example.test')).toBe('Administrador S4P')
-    expect(displayUserName('administrador NEXORA GROUP')).toBe('Administrador S4P')
-  })
-
-  it('never rewrites personal or legally meaningful names', () => {
-    expect(displayUserName('Carlos Nexora', 'x@example.test')).toBe('Carlos Nexora')
-    expect(displayUserName('Administrador Nexora Regional')).toBe('Administrador Nexora Regional')
+describe('S4P identity presentation', () => {
+  it('displays the backend-provided public name without inventing a user', () => {
+    expect(displayUserName('Administrador S4P', 'admin@example.test')).toBe('Administrador S4P')
     expect(displayUserName('Carlos López')).toBe('Carlos López')
+  })
+  it('falls back to email or a generic label', () => {
     expect(displayUserName('', 's4p@example.test')).toBe('s4p@example.test')
+    expect(displayUserName(null, null)).toBe('Usuario')
   })
 })
