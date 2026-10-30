@@ -16,6 +16,7 @@ interface WizardProps {
   users: Array<{ id: string; fullName: string }>
   costCenters: Array<{ id: string; code: string; name: string }>
   suppliers: Supplier[]
+  residentialPreset?: boolean
   onCreated: (project: Project) => void
 }
 
@@ -53,9 +54,16 @@ function isPositiveMoney(value: string) {
   return amount !== null && amount > 0n
 }
 
-export function ProjectWizard({ companyId, functionalCurrencyCode, customers, users, costCenters, suppliers, onCreated }: WizardProps) {
+export function ProjectWizard({ companyId, functionalCurrencyCode, customers, users, costCenters, suppliers, residentialPreset = false, onCreated }: WizardProps) {
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState({ ...EMPTY, currencyCode: functionalCurrencyCode })
+  const [form, setForm] = useState({
+    ...EMPTY,
+    currencyCode: functionalCurrencyCode,
+    description: residentialPreset
+      ? 'Construcción integral de vivienda residencial: terreno, diseños, permisos, cimentación, estructura, instalaciones, acabados, exteriores y entrega.'
+      : '',
+  })
+  const [wbsMode, setWbsMode] = useState<'none' | 'manual' | 'residential'>(residentialPreset ? 'residential' : 'none')
   const [files, setFiles] = useState<File[]>([])
   const [setupRunId, setSetupRunId] = useState<string | null>(null)
   const set = (patch: Partial<typeof EMPTY>) => setForm((prev) => ({ ...prev, ...patch }))
@@ -77,7 +85,10 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
     mutationFn: async (activate: boolean) => {
       const payload = {
         project: { companyId, name: form.name.trim(), code: form.code.trim() || undefined, customerId: form.customerId || undefined, currencyCode: form.currencyCode || undefined, description: form.description.trim() || undefined, addressLine1: form.addressLine1.trim() || undefined, addressLine2: form.addressLine2.trim() || undefined, city: form.city.trim() || undefined, stateDepartment: form.stateDepartment.trim() || undefined, country: form.country.trim() || undefined, locationReference: form.locationReference.trim() || undefined, plannedStart: form.plannedStart || undefined, plannedEnd: form.plannedEnd || undefined, costCenterId: form.costCenterId || undefined, managerUserId: form.managerUserId || undefined },
-        wbs: { code: form.wbsCode.trim() || undefined, name: form.wbsName.trim() || undefined },
+        wbs: wbsMode === 'manual'
+          ? { code: form.wbsCode.trim() || undefined, name: form.wbsName.trim() || undefined }
+          : {},
+        wbsTemplate: wbsMode === 'residential' ? 'RESIDENTIAL_HOUSE_V1' as const : undefined,
         baselineAmount: isPositiveMoney(form.baselineAmount) ? form.baselineAmount : undefined,
         contract: contractEnabled ? { supplierId: form.contractSupplierId, contractNumber: form.contractNumber.trim(), contractCategory: form.contractCategory, value: form.contractValue, startDate: form.contractStartDate || form.plannedStart || businessTodayIso(), endDate: form.contractEndDate || undefined, advanceAmount: advanceConfigured ? form.advanceAmount : undefined, advanceDueDate: advanceConfigured ? form.advanceDueDate : undefined, retentionPercentage: form.retentionPercentage, paymentTermsType: form.paymentTermsType as 'LUMP_SUM' | 'MONTHLY' | 'CUSTOM', regularMonths: form.paymentTermsType === 'LUMP_SUM' ? undefined : Number(form.regularMonths), dueDay: form.paymentTermsType === 'LUMP_SUM' ? undefined : Number(form.dueDay) } : undefined,
         activate,
@@ -105,7 +116,7 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
   const managerName = users.find((u) => u.id === form.managerUserId)?.fullName ?? 'Sin asignar'
   const customerName = customers.find((c) => c.id === form.customerId)?.legalName ?? 'Sin cliente'
   const contractorName = suppliers.find((s) => s.id === form.contractSupplierId)?.legalName ?? 'Sin contrato inicial'
-  const wbsIncomplete = Boolean(form.wbsCode.trim()) !== Boolean(form.wbsName.trim())
+  const wbsIncomplete = wbsMode === 'manual' && (Boolean(form.wbsCode.trim()) !== Boolean(form.wbsName.trim()))
   const canSaveDraft = Boolean(form.name.trim()) && !datesInvalid && !wbsIncomplete && !contractInvalid && !create.isPending
 
   return (
@@ -120,6 +131,8 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
 
       <div className="nx-wizard__body">
         {step === 0 ? <>
+          {residentialPreset ? <p className="nx-field__hint">Proyecto residencial desde cero. La estructura de 13 fases se creará junto con el proyecto, sin inventar importes, pagos ni fechas. Puede modificarla posteriormente.</p> : null}
+          <p className="nx-field__hint">Solo el nombre es obligatorio para guardar un borrador. Los demás datos pueden completarse después.</p>
           <Input label="Nombre del proyecto" value={form.name} onChange={(e) => set({ name: e.target.value })} required />
           <Input label="Código (opcional)" value={form.code} onChange={(e) => set({ code: e.target.value })} />
           <Select label="Cliente" value={form.customerId} onChange={(e) => set({ customerId: e.target.value })}>
@@ -153,10 +166,25 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
         </Select> : null}
 
         {step === 4 ? <>
-          <p className="nx-field__hint">Opcional. Si defines ambos campos, se crea una WBS raíz real junto con el proyecto.</p>
-          <Input label="Código WBS" value={form.wbsCode} onChange={(e) => set({ wbsCode: e.target.value })} placeholder="Ej. 1.0" />
-          <Input label="Nombre WBS" value={form.wbsName} onChange={(e) => set({ wbsName: e.target.value })} placeholder="Ej. Obra principal" />
-          {Boolean(form.wbsCode) !== Boolean(form.wbsName) ? <p className="nx-field__error">Completa código y nombre WBS o deja ambos vacíos.</p> : null}
+          <Select label="Estructura inicial de fases" value={wbsMode} onChange={(e) => setWbsMode(e.target.value as typeof wbsMode)}>
+            <option value="residential">Casa residencial · 13 fases predeterminadas</option>
+            <option value="manual">Una fase WBS manual</option>
+            <option value="none">Sin fases por ahora</option>
+          </Select>
+          {wbsMode === 'residential' ? (
+            <p className="nx-field__hint" role="status">
+              Se crearán atómicamente una WBS raíz y 13 fases: planificación, terreno, diseño,
+              permisos, preparación, cimentación, estructura, mampostería, instalaciones,
+              acabados, equipamiento, exteriores y entrega final. Sin montos ni movimientos inventados.
+            </p>
+          ) : null}
+          {wbsMode === 'manual' ? <>
+            <p className="nx-field__hint">Complete código y nombre para crear una WBS raíz.</p>
+            <Input label="Código WBS" value={form.wbsCode} onChange={(e) => set({ wbsCode: e.target.value })} placeholder="Ej. 1.0" />
+            <Input label="Nombre WBS" value={form.wbsName} onChange={(e) => set({ wbsName: e.target.value })} placeholder="Ej. Obra principal" />
+            {wbsIncomplete ? <p className="nx-field__error">Completa código y nombre WBS o deja ambos vacíos.</p> : null}
+          </> : null}
+          {wbsMode === 'none' ? <p className="nx-field__hint">Podrá definir las fases desde el módulo WBS después de crear el proyecto.</p> : null}
         </> : null}
 
         {step === 5 ? <>
@@ -204,7 +232,7 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
           <div><dt>Ubicación</dt><dd>{[form.addressLine1, form.city, form.stateDepartment, form.country].filter(Boolean).join(', ') || '—'}</dd></div>
           <div><dt>Plan</dt><dd>{form.plannedStart && form.plannedEnd ? `${form.plannedStart} → ${form.plannedEnd}` : '—'}</dd></div>
           <div><dt>Responsable</dt><dd>{managerName}</dd></div>
-          <div><dt>WBS inicial</dt><dd>{form.wbsCode && form.wbsName ? `${form.wbsCode} · ${form.wbsName}` : 'No configurada'}</dd></div>
+          <div><dt>WBS inicial</dt><dd>{wbsMode === 'residential' ? '13 fases residenciales + raíz, sin presupuesto ficticio' : wbsMode === 'manual' && form.wbsCode && form.wbsName ? `${form.wbsCode} · ${form.wbsName}` : 'No configurada'}</dd></div>
           <div><dt>Presupuesto BASELINE</dt><dd>{isPositiveMoney(form.baselineAmount) ? formatMoney(form.baselineAmount, form.currencyCode) : 'Sin configurar'}</dd></div>
           <div><dt>Contrato de ejecución</dt><dd>{contractEnabled ? `${form.contractNumber} · ${contractorName} · ${formatMoney(form.contractValue || '0', form.currencyCode)}` : 'No configurado'}</dd></div>
           <div><dt>Documentos iniciales</dt><dd>{files.length ? `${files.length} archivo(s)` : 'Ninguno'}</dd></div>
@@ -221,7 +249,7 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
         <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0 || create.isPending}>Atrás</Button>
         {step < STEPS.length - 1 ? (
           <div className="nx-wizard__finish">
-            {step > 0 ? (
+            {(
               <Button
                 variant="secondary"
                 loading={create.isPending && create.variables === false}
@@ -231,7 +259,7 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
                 Crear como borrador
               </Button>
             ) : null}
-            <Button onClick={() => setStep((s) => s + 1)} disabled={!canContinue || (step === 4 && Boolean(form.wbsCode) !== Boolean(form.wbsName)) || create.isPending}>Continuar</Button>
+            <Button onClick={() => setStep((s) => s + 1)} disabled={!canContinue || (step === 4 && wbsIncomplete) || create.isPending}>Continuar</Button>
           </div>
         ) : (
           <div className="nx-wizard__finish">
