@@ -338,22 +338,17 @@ export function ProjectDetailPage() {
         />
       ) : null}
       {summary ? (
-        <Card title="Resumen comercial y rentabilidad">
+        <Card title="Centro de control de la obra">
           <div className="nx-home__grid">
-            <StatCard label="Valor comercial contratado" value={money(summary.contractValue, currency)} />
-            <StatCard label="Presupuesto BASELINE" value={money(summary.baselineBudget, currency)} />
             <StatCard label="Presupuesto vigente" value={money(summary.currentBudget, currency)} />
-            <StatCard label="Costo contratado de ejecución" value={money(summary.executionContractValue, currency)} />
-            <StatCard label="Órdenes de compra comprometidas" value={money(summary.poCommitted, currency)} />
-            <StatCard label="Pagado a contratos de ejecución" value={money(summary.executionContractPaid, currency)} />
-            <StatCard label="Saldo contractual de ejecución" value={money(summary.executionContractBalance, currency)} />
-            <StatCard label="Devengado" value={money(summary.accrued, currency)} />
-            <StatCard label="Pagado" value={money(summary.paid, currency)} />
-            <StatCard label="Costo real GL" value={money(summary.actualCost, currency)} />
-            <StatCard label="Utilidad esperada" value={money(summary.expectedProfit, currency)} />
-            <StatCard label="Utilidad actual" value={money(summary.actualProfit, currency)} />
+            <StatCard label="Costo real contable" value={money(summary.actualCost, currency)} />
+            <StatCard label="Saldo de contratos de ejecución" value={money(summary.executionContractBalance, currency)} />
             <StatCard label="Avance físico" value={percent(summary.progressPercent)} />
           </div>
+          <p className="nx-field__hint">
+            Los importes provienen de registros reales de la empresa. Abra la pestaña Finanzas para
+            consultar compromisos, pagos, facturación, rentabilidad y control presupuestario.
+          </p>
           {summary.contractValue === null ? (
             <p className="nx-field__hint">
               El valor comercial aparecerá cuando exista un contrato de venta asociado; no se
