@@ -153,8 +153,8 @@ def test_concurrent_setup_execution_writes_only_one_completion_audit(client, db_
 def test_residential_template_creates_13_real_phases_without_financial_movements(client, db_session):
     """Residential construction is a project/WBS template, never invented money."""
     from app.domain.residential_wbs import RESIDENTIAL_WBS_PHASES
-    from app.models.budget import Budget
     from app.models.accounting import AccountingDocument
+    from app.models.budget import Budget
 
     login_admin(client)
     company = create_company(client)
