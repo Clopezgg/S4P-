@@ -76,6 +76,7 @@ export interface ProjectSetupRun {
 export interface ProjectSetupInput {
   project: ProjectInput
   wbs: { code?: string; name?: string }
+  wbsTemplate?: 'RESIDENTIAL_HOUSE_V1'
   baselineAmount?: string
   contract?: {
     supplierId: string; contractNumber: string; contractCategory: string; value: string
