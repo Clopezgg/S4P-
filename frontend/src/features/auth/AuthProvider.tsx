@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authService } from '../../services/authService'
 import { ApiError, clearEditCapability } from '../../services/httpClient'
 import { exitApplication } from './exitApplication'
+import { clearActiveCompanySelection } from '../../hooks/useActiveCompany'
 import type { CurrentUser } from '../../types/auth'
 import { AuthContext, type AuthContextValue } from './auth-context'
 
@@ -10,12 +11,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [signedOut, setSignedOut] = useState(false)
 
-  // Any authenticated call that comes back 401 means the session is gone.
-  // Drop the cached user so the router shows the login screen instead of a
-  // scattered error state across every data page.
+  // Any authenticated domain request returning 401 revokes the browser's
+  // authenticated view. Clearing only auth/me leaves private project, treasury
+  // and company queries visible to the next user of the same browser tab.
   useEffect(() => {
     const onExpired = () => {
-      queryClient.setQueryData(['auth', 'me'], null)
+      setSignedOut(true)
+      clearEditCapability()
+      clearActiveCompanySelection()
+      void queryClient.cancelQueries()
+      queryClient.clear()
     }
     window.addEventListener('nexora:session-expired', onExpired)
     return () => window.removeEventListener('nexora:session-expired', onExpired)
@@ -40,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: authService.login,
     onSuccess: (user) => {
+      // A successful identity switch must never reuse a former user's
+      // company/project state or permission-scoped query results.
+      void queryClient.cancelQueries()
+      queryClient.clear()
+      clearEditCapability()
+      clearActiveCompanySelection()
       setSignedOut(false)
       queryClient.setQueryData(['auth', 'me'], user)
     },
@@ -53,14 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // The server has revoked the session and removed the HttpOnly cookie.
       // Exit the web application rather than routing back to S4P's login.
-      // Keep the existing legacy storage key compatible until its migration.
       setSignedOut(true)
       clearEditCapability()
-      try {
-        window.localStorage.removeItem('nexora.activeCompanyId')
-      } catch {
-        // Local storage can be disabled in private browsing.
-      }
+      clearActiveCompanySelection()
       // Erase cached private data before leaving, not after navigation
       // begins. This prevents a browser from retaining stale user context.
       queryClient.setQueryData(['auth', 'me'], null)
