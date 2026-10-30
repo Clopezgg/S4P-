@@ -35,6 +35,7 @@ export function ProjectsPage() {
   const { context, setActiveProject } = useActiveContext()
   const { companies, activeCompany, activeCompanyId, isLoading: companiesLoading, isError: companiesError, refetch } = useActiveCompany()
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [residentialPreset, setResidentialPreset] = useState(false)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [quickProjectName, setQuickProjectName] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -137,13 +138,16 @@ export function ProjectsPage() {
       <header className="nx-page__header">
         <div>
           <h1 className="nx-dashboard__title">Proyectos</h1>
-          <p className="nx-field__hint">Empresa activa: {activeCompany.name}. El alta guiada puede dejar WBS, presupuesto, contrato, plan y documentos listos antes de activar.</p>
+          <p className="nx-field__hint">Empresa activa: {activeCompany.name}. Cree un proyecto residencial con sus 13 fases o inicie otro tipo de obra. Los fondos, contratos y costos se registran solo cuando existen realmente.</p>
         </div>
         <div className="nx-page__actions">
+          <Button onClick={() => { setResidentialPreset(true); setWizardOpen(true); setQuickCreateOpen(false) }}>
+            Nueva residencia · 13 fases
+          </Button>
           <Button variant="secondary" onClick={() => { setQuickCreateOpen((open) => !open); setWizardOpen(false) }}>
             {quickCreateOpen ? 'Cerrar alta rápida' : 'Crear proyecto básico'}
           </Button>
-          <Button onClick={() => { setWizardOpen((open) => !open); setQuickCreateOpen(false) }}>
+          <Button variant="secondary" onClick={() => { setResidentialPreset(false); setWizardOpen((open) => !open); setQuickCreateOpen(false) }}>
             {wizardOpen ? 'Cerrar asistente' : 'Proyecto con configuración completa'}
           </Button>
         </div>
@@ -171,7 +175,7 @@ export function ProjectsPage() {
       ) : null}
 
       {wizardOpen ? (
-        <Card title="Nuevo proyecto — configuración operacional">
+        <Card title={residentialPreset ? 'Nueva residencia — preparación integral desde cero' : 'Nuevo proyecto — configuración operacional'}>
           <ProjectWizard
             companyId={activeCompanyId}
             functionalCurrencyCode={activeCompany.functionalCurrencyCode as string}
@@ -179,6 +183,7 @@ export function ProjectsPage() {
             users={users}
             costCenters={costCenters}
             suppliers={suppliers}
+            residentialPreset={residentialPreset}
             onCreated={(project) => {
               invalidate()
               setWizardOpen(false)
