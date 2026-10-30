@@ -258,7 +258,7 @@ export function ProjectWizard({ companyId, functionalCurrencyCode, customers, us
               >
                 Crear como borrador
               </Button>
-            ) : null}
+            )}
             <Button onClick={() => setStep((s) => s + 1)} disabled={!canContinue || (step === 4 && wbsIncomplete) || create.isPending}>Continuar</Button>
           </div>
         ) : (
