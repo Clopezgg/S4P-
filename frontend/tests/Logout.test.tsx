@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../src/features/auth/AuthProvider'
@@ -68,6 +68,23 @@ describe('S4P complete sign-out', () => {
     await waitFor(() => expect(client.getQueryData(['auth', 'me'])).toBeUndefined())
     expect(screen.getByText('Sesión inactiva')).toBeInTheDocument()
     expect(window.alert).not.toHaveBeenCalled()
+  })
+
+  it('removes confidential company/project cache and selection after an expired session', async () => {
+    const client = setup()
+    await screen.findByText('Sesión activa')
+    client.setQueryData(['projects', 'test-company'], [{ id: 'former-user-project' }])
+    client.setQueryData(['ui-context'], { activeProjectId: 'former-user-project' })
+
+    await act(async () => {
+      window.dispatchEvent(new Event('nexora:session-expired'))
+    })
+
+    await waitFor(() => expect(screen.getByText('Sesión inactiva')).toBeInTheDocument())
+    expect(client.getQueryData(['projects', 'test-company'])).toBeUndefined()
+    expect(client.getQueryData(['ui-context'])).toBeUndefined()
+    expect(window.localStorage.getItem('nexora.activeCompanyId')).toBeNull()
+    expect(exitApplication).not.toHaveBeenCalled()
   })
 
   it('does not leave or report success when server revocation fails', async () => {
