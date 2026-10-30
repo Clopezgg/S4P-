@@ -51,6 +51,13 @@ function setSelectedCompanyId(value: string | null) {
   listeners.forEach((listener) => listener())
 }
 
+/** Reset both the in-memory company selection and its persisted browser hint.
+ * Removing only localStorage leaves the module-scoped selection alive until reload.
+ */
+export function clearActiveCompanySelection() {
+  setSelectedCompanyId(null)
+}
+
 export function resolveActiveCompanyId(
   selectedId: string | null,
   companies: ReadonlyArray<{ id: string }>,
