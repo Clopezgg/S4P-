@@ -10,6 +10,7 @@ import { useActiveCompany } from '../hooks/useActiveCompany'
 import { projectService } from '../services/projectService'
 import { fiscalService } from '../services/fiscalService'
 import { useTheme } from '../theme/theme-context'
+import { displayUserName } from '../utils/identityLabels'
 
 interface TopbarProps {
   onOpenNav: () => void
@@ -136,7 +137,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
         <NotificationBell />
         <div className="nx-topbar__user">
           <div className="nx-topbar__user-info">
-            <span className="nx-topbar__user-name">{user?.fullName ?? user?.email}</span>
+            <span className="nx-topbar__user-name">{displayUserName(user?.fullName, user?.email)}</span>
             {primaryRole ? <span className="nx-topbar__user-role">{primaryRole}</span> : null}
           </div>
           <button className="nx-topbar__logout" aria-label="Cerrar sesión" onClick={logout}>
