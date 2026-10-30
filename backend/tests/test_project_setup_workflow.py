@@ -148,3 +148,92 @@ def test_concurrent_setup_execution_writes_only_one_completion_audit(client, db_
         )
     ).all()
     assert len(completion_audits) == 1
+
+
+def test_residential_template_creates_13_real_phases_without_financial_movements(client, db_session):
+    """Residential construction is a project/WBS template, never invented money."""
+    from app.domain.residential_wbs import RESIDENTIAL_WBS_PHASES
+    from app.models.budget import Budget
+    from app.models.accounting import AccountingDocument
+
+    login_admin(client)
+    company = create_company(client)
+    payload = _payload(company["id"])
+    payload["wbs"] = {}
+    payload.pop("baselineAmount")
+    payload["activate"] = False
+    payload["wbsTemplate"] = "RESIDENTIAL_HOUSE_V1"
+
+    created = client.post(
+        "/api/projects/setup-runs", json=payload,
+        headers={"Idempotency-Key": "residence-13-phase"},
+    )
+    assert created.status_code == 201, created.text
+    executed = client.post(f"/api/projects/setup-runs/{created.json()['id']}/execute")
+    assert executed.status_code == 200, executed.text
+    project_id = uuid.UUID(executed.json()["projectId"])
+    nodes = list(db_session.scalars(select(WBSNode).where(WBSNode.project_id == project_id)))
+    assert len(nodes) == 14
+    root = next(n for n in nodes if n.code == "00")
+    assert root.parent_id is None
+    assert root.name == "Construcción residencial"
+    phases = sorted((n for n in nodes if n.parent_id == root.id), key=lambda n: n.code)
+    assert [(n.code, n.name) for n in phases] == list(RESIDENTIAL_WBS_PHASES)
+    assert all(n.status == "PLANNING" for n in nodes)
+    assert db_session.scalars(select(Budget).where(Budget.project_id == project_id)).all() == []
+    assert db_session.scalars(select(AccountingDocument).where(AccountingDocument.project_id == project_id)).all() == []
+
+    # An identical retried execution must neither create another tree nor
+    # record another completion.
+    replay = client.post(f"/api/projects/setup-runs/{created.json()['id']}/execute")
+    assert replay.status_code == 200, replay.text
+    assert replay.json()["projectId"] == str(project_id)
+    assert len(db_session.scalars(select(WBSNode).where(WBSNode.project_id == project_id)).all()) == 14
+
+
+def test_residential_template_rejects_conflicting_manual_wbs(client):
+    login_admin(client)
+    company = create_company(client)
+    payload = _payload(company["id"])
+    payload["wbsTemplate"] = "RESIDENTIAL_HOUSE_V1"
+    response = client.post(
+        "/api/projects/setup-runs", json=payload,
+        headers={"Idempotency-Key": "invalid-dual-wbs"},
+    )
+    assert response.status_code == 422
+
+
+def test_residential_template_midway_failure_rolls_back_all_phases(client, db_session, monkeypatch):
+    from app.services import project_setup_service
+
+    login_admin(client)
+    company = create_company(client)
+    payload = _payload(company["id"])
+    payload["wbs"] = {}
+    payload["wbsTemplate"] = "RESIDENTIAL_HOUSE_V1"
+    run = client.post(
+        "/api/projects/setup-runs", json=payload,
+        headers={"Idempotency-Key": "residential-roll-back"},
+    )
+    assert run.status_code == 201, run.text
+    original = project_setup_service.project_control_repository.create_wbs_node
+    created_count = 0
+
+    def break_during_phase(db, **kwargs):
+        nonlocal created_count
+        created_count += 1
+        if created_count == 5:
+            raise ValueError("template phase failed")
+        return original(db, **kwargs)
+
+    monkeypatch.setattr(
+        project_setup_service.project_control_repository, "create_wbs_node", break_during_phase,
+    )
+    failed = client.post(f"/api/projects/setup-runs/{run.json()['id']}/execute")
+    assert failed.status_code == 422, failed.text
+    db_session.expire_all()
+    assert db_session.scalars(select(Project)).all() == []
+    assert db_session.scalars(select(WBSNode)).all() == []
+    stored = db_session.get(ProjectSetupRun, uuid.UUID(run.json()["id"]))
+    assert stored.status == "FAILED"
+    assert stored.failure_step == "WBS"
