@@ -189,7 +189,9 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
   }
 
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
-  await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+  // Logout must leave S4P entirely; navigating to /login would contradict
+  // the corporate exit contract and could allow back-button session confusion.
+  await expect(page).toHaveURL('about:blank', { timeout: 10_000 })
   expect(pageErrors).toEqual([])
 }
 
