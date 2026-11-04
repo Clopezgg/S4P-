@@ -1,9 +1,9 @@
 """Fail-closed checks for restoring a REAL backup into a local disposable DB only."""
 from __future__ import annotations
 
-from importlib import import_module
 import subprocess
 import sys
+from importlib import import_module
 from pathlib import Path
 from types import SimpleNamespace
 
