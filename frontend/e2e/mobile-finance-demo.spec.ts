@@ -7,7 +7,7 @@ test('mobile finance demo registers remittance and expense, downloads a valid ex
   await expect(page).toHaveTitle('S4P · Validación de interfaz móvil')
   const bottom = page.getByRole('navigation', { name: 'Navegación móvil' })
   await bottom.getByRole('button', { name: /Finanzas/i }).click()
-  await page.getByRole('button', { name: 'Registrar remesa', exact: true }).first().click()
+  await page.locator('#finances .finance-action[data-flow="remesa"]').click()
   const modal = page.getByRole('dialog', { name: /Registrar remesa/i })
   await expect(modal).toBeVisible()
   await modal.getByLabel('Remitente / quien envía').fill('Prueba de remesa')
@@ -18,7 +18,7 @@ test('mobile finance demo registers remittance and expense, downloads a valid ex
   await modal.getByRole('button', { name: 'Registrar en demostración' }).click()
   await expect(page.getByText('Remesa recibida · Prueba de remesa')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Registrar gasto', exact: true }).first().click()
+  await page.locator('#finances .finance-action[data-flow="gasto"]').click()
   const expense = page.getByRole('dialog', { name: /Registrar gasto/i })
   await expense.getByLabel('Proveedor / beneficiario').fill('Proveedor de prueba')
   await expense.getByLabel('Categoría del gasto').selectOption('Servicios')
@@ -27,7 +27,7 @@ test('mobile finance demo registers remittance and expense, downloads a valid ex
   await expense.getByRole('button', { name: 'Registrar en demostración' }).click()
   await expect(page.getByText('Gasto registrado · Proveedor de prueba')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Generar recibo PDF', exact: true }).first().click()
+  await page.locator('#finances .finance-action[data-flow="recibo"]').click()
   const receipt = page.getByRole('dialog', { name: /Generar recibo PDF/i })
   await receipt.getByLabel('Recibido de').fill('Persona ficticia')
   await receipt.getByLabel('Referencia del cobro').fill('COB-DEMO-01')
