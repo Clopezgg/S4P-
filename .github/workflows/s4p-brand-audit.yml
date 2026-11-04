@@ -1,13 +1,9 @@
 name: S4P corporate identity audit
 on:
   push:
-    paths:
-      - 'frontend/**'
-      - 'backend/app/**'
-      - 'brand/**'
-      - 'scripts/check_s4p_brand.py'
-      - '.github/workflows/s4p-brand-audit.yml'
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

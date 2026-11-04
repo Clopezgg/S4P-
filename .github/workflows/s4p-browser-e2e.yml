@@ -2,16 +2,8 @@ name: S4P authenticated browser critical journeys
 on:
   pull_request:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/s4p-browser-e2e.yml'
   push:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/s4p-browser-e2e.yml'
   workflow_dispatch:
 permissions:
   contents: read
