@@ -1,0 +1,66 @@
+import { expect, test, type Page } from '@playwright/test'
+
+// Mobile uses the real isolated E2E backend and shared RBAC (no mocked API).
+async function signIn(page: Page) {
+  await page.goto('/login')
+  await page.getByLabel('Correo electrónico').fill('admin@nexora.group')
+  await page.getByLabel('Contraseña').fill(['Nexora', 'Admin', '123!'].join(''))
+  await page.getByRole('button', { name: /iniciar sesión/i }).click()
+  await expect(page).toHaveURL(/\/inicio/, { timeout: 15_000 })
+}
+
+async function selectSapGui(page: Page) {
+  const response = await page.request.post('/api/edit-access/verify', {
+    data: { token: process.env.E2E_EDIT_ACCESS_TOKEN },
+  })
+  expect(response.ok(), await response.text()).toBeTruthy()
+  const { capability } = (await response.json()) as { capability: string }
+  const result = await page.request.put('/api/me/preferences', {
+    headers: { 'X-Nexora-Edit-Access': capability },
+    data: { themeId: 'sap-gui-horizon', density: 'compact' },
+  })
+  expect(result.ok(), await result.text()).toBeTruthy()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-nx-family', 'sap-gui')
+}
+
+async function noDocumentOverflow(page: Page, label: string) {
+  const width = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    client: document.documentElement.clientWidth,
+  }))
+  expect(width.scroll, label + ': no horizontal page scroll').toBeLessThanOrEqual(width.client + 1)
+}
+
+test('mobile S4P SAP navigation, company selector and create sheet remain usable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await signIn(page)
+  await selectSapGui(page)
+  const navigation = page.getByRole('navigation', { name: 'Navegación principal (móvil)' })
+  await expect(navigation).toBeVisible()
+  await expect(navigation.getByRole('link', { name: 'Inicio' })).toBeVisible()
+  await expect(page.locator('.nx-sap-menubar')).toBeHidden()
+  await noDocumentOverflow(page, 'SAP mobile home')
+  await navigation.getByRole('button', { name: 'Más' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Navegación' })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByLabel('Empresa activa')).toBeVisible()
+  await expect(drawer.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible()
+  await drawer.getByRole('button', { name: 'Cerrar', exact: true }).click()
+  await expect(drawer).toBeHidden()
+  await navigation.getByRole('button', { name: 'Crear' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Crear' })
+  await expect(sheet).toBeVisible()
+  await sheet.getByRole('button', { name: 'Cerrar', exact: true }).click()
+  await expect(sheet).toBeHidden()
+  for (const viewport of [360, 390, 430, 768]) {
+    await page.setViewportSize({ width: viewport, height: 844 })
+    for (const route of ['/inicio', '/proyectos', '/finanzas/tesoreria', '/control/configuracion']) {
+      const result = await page.goto(route)
+      expect(result?.status(), route + ': HTTP status').toBeLessThan(500)
+      await expect(page.locator('main')).toBeVisible()
+      await noDocumentOverflow(page, route + ' @' + viewport)
+      await expect(navigation).toBeVisible()
+    }
+  }
+})

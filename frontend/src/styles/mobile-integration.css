@@ -1,0 +1,429 @@
+/* S4P mobile workspace (web, same session/RBAC/backend as desktop).
+   One shared responsive layer; desktop shell is unchanged. */
+.nx-bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  :root {
+    --nx-mobile-bar-height: 60px;
+  }
+  body {
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-x: none;
+  }
+  .nx-app-shell, .nx-app-shell__main,
+  .nx-app-shell__content,
+  .nx-sap-workstation, .nx-sap-workarea,
+  .nx-sap-main, .nx-sap-content, .nx-sap-screen {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* A real, RBAC-filtered navigation bar, not desktop links squeezed down. */
+  .nx-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: start;
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: calc(var(--nx-mobile-bar-height) + var(--nx-safe-bottom));
+    padding: 4px max(6px, var(--nx-safe-right))
+      max(3px, var(--nx-safe-bottom)) max(6px, var(--nx-safe-left));
+    z-index: var(--nx-z-sticky, 40);
+    background: var(--nx-color-surface, #fff);
+    border-top: 1px solid var(--nx-color-border, #dbe4ef);
+    box-shadow: 0 -6px 26px rgba(11, 31, 58, .12);
+  }
+  .nx-bottom-nav__item {
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 2px;
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    color: var(--nx-color-text-muted, #536174);
+    text-decoration: none;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .nx-bottom-nav__item .nx-icon { width: 20px; height: 20px; }
+  .nx-bottom-nav__item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nx-bottom-nav__item--active,
+  .nx-bottom-nav__item[aria-current='page'] {
+    color: var(--nx-color-accent, #1769d2);
+    background: var(--nx-color-accent-soft, #eaf4ff);
+  }
+  .nx-bottom-nav__fab {
+    width: 48px;
+    height: 48px;
+    min-width: 44px;
+    justify-self: center;
+    align-self: start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: var(--nx-color-accent, #1769d2);
+    border: 2px solid var(--nx-color-surface, #fff);
+    border-radius: 16px;
+    box-shadow: 0 3px 10px rgba(20, 75, 135, .20);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .nx-bottom-nav__fab .nx-icon { width: 22px; height: 22px; }
+  .nx-bottom-nav :focus-visible { outline: 2px solid var(--nx-color-accent, #1769d2); outline-offset: 2px; }
+
+  /* Modern shell and SAP workstation share the same bottom safe area. */
+  .nx-app-shell__main {
+    padding-bottom: calc(var(--nx-mobile-bar-height) + var(--nx-safe-bottom));
+  }
+  .nx-app-shell__content { width: 100%; padding: 12px 10px; }
+
+  /* SAP desktop chrome becomes compact mobile context + bottom navigation.
+     The old menu/command bars stay available on larger screens only. */
+  .nx-sap-workstation {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 42px 0 0 minmax(0, 1fr) 0;
+    height: 100dvh;
+    padding-bottom: calc(var(--nx-mobile-bar-height) + var(--nx-safe-bottom));
+    overflow: hidden;
+  }
+  .nx-sap-workstation .nx-sap-menubar,
+  .nx-sap-workstation .nx-sap-commandrow,
+  .nx-sap-workstation .nx-sap-statusbar { display: none; }
+  .nx-sap-workstation .nx-sap-titlebar {
+    height: 42px;
+    min-width: 0;
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .nx-sap-workstation .nx-sap-titlebar strong,
+  .nx-sap-workstation .nx-sap-titlebar span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .nx-sap-workstation .nx-sap-titlebar strong { flex: 0 0 auto; font-size: 12px; }
+  .nx-sap-workstation .nx-sap-titlebar span { flex: 1; text-align: right; font-size: 11px; }
+  .nx-sap-workstation .nx-sap-workarea {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
+  }
+  .nx-sap-workstation .nx-sap-sidebar { display: none; }
+  .nx-sap-workstation .nx-sap-main {
+    grid-column: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .nx-sap-workstation .nx-sap-content {
+    display: block;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .nx-sap-workstation .nx-sap-screen {
+    min-height: 0;
+    height: 100%;
+  }
+  .nx-sap-workstation .nx-sap-screen__header {
+    min-height: 30px;
+    padding: 4px 12px;
+  }
+  .nx-sap-workstation .nx-sap-screen__header > * { min-width: 0; }
+  .nx-sap-workstation .nx-sap-screen__context {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .nx-sap-workstation .nx-sap-screen__workarea {
+    min-height: 0;
+    min-width: 0;
+    padding: 12px 10px 18px;
+    overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: var(--sap-color-workarea-bg, #eaf1f6);
+  }
+  .nx-sap-workstation .nx-sap-screen__workarea > * { min-width: 0; max-width: 100%; }
+
+  .nx-sap-workstation .nx-topbar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: 6px 8px;
+    gap: 4px;
+    position: relative;
+    z-index: 20;
+  }
+  .nx-sap-workstation .nx-topbar__left {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    gap: 4px;
+  }
+  .nx-sap-workstation .nx-topbar__right {
+    display: flex;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    gap: 2px;
+    justify-content: flex-end;
+  }
+  .nx-sap-workstation .nx-topbar__nav-toggle {
+    display: inline-flex;
+    flex: 0 0 40px;
+  }
+  .nx-sap-workstation .nx-topbar__company,
+  .nx-sap-workstation .nx-topbar__period,
+  .nx-sap-workstation .nx-topbar__user,
+  .nx-sap-workstation .nx-topbar__action--approvals,
+  .nx-sap-workstation .nx-topbar__context-label { display: none; }
+  .nx-sap-workstation .nx-topbar__context { display: flex; flex: 1 1 auto; min-width: 0; }
+  .nx-sap-workstation .nx-topbar__context .nx-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 40px;
+    font-size: 16px;
+    padding: 0 8px;
+    text-overflow: ellipsis;
+  }
+  .nx-sap-workstation .nx-topbar__right .nx-icon-button {
+    height: 40px;
+    width: 40px;
+    min-width: 40px;
+  }
+  .nx-sap-workstation .nx-edit-access {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nx-sap-workstation .nx-edit-access__dot { margin: 0; }
+  .nx-notification-bell__panel {
+    position: fixed;
+    top: 55px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    max-height: min(70dvh, 520px);
+    overflow-y: auto;
+  }
+
+  /* Mobile drawer retains the exact same permission-filtered navigation. */
+  .nx-drawer__overlay { z-index: var(--nx-z-overlay, 50); }
+  .nx-drawer { max-width: calc(100vw - 24px); }
+  .nx-drawer__header { padding: 14px 16px; }
+  .nx-drawer__body {
+    min-height: 0;
+    padding: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .nx-sap-workstation .nx-drawer__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .nx-sap-workstation .nx-drawer .nx-sap-tree {
+    flex: 1 1 auto;
+    min-height: 120px;
+    overflow-y: auto;
+  }
+  .nx-sap-workstation .nx-drawer .nx-sap-tree .nx-sidebar__list {
+    position: static;
+    inset: auto;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .nx-sap-mobile-company {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--nx-color-surface-secondary, #f4f7fb);
+  }
+  .nx-sap-mobile-company label {
+    color: var(--nx-color-text-muted, #536174);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .nx-sap-mobile-company select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+    color: var(--nx-color-text, #17324f);
+    background: var(--nx-color-surface, #fff);
+    border: 1px solid var(--nx-color-border-strong, #ccd8e5);
+    border-radius: 6px;
+  }
+  .nx-sap-drawer__footer { padding: 8px 0 0; display: grid; gap: 10px; }
+  .nx-sap-drawer__user { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+
+  /* Every module fits into one readable mobile column; KPI tiles remain 2x2. */
+  .nx-home__grid, .nx-home__grid--kpi, .nx-fcc-grid,
+  .nx-dashboard__kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nx-home__operations, .nx-home__sections, .nx-home__charts,
+  .nx-worktoday__grid, .nx-treasury__grid,
+  .nx-project-contracts { grid-template-columns: minmax(0, 1fr); }
+  .nx-home__header, .nx-page__header, .nx-treasury__header,
+  .nx-object-header__top { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .nx-home__header > *, .nx-page__header > *, .nx-object-header__top > * { min-width: 0; max-width: 100%; }
+  .nx-stat-card { padding: 12px; min-width: 0; }
+  .nx-stat-card__value, .nx-fcc-kpi__value, .nx-card__value {
+    font-size: clamp(16px, 4.4vw, 23px);
+    overflow-wrap: anywhere;
+  }
+  .nx-stat-card__label, .nx-fcc-kpi__label { overflow-wrap: anywhere; }
+  .nx-card, .nx-chart-card, .nx-fcc-kpi, .nx-object-header,
+  .nx-field, .nx-form-grid, .nx-filter-bar, .nx-tabs, .nx-tabs__panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .nx-card, .nx-chart-card { padding: 12px; }
+  .nx-chart-card { min-height: 180px; }
+  .nx-object-header { position: static; padding: 12px; }
+  .nx-object-header__facts { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+
+  /* iOS Safari: 16px prevents keyboard-focus zoom. */
+  input:not([type='checkbox']):not([type='radio']),
+  select, textarea { max-width: 100%; min-width: 0; font-size: 16px; }
+  .nx-input, .nx-select, .nx-textarea { width: 100%; }
+  .nx-field { min-width: 0; }
+  .nx-filter-bar__controls, .nx-wizard__actions, .nx-wizard__finish,
+  .nx-treasury__actions, .nx-object-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+  .nx-filter-bar__controls > * { max-width: 100%; }
+  .nx-wizard__actions .nx-button, .nx-wizard__finish .nx-button { flex: 1 1 auto; }
+  .nx-tabs__list { overflow-x: auto; scroll-snap-type: x proximity; }
+  .nx-tabs__tab { flex-shrink: 0; min-height: 44px; scroll-snap-align: start; }
+
+  /* Keep financial table context; never hide debit/credit data to fit. */
+  .nx-table-scroll { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+  .nx-table th, .nx-table td { overflow-wrap: anywhere; }
+  .nx-breadcrumb ol, .nx-stepper { max-width: 100%; overflow-x: auto; }
+  .nx-breadcrumb li, .nx-stepper__step { flex-shrink: 0; }
+
+  /* Dialogs, creation sheet and notifications are safe-area aware. */
+  .nx-modal__overlay { padding: 12px !important; align-items: center; }
+  .nx-modal {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto;
+  }
+  .nx-modal__body, .nx-sheet .nx-drawer__body { min-width: 0; max-width: 100%; }
+  .nx-sheet {
+    max-height: calc(92dvh - var(--nx-safe-top));
+    padding-bottom: var(--nx-safe-bottom);
+    border-radius: 16px 16px 0 0;
+  }
+  .nx-quick-create__action { min-height: 44px; }
+  .nx-modal__close { min-width: 40px; min-height: 40px; }
+  .nx-popover__panel { min-width: 0; max-width: calc(100vw - 20px); }
+  .nx-toast-stack { right: 8px; left: 8px; width: auto; max-width: none; }
+}
+
+@media (max-width: 600px) {
+  .nx-sap-workstation .nx-sap-titlebar strong { font-size: 11px; }
+  .nx-sap-workstation .nx-sap-titlebar span { font-size: 10px; }
+  .nx-app-shell__content { padding: 10px 8px; }
+  .nx-home__grid:not(.nx-home__grid--kpi), .nx-home__sections { grid-template-columns: minmax(0, 1fr); }
+  .nx-home__grid--kpi, .nx-fcc-grid, .nx-dashboard__kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nx-home .nx-stat-card { min-height: 84px; padding: 10px; }
+  .nx-home .nx-stat-card__value { font-size: clamp(15px, 4vw, 19px); }
+  .nx-home__header { padding-bottom: 9px; }
+  .nx-home__quick-link p { max-width: 100%; }
+  .nx-voucher-preview { grid-template-columns: minmax(0, 1fr); }
+
+  /* Shared Table/DataGrid transforms each record into a labeled card. */
+  .nx-table--responsive { border: 0; background: transparent; }
+  .nx-table--responsive thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden; clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .nx-table--responsive tbody tr {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--nx-color-border, #dbe4ef);
+    border-radius: 8px;
+    background: var(--nx-color-surface, #fff);
+  }
+  .nx-table--responsive tbody td {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 36px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .nx-table--responsive tbody td::before {
+    content: attr(data-label);
+    flex: 0 1 45%;
+    min-width: 0;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--nx-color-text-muted, #536174);
+    white-space: normal;
+  }
+  .nx-table--responsive tbody td > * { max-width: 100%; min-width: 0; }
+  .nx-table--responsive tbody td:empty { display: none; }
+}
+@media (max-width: 380px) {
+  .nx-sap-workstation .nx-sap-titlebar span { max-width: 42%; }
+  .nx-sap-workstation .nx-topbar__right { gap: 0; }
+  .nx-sap-workstation .nx-topbar__right .nx-icon-button,
+  .nx-sap-workstation .nx-edit-access { width: 38px; min-width: 38px; }
+  .nx-fcc-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 768px) and (max-height: 560px) {
+  .nx-sap-workstation .nx-sap-titlebar { height: 36px; }
+  .nx-sap-workstation { grid-template-rows: 36px 0 0 minmax(0, 1fr) 0; }
+}
+/* Respect reduced motion for scroll and drawer transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .nx-bottom-nav, .nx-bottom-nav__fab { transition: none; }
+}
