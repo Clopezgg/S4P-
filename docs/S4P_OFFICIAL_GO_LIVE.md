@@ -19,7 +19,7 @@ This file is a **release gate**, never an assertion that S4P is already certifie
 
 ## Dependency scan findings discovered 2026-11-03
 - Python: upgrade the cryptography dependency floor to 48.0.1 (reported fix for the seven pip-audit advisories); do not close until the job is green.
-- Frontend: the new npm audit found six high-severity alerts in the current lockfile. A dependency/lockfile upgrade with passing full test suite is a P0; do not bypass or downgrade the scanner to obtain green checks.
+- Frontend: initial audit found six high-severity alerts. The candidate lockfile has since been updated; the blocking high/critical audit passed. Remaining low/moderate findings require documented triage, while full backend + browser E2E remains a mandatory release gate.
 - Test-only Azurite uses its built-in emulator development connection; no test account keys in the repository workflow.
 
 ## P0: No irreversible business operations until these have evidence
