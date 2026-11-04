@@ -143,10 +143,13 @@ async function verifySapGuiConfirmation({ page }: { page: Page }) {
   await expect(page.getByRole('tree', { name: 'Navegación principal' })).toBeVisible()
 
   await page.setViewportSize({ width: 390, height: 844 })
-  const navButton = page.locator('.nx-sap-toolbar button[aria-label="Abrir navegación"]')
-  await expect(navButton).toBeVisible()
-  await navButton.click()
-  await expect(page.getByRole('dialog', { name: 'Navegación' })).toBeVisible()
+  const mobileNavigation = page.getByRole('navigation', { name: 'Navegación principal (móvil)' })
+  await expect(mobileNavigation).toBeVisible()
+  await expect(page.locator('.nx-sap-toolbar button[aria-label="Abrir navegación"]')).toBeHidden()
+  await mobileNavigation.getByRole('button', { name: 'Más' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Navegación' })
+  await expect(drawer).toBeVisible()
+  await expect(drawer.getByLabel('Empresa activa')).toBeVisible()
   const viewport = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
@@ -385,21 +388,32 @@ test('SAP menus and command results remain clickable outside compact bars', asyn
     await setTheme(page, theme.id)
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 })
-      await page.getByRole('menuitem', { name: 'Sistema', exact: true }).click()
-      await page
-        .getByRole('menu', { name: 'Sistema', exact: true })
-        .getByRole('menuitem', { name: 'Inicio', exact: true })
-        .click()
-      await expect(page).toHaveURL(/\/inicio/)
-      const command = page.getByRole('combobox', {
-        name: 'Comando: buscar módulo, documento o acción',
-      })
-      await command.fill('Inventario')
-      await page
-        .getByRole('listbox', { name: 'Resultados del comando' })
-        .getByRole('button', { name: /Inventario/ })
-        .click()
-      await expect(page).toHaveURL(/\/abastecimiento\/inventario/)
+      if (width === 390) {
+        const mobileNavigation = page.getByRole('navigation', { name: 'Navegación principal (móvil)' })
+        await expect(mobileNavigation).toBeVisible()
+        await mobileNavigation.getByRole('button', { name: 'Más' }).click()
+        const drawer = page.getByRole('dialog', { name: 'Navegación' })
+        await expect(drawer).toBeVisible()
+        await expect(drawer.getByLabel('Empresa activa')).toBeVisible()
+        await drawer.getByRole('button', { name: 'Cerrar', exact: true }).click()
+        await expect(drawer).toBeHidden()
+      } else {
+        await page.getByRole('menuitem', { name: 'Sistema', exact: true }).click()
+        await page
+          .getByRole('menu', { name: 'Sistema', exact: true })
+          .getByRole('menuitem', { name: 'Inicio', exact: true })
+          .click()
+        await expect(page).toHaveURL(/\/inicio/)
+        const command = page.getByRole('combobox', {
+          name: 'Comando: buscar módulo, documento o acción',
+        })
+        await command.fill('Inventario')
+        await page
+          .getByRole('listbox', { name: 'Resultados del comando' })
+          .getByRole('button', { name: /Inventario/ })
+          .click()
+        await expect(page).toHaveURL(/\/abastecimiento\/inventario/)
+      }
     }
   }
 })
