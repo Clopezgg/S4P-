@@ -60,7 +60,7 @@ describe('ProjectsPage', () => {
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/nombre de la compañía/i), company.name)
     await user.click(screen.getByRole('button', { name: /crear compañía y habilitar operaciones/i }))
-    expect(await screen.findByRole('button', { name: 'Proyecto con configuración completa' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Nuevo proyecto' })).toBeInTheDocument()
   })
 
   it('creates a basic draft project directly without requiring evidence storage', async () => {
@@ -142,7 +142,7 @@ describe('ProjectsPage', () => {
     )
 
     render(renderApp('/proyectos'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Proyecto con configuración completa' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo proyecto' }))
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Puente Río Grande')
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     // Paso 2 — ubicación real.
@@ -171,7 +171,7 @@ describe('ProjectsPage', () => {
     })
 
     render(renderApp('/proyectos'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Proyecto con configuración completa' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo proyecto' }))
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'WBS incompleta')
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
