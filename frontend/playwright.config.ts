@@ -59,6 +59,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'iphone-webkit',
+      testMatch: /mobile-workspace\.spec\.ts/,
+      use: { ...devices['iPhone 13'] },
+    },
+    {
       name: 'firefox',
       testMatch: /cross-browser-critical\.spec\.ts/,
       use: { ...devices['Desktop Firefox'] },

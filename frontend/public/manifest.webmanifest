@@ -1,0 +1,19 @@
+{
+  "name": "S4P Enterprise Platform",
+  "short_name": "S4P",
+  "description": "ERP empresarial seguro para operaciones y finanzas",
+  "start_url": "/inicio",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eef3f9",
+  "theme_color": "#101D35",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
