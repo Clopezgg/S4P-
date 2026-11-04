@@ -41,7 +41,7 @@ test('mobile finance demo registers remittance and expense, downloads a valid ex
   const buffer = await readFile(await download.path())
   expect(buffer.subarray(0, 8).toString('ascii')).toBe('%PDF-1.4')
   const pdfString = buffer.toString('latin1')
-  expect(pdfString).toContain('COMPROBANTE') // original Nexora-style document heading
+  expect(pdfString).toContain('Comprobante') // original Nexora-style document footer
   expect(pdfString).toContain('RECIBO DE INGRESO')
   expect(pdfString).toContain('Asiento contable')
   expect(pdfString).toContain('Evidencia de pago')
