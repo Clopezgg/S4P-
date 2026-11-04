@@ -18,7 +18,41 @@ import s4p_backup
 from app.services.backup_worker import _bridge, _json_call
 
 
+def _validate_empty_isolated_target(target_dsn: str):
+    """Fail closed before downloading or decrypting any production backup."""
+    target_env, target_id = s4p_backup.db_environment(target_dsn)
+    if target_id[0] not in ("localhost", "127.0.0.1"):
+        raise RuntimeError("Restore target must be a local isolated PostgreSQL instance")
+    if not target_id[2].startswith("s4p_restore_"):
+        raise RuntimeError("Target database name must start with s4p_restore_")
+
+    source_url = os.environ.get("DATABASE_URL")
+    if source_url:
+        _, source_id = s4p_backup.db_environment(source_url)
+        if source_id == target_id:
+            raise RuntimeError("Refusing to overwrite the source S4P database")
+
+    # Inspect metadata only. All target objects must be absent before restore.
+    # This prevents a partial import or overwrite of an existing local ERP.
+    sql = (
+        "SELECT count(*) FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid=c.relnamespace "
+        "WHERE n.nspname <> 'information_schema' "
+        "AND n.nspname NOT LIKE 'pg_%' "
+        "AND c.relkind IN ('r','p','v','m','S','f')"
+    )
+    result = subprocess.run(
+        ["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c", sql],
+        env=target_env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        text=True, check=True, timeout=30,
+    )
+    if result.stdout.strip() != "0":
+        raise RuntimeError("Restore target is not empty; refusing to modify it")
+    return target_env, target_id
+
+
 def restore_to_test_database(target_dsn: str) -> None:
+    target_env, target_id = _validate_empty_isolated_target(target_dsn)
     bridge = _bridge()
     latest = _json_call(bridge, "status")
     if not latest.get("available"):
@@ -33,16 +67,7 @@ def restore_to_test_database(target_dsn: str) -> None:
     if not isinstance(parts, list) or not parts or len(parts) > 9999:
         raise RuntimeError("Invalid backup chunk manifest")
 
-    target_env, target_id = s4p_backup.db_environment(target_dsn)
-    if target_id[0] not in ("localhost", "127.0.0.1"):
-        raise RuntimeError("Restore target must be a local isolated PostgreSQL instance")
-    # Disaster recovery must work even when the primary Render database has
-    # expired and its DATABASE_URL is no longer available.
-    source_url = os.environ.get("DATABASE_URL")
-    if source_url:
-        _, source_id = s4p_backup.db_environment(source_url)
-        if source_id == target_id:
-            raise RuntimeError("Refusing to overwrite the source S4P database")
+    # Disaster recovery also works after Render's source DATABASE_URL expires.
     key = s4p_backup.key_bytes()
 
     with tempfile.TemporaryDirectory(prefix="s4p-backup-restore-") as tmp:
@@ -67,7 +92,7 @@ def restore_to_test_database(target_dsn: str) -> None:
             raise RuntimeError("Whole-backup integrity failure")
         s4p_backup.decrypt_file(encrypted, decrypted, key)
         subprocess.run(
-            ["pg_restore", "--exit-on-error", "--no-owner", "--no-acl",
+            ["pg_restore", "--exit-on-error", "--single-transaction", "--no-owner", "--no-acl",
              "--dbname", target_id[2], str(decrypted)],
             check=True, env=target_env, timeout=180,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
