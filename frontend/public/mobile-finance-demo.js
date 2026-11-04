@@ -101,51 +101,264 @@
       container.appendChild(row);
     }
   }
-  function pdfText(text) {
-    return String(text || '').normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\x20-\x7e]/g, '?')
+  // Match the original Nexora/S4P PAYMENT VOUCHER presentation, not the old
+  // one-page mock slip. This preview remains DEMO-ONLY and never forges a
+  // verification QR, payment evidence, journal or fiscal authorisation.
+  function pdfText(value) {
+    return String(value === null || value === undefined ? '' : value)
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201c\u201d]/g, '"')
+      .replace(/[\u20ac]/g, 'EUR')
+      .replace(/[^\x20-\xff]/g, '?')
       .replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
   }
   function pdfDocument(record) {
-    // A self-contained 1-page PDF 1.4 generated locally; no CDN, API, cache or stored data.
-    const textAt = (text, x, y, size) => 'BT /F1 ' + size + ' Tf ' + x + ' ' + y + ' Td (' + pdfText(text) + ') Tj ET\n';
-    const separator = '0.75 0.82 0.88 RG 48 640 m 544 640 l S\n';
-    let stream = '0.06 0.12 0.21 rg\n';
-    stream += textAt('S4P | PLATAFORMA EMPRESARIAL', 48, 785, 19);
-    stream += '0.65 0.36 0.10 rg\n' + textAt('RECIBO DE DEMOSTRACION', 48, 751, 16);
-    stream += '0.35 0.40 0.48 rg\n' + textAt('SIN VALIDEZ CONTABLE, FISCAL NI BANCARIA', 48, 728, 10);
-    stream += '0.08 0.19 0.30 rg\n';
-    stream += textAt('Documento: ' + record.id, 48, 687, 12);
-    stream += textAt('Fecha: ' + record.date, 48, 665, 12);
-    stream += separator;
-    stream += textAt('Tipo: ' + names[record.type], 48, 604, 12);
-    stream += textAt((record.type === 'gasto' ? 'Beneficiario: ' : 'Recibido de: ') + record.party, 48, 578, 12);
-    stream += textAt('Monto: ' + money(record.amount, record.currency), 48, 552, 14);
-    stream += textAt('Moneda: ' + record.currency, 48, 525, 12);
-    stream += textAt('Referencia: ' + (record.reference || 'No registrada'), 48, 499, 12);
-    stream += textAt('Concepto:', 48, 469, 12);
-    // Avoid cutting long user descriptions beyond the printed page.
-    const summary = record.description.replace(/[\r\n]/g, ' ').slice(0, 160);
-    stream += textAt(summary.slice(0, 77), 48, 444, 11);
-    if (summary.length > 77) stream += textAt(summary.slice(77, 154), 48, 425, 11);
-    stream += '0.65 0.36 0.10 rg\n' + textAt('DATOS FICTICIOS - DOCUMENTO SOLO PARA VALIDAR LA INTERFAZ', 48, 115, 10);
-    stream += '0.4 0.46 0.55 rg\n' + textAt('No representa un pago, remesa, asiento contable ni recibo real.', 48, 94, 10);
+    // Original Nexora report: letter page, branded header + document metadata,
+    // beneficiary/payer, payment rows, strong total, evidence, signatures,
+    // audit footer, and a second accounting/evidence annex.
+    const pageWidth = 612;
+    const pageHeight = 792;
+    const navy = '0.043 0.153 0.290';
+    const blue = '0.090 0.412 0.824';
+    const muted = '0.310 0.380 0.463';
+    const lineColor = '0.863 0.898 0.937';
+    const ink = '0.106 0.153 0.200';
+    const faint = '0.949 0.965 0.984';
+    const gold = '0.714 0.490 0.192';
+    const isOutflow = record.type === 'gasto';
+    const typeTitle = isOutflow ? 'COMPROBANTE DE PAGO' : 'RECIBO DE INGRESO';
+    const totalLabel = isOutflow ? 'TOTAL PAGADO' : 'TOTAL RECIBIDO';
+    const paidToLabel = isOutflow ? 'PAGADO A / BENEFICIARIO' : 'RECIBIDO DE / REMITENTE';
+    const paidByLabel = isOutflow ? 'PAGADO POR' : 'RECIBIDO POR';
+    const subject = isOutflow ? 'Información del pago' : 'Información del ingreso';
+    const currencyText = money(record.amount, record.currency);
+    const dateParts = String(record.date).split('-');
+    const displayDate = dateParts.length === 3 ? dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0] : record.date;
+    const docNumber = 'S4P-' + record.id;
+    const pages = [];
 
-    // PDF objects and xref use ASCII-only strings, therefore byte offsets == string lengths.
-    let out = '%PDF-1.4\n%S4P-DEMO\n';
-    const offsets = [0];
-    const add = (id, body) => { offsets[id] = out.length; out += id + ' 0 obj\n' + body + '\nendobj\n'; };
-    add(1, '<< /Type /Catalog /Pages 2 0 R >>');
-    add(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-    add(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>');
-    add(4, '<< /Length ' + stream.length + ' >>\nstream\n' + stream + 'endstream');
-    add(5, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
-    const at = out.length;
-    out += 'xref\n0 6\n0000000000 65535 f \n';
-    for (let id = 1; id < 6; id++) out += String(offsets[id]).padStart(10, '0') + ' 00000 n \n';
-    out += 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + at + '\n%%EOF\n';
-    return new Blob([out], { type: 'application/pdf' });
+    function draw() {
+      const commands = [];
+      const add = (value) => commands.push(value);
+      function textAt(value, x, y, size, options) {
+        const opts = options || {};
+        const c = opts.color || ink;
+        const font = opts.bold ? 'F2' : 'F1';
+        add(c + ' rg\nBT /' + font + ' ' + size + ' Tf 1 0 0 1 ' + x + ' ' + y
+          + ' Tm (' + pdfText(value) + ') Tj ET\n');
+      }
+      function fillRect(x, y, w, height, color) {
+        add(color + ' rg\n' + x + ' ' + y + ' ' + w + ' ' + height + ' re f\n');
+      }
+      function strokeRect(x, y, w, height, color, weight) {
+        add((color || lineColor) + ' RG\n' + (weight || 0.8) + ' w\n'
+          + x + ' ' + y + ' ' + w + ' ' + height + ' re S\n');
+      }
+      function rule(x1, y1, x2, y2, color, weight) {
+        add((color || lineColor) + ' RG\n' + (weight || 0.8) + ' w\n'
+          + x1 + ' ' + y1 + ' m ' + x2 + ' ' + y2 + ' l S\n');
+      }
+      function chunks(value, limit, maxLines) {
+        const source = String(value || '—').replace(/\s+/g, ' ').trim();
+        const words = source.split(' ');
+        const lines = [];
+        let active = '';
+        for (let word of words) {
+          while (word.length > limit) {
+            if (active) { lines.push(active); active = ''; }
+            lines.push(word.slice(0, limit));
+            word = word.slice(limit);
+          }
+          if (!word) continue;
+          if (active.length + word.length + (active ? 1 : 0) > limit) {
+            lines.push(active);
+            active = word;
+          } else {
+            active += (active ? ' ' : '') + word;
+          }
+        }
+        if (active) lines.push(active);
+        if (maxLines && lines.length > maxLines) {
+          const clipped = lines.slice(0, maxLines);
+          clipped[maxLines - 1] = clipped[maxLines - 1].slice(0, Math.max(0, limit - 3)) + '...';
+          return clipped;
+        }
+        return lines.length ? lines : ['—'];
+      }
+      function wrapped(value, x, y, maxChars, size, opts, maxLines) {
+        const items = chunks(value, maxChars, maxLines);
+        items.forEach((part, i) => textAt(part, x, y - i * (size + 4), size, opts));
+        return y - items.length * (size + 4);
+      }
+      function section(title, y) {
+        textAt(title, 50, y, 11, { bold: true, color: navy });
+        rule(50, y - 7, 560, y - 7, blue, 1.25);
+      }
+      function footer(number) {
+        rule(50, 60, 562, 60, lineColor, 0.75);
+        textAt('S4P  ·  Comprobante ' + record.id + '  ·  NO VERIFICABLE - DEMOSTRACIÓN', 50, 44, 7.4, { color: muted });
+        textAt('Página ' + number, 514, 44, 7.4, { color: muted });
+      }
+      return { add, textAt, fillRect, strokeRect, rule, section, wrapped, footer,
+        output: () => commands.join('') };
+    }
+
+    // Page one - restore Nexora's corporate voucher arrangement.
+    const one = draw();
+    one.textAt('S4P', 50, 741, 22, { bold: true, color: navy });
+    one.textAt('PLATAFORMA EMPRESARIAL', 50, 721, 9.2, { bold: true, color: blue });
+    one.textAt('Empresa de demostración', 50, 702, 10, { bold: true });
+    one.textAt('Honduras  ·  Identidad y cifras ficticias', 50, 686, 8, { color: muted });
+    one.fillRect(348, 644, 211, 112, faint);
+    one.strokeRect(348, 644, 211, 112, lineColor);
+    one.textAt(typeTitle, 358, 735, 9, { bold: true, color: blue });
+    one.textAt('N.º ' + docNumber, 358, 716, 13, { bold: true, color: navy });
+    one.textAt('Emitido ' + displayDate, 358, 696, 8.3, { color: muted });
+    one.textAt('Contabilizado: no aplica', 358, 680, 8.3, { color: muted });
+    one.textAt('Estado: DEMOSTRACIÓN', 358, 664, 8.3, { bold: true, color: gold });
+
+    one.strokeRect(479, 562, 78, 69, lineColor, 0.8);
+    one.textAt('QR', 505, 599, 13, { bold: true, color: muted });
+    one.textAt('NO ACTIVO', 487, 579, 8.3, { bold: true, color: gold });
+    one.rule(50, 551, 559, 551, navy, 1.8);
+    one.textAt('La verificación por QR corresponde solo a comprobantes oficiales emitidos por el ERP.', 50, 536, 8, { color: muted });
+
+    one.textAt(paidToLabel, 50, 503, 8, { bold: true, color: muted });
+    one.wrapped(record.party, 50, 487, 40, 10.5, { bold: true, color: ink }, 2);
+    one.textAt(paidByLabel, 326, 503, 8, { bold: true, color: muted });
+    one.wrapped('Empresa S4P (demostración)', 326, 487, 31, 9.8, { bold: true, color: ink }, 2);
+    one.section(subject, 452);
+
+    const info = [
+      ['Concepto', record.description],
+      ['Ámbito', 'Operación general · DEMO'],
+      ['Método', isOutflow ? 'Efectivo (simulado)' : 'Ingreso simulado'],
+    ];
+    if (record.type === 'remesa') {
+      info.push(['Remesadora', record.provider || 'Sin especificar']);
+    }
+    if (record.category) {
+      info.push(['Categoría', record.category]);
+    }
+    if (record.reference) {
+      info.push(['Referencia', record.reference]);
+    }
+    let y = 425;
+    for (const [label, value] of info) {
+      one.textAt(label, 52, y, 8.3, { bold: true, color: muted });
+      y = one.wrapped(value, 171, y, 62, 9.6, { color: ink }, 2) - 10;
+    }
+    const totalY = Math.max(224, Math.min(270, y - 12));
+    one.rule(50, totalY + 36, 560, totalY + 36, navy, 1.5);
+    one.rule(50, totalY - 11, 560, totalY - 11, navy, 1.5);
+    one.textAt(totalLabel, 52, totalY + 6, 9.2, { bold: true, color: muted });
+    one.textAt(currencyText, 359, totalY, 19, { bold: true, color: navy });
+    const evidenceY = totalY - 48;
+    one.section('Evidencia de pago', evidenceY);
+    one.textAt('Sin evidencia adjunta: documento generado en una vista de prueba.', 52, evidenceY - 23, 8.7, { color: muted });
+    const signatureY = Math.min(126, evidenceY - 80);
+    const positions = [50, 221, 392];
+    const signatures = [
+      ['Preparado por', 'S4P · DEMO'],
+      ['Aprobado por', 'Pendiente de aprobación'],
+      ['Recibí conforme', record.party],
+    ];
+    signatures.forEach(([label, name], index) => {
+      const x = positions[index];
+      one.rule(x, signatureY + 9, x + 151, signatureY + 9, muted, 0.75);
+      one.textAt(label, x, signatureY - 6, 8, { bold: true, color: muted });
+      one.wrapped(name, x, signatureY - 21, 23, 8.5, { color: ink }, 2);
+    });
+    one.textAt('SIN VALIDEZ CONTABLE, FISCAL NI BANCARIA · NO HAY FIRMA NI APROBACIÓN REAL',
+      50, 76, 8.5, { bold: true, color: gold });
+    one.footer(1);
+    pages.push(one.output());
+
+    // Page two - same accounting/evidence appendix as the Nexora template.
+    // Example entries are illustrative only, never actual journal postings.
+    const two = draw();
+    two.textAt('S4P', 50, 746, 21, { bold: true, color: navy });
+    two.textAt('ANEXO AL ' + typeTitle, 50, 725, 11.5, { bold: true, color: blue });
+    two.textAt('Documento ' + docNumber + ' · ' + displayDate, 50, 703, 9.5, { color: muted });
+    two.rule(50, 688, 560, 688, navy, 1.6);
+    two.section('Asiento contable (ilustrativo - NO contabilizado)', 661);
+    two.fillRect(50, 598, 510, 35, faint);
+    two.textAt('Código / Cuenta', 58, 612, 9, { bold: true, color: muted });
+    two.textAt('Débito', 360, 612, 9, { bold: true, color: muted });
+    two.textAt('Crédito', 469, 612, 9, { bold: true, color: muted });
+    const debitAccount = isOutflow ? '5100 - Gastos generales (ejemplo)' : '1101 - Caja / Banco (ejemplo)';
+    const creditAccount = isOutflow ? '1101 - Caja / Banco (ejemplo)' : '3100 - Origen de fondos (ejemplo)';
+    two.textAt(debitAccount, 58, 577, 9.2);
+    two.textAt(currencyText, 360, 577, 9.2);
+    two.rule(50, 565, 560, 565, lineColor, 0.5);
+    two.textAt(creditAccount, 58, 547, 9.2);
+    two.textAt(currencyText, 469, 547, 9.2);
+    two.rule(50, 532, 560, 532, lineColor, 0.65);
+    two.textAt('Totales', 58, 509, 9.5, { bold: true, color: navy });
+    two.textAt(currencyText, 360, 509, 9.5, { bold: true, color: navy });
+    two.textAt(currencyText, 469, 509, 9.5, { bold: true, color: navy });
+    two.rule(50, 495, 560, 495, navy, 0.8);
+    two.wrapped('Doble partida ilustrativa. No existe documento contable registrado,',
+      50, 475, 86, 8.5, { color: muted }, 2);
+    two.textAt('sello de aprobación, movimiento bancario ni afectación a la tesorería real.',
+      50, 463, 8.5, { color: muted });
+    two.section('Evidencia de pago', 421);
+    two.textAt('No existe archivo de evidencia real porque esta operación es una demostración.', 52, 397, 9, { color: muted });
+    two.section('Datos del documento', 349);
+    const appendix = [
+      ['Comprobante', docNumber],
+      ['Beneficiario', record.party],
+      ['Monto', currencyText],
+      ['Fecha', displayDate],
+      ['Referencia', record.reference || 'Sin referencia'],
+      ['Verificación', 'No disponible en la demostración'],
+    ];
+    let rowY = 320;
+    for (const [name, value] of appendix) {
+      two.textAt(name, 52, rowY, 8.5, { bold: true, color: muted });
+      two.wrapped(value, 175, rowY, 58, 9, {}, 1);
+      rowY -= 24;
+    }
+    two.fillRect(50, 105, 510, 48, faint);
+    two.textAt('SOLO VALIDACIÓN VISUAL DEL FORMATO NEXORA / S4P', 60, 133, 10, { bold: true, color: gold });
+    two.textAt('SIN VALIDEZ CONTABLE, FISCAL NI BANCARIA. No usar como recibo real.',
+      60, 113, 8.5, { color: muted });
+    two.footer(2);
+    pages.push(two.output());
+
+    // PDF 1.4 with searchable, selectable text and two US-letter pages.
+    // All stored characters use the WinAnsi-compatible 1-byte range, so
+    // object offsets and /Length are byte-accurate even for Spanish accents.
+    let out = '%PDF-1.4\n%S4P-NEXORA-TEMPLATE-DEMO\n';
+    const positionsOut = [0];
+    function addObject(number, content) {
+      positionsOut[number] = out.length;
+      out += number + ' 0 obj\n' + content + '\nendobj\n';
+    }
+    addObject(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    addObject(2, '<< /Type /Pages /Kids [3 0 R 6 0 R] /Count 2 >>');
+    const fontResources = '/Resources << /Font << /F1 4 0 R /F2 5 0 R >> >>';
+    addObject(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageWidth + ' ' + pageHeight
+      + '] ' + fontResources + ' /Contents 7 0 R >>');
+    addObject(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    addObject(5, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    addObject(6, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageWidth + ' ' + pageHeight
+      + '] ' + fontResources + ' /Contents 8 0 R >>');
+    addObject(7, '<< /Length ' + pages[0].length + ' >>\nstream\n' + pages[0] + 'endstream');
+    addObject(8, '<< /Length ' + pages[1].length + ' >>\nstream\n' + pages[1] + 'endstream');
+    const xrefOffset = out.length;
+    out += 'xref\n0 9\n0000000000 65535 f \n';
+    for (let number = 1; number <= 8; number++) {
+      out += String(positionsOut[number]).padStart(10, '0') + ' 00000 n \n';
+    }
+    out += 'trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n'
+      + xrefOffset + '\n%%EOF\n';
+    return new Blob(
+      [Uint8Array.from(out, (character) => character.charCodeAt(0) & 255)],
+      { type: 'application/pdf' },
+    );
   }
   function downloadReceipt(record) {
     const file = pdfDocument(record);

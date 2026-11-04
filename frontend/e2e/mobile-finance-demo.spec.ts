@@ -40,7 +40,19 @@ test('mobile finance demo registers remittance and expense, downloads a valid ex
   expect(download.suggestedFilename()).toMatch(/^S4P-RECIBO-DEMO-DEMO-\d{4}\.pdf$/)
   const buffer = await readFile(await download.path())
   expect(buffer.subarray(0, 8).toString('ascii')).toBe('%PDF-1.4')
-  expect(buffer.toString('ascii')).toContain('SIN VALIDEZ CONTABLE')
+  const pdfString = buffer.toString('latin1')
+  expect(pdfString).toContain('COMPROBANTE') // original Nexora-style document heading
+  expect(pdfString).toContain('RECIBO DE INGRESO')
+  expect(pdfString).toContain('Asiento contable')
+  expect(pdfString).toContain('Evidencia de pago')
+  expect(pdfString).toContain('Preparado por')
+  expect(pdfString).toContain('Aprobado por')
+  expect(pdfString).toContain('Recibí conforme')
+  expect(pdfString).toContain('SIN VALIDEZ CONTABLE')
+  expect(pdfString).toContain('/MediaBox [0 0 612 792]')
+  expect(pdfString).toContain('/Count 2')
+  expect((pdfString.match(/\/Type \/Page\b/g) ?? []).length).toBe(2)
+  expect(pdfString).not.toContain('NEXORA GROUP') // branding is S4P, not a legacy logo
   expect(buffer.toString('ascii')).toContain('%%EOF')
   await expect(page.getByText('Recibo de ingreso · Persona ficticia')).toBeVisible()
   const dimensions = await page.evaluate(() => ({
