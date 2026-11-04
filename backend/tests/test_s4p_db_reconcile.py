@@ -1,5 +1,5 @@
 """Pure regression tests for fail-closed production DB parity decisions."""
-from s4p_db_reconcile import compare_snapshots, _parse_dsn
+from s4p_db_reconcile import _parse_dsn, compare_snapshots
 
 
 def _baseline():
