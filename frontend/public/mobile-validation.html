@@ -26,6 +26,7 @@
     @media(max-width:340px){.brand small{display:none}.nav-btn{font-size:9px}.stat{padding:11px 9px}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
   </style>
+  <link rel="stylesheet" href="/mobile-finance-demo.css">
 </head>
 <body>
 <div class="outer">
@@ -51,10 +52,17 @@
         <div class="rowitem"><div><strong><span class="dot"></span>Liquidaciones del período</strong><small>Documentos vinculados</small></div><b>08</b></div>
         <div class="rowitem"><div><strong><span class="dot"></span>Conciliaciones pendientes</strong><small>Contabilidad y bancos</small></div><b>02</b></div>
       </div>
-      <div class="card"><h2>Accesos rápidos</h2><div class="actions"><button class="action" data-to="projects">Proyectos</button><button class="action alt" data-to="finances">Finanzas</button></div></div>
+      <div class="card"><h2>Accesos rápidos</h2><div class="actions"><button class="action" data-to="projects">Proyectos</button><button class="action alt" data-to="finances">Finanzas</button></div>
+      <div class="finance-home-actions"><button type="button" class="finance-action" data-flow="remesa"><span aria-hidden="true">↓</span> Registrar remesa</button><button type="button" class="finance-action" data-flow="gasto"><span aria-hidden="true">↑</span> Registrar gasto</button><button type="button" class="finance-action" data-flow="recibo"><span aria-hidden="true">▧</span> Recibo en PDF</button></div></div>
     </section>
     <section id="finances" class="section"><div class="eyebrow">Operación financiera</div><h1 class="heading">Finanzas</h1><p class="sub">Tesorería · Remesas · Recibos · Pagos</p>
+      <div class="finance-action-grid" aria-label="Operaciones financieras de demostración">
+        <button type="button" class="finance-action" data-flow="remesa"><span aria-hidden="true">↓</span><strong>Registrar remesa</strong><small>Entrada de dinero</small></button>
+        <button type="button" class="finance-action" data-flow="gasto"><span aria-hidden="true">↑</span><strong>Registrar gasto</strong><small>Salida de dinero</small></button>
+        <button type="button" class="finance-action" data-flow="recibo"><span aria-hidden="true">▧</span><strong>Generar recibo PDF</strong><small>Descarga de ejemplo</small></button>
+      </div>
       <div class="grid"><div class="stat"><div class="symbol">▣</div><label>Bancos</label><b>L 248,500</b></div><div class="stat"><div class="symbol">✓</div><label>Por conciliar</label><b>02</b></div></div>
+      <div class="card" id="finance-demo-results" hidden><h2>Operaciones registradas en esta demostración <small>Memoria temporal</small></h2><div id="finance-demo-records" aria-live="polite"></div></div>
       <div class="card"><h2>Últimas operaciones <small>Ejemplos</small></h2><div class="rowitem"><div><strong>Ingreso de remesa</strong><small>REM-2026-001 · Aprobado</small></div><b>L 18,500</b></div><div class="rowitem"><div><strong>Pago a proveedor</strong><small>PAG-2026-024 · Registrado</small></div><b>L 9,200</b></div><div class="rowitem"><div><strong>Recibo</strong><small>REC-2026-015 · Emitido</small></div><span class="pill">Completado</span></div></div>
       <div class="card"><h2>Gestión financiera</h2><div class="actions"><button class="action" data-quick="Registrar remesa">Remesa</button><button class="action alt" data-quick="Nuevo recibo">Recibo</button></div><p class="smallnote">Los botones muestran el flujo de interfaz; no crean operaciones reales.</p></div>
     </section>
@@ -78,7 +86,7 @@
   <p class="smallnote">Esta vista no solicita contraseñas. Inicie sesión únicamente en el ERP oficial, una vez certificado.</p>
 </aside></div>
 <div id="sheet-scrim" class="scrim" aria-hidden="true"><div class="sheetwrap"><div class="sheet" role="dialog" aria-modal="true" aria-label="Crear"><div class="top"><h2>Crear registro</h2><button class="close" data-close aria-label="Cerrar ventana">×</button></div>
-  <p class="smallnote">Interacciones demostrativas. No se almacenan datos.</p><button class="menu-link" data-quick="Nuevo proyecto">▤ &nbsp; Nuevo proyecto</button><button class="menu-link" data-quick="Registrar remesa">▣ &nbsp; Registrar remesa</button><button class="menu-link" data-quick="Nuevo comprobante">▧ &nbsp; Nuevo comprobante</button><button class="menu-link" data-quick="Nueva evidencia">◫ &nbsp; Nueva evidencia</button>
+  <p class="smallnote">Interacciones demostrativas. No se envían datos a producción.</p><button class="menu-link" data-flow="remesa">↓ &nbsp; Registrar remesa</button><button class="menu-link" data-flow="gasto">↑ &nbsp; Registrar gasto</button><button class="menu-link" data-flow="recibo">▧ &nbsp; Generar recibo PDF</button><button class="menu-link" data-quick="Nuevo proyecto">▤ &nbsp; Nuevo proyecto</button><button class="menu-link" data-quick="Nueva evidencia">◫ &nbsp; Nueva evidencia</button>
 </div></div></div>
 <script>
 (function(){
@@ -94,5 +102,20 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
 })();
 </script>
+<div id="finance-demo-modal" class="finance-demo-overlay" hidden>
+  <section class="finance-demo-dialog" role="dialog" aria-modal="true" aria-labelledby="finance-demo-title">
+    <header class="finance-demo-dialog__header"><div><small>OPERACIÓN SIMULADA</small><h2 id="finance-demo-title">Registro financiero</h2></div>
+      <button type="button" class="finance-demo-close" data-finance-close aria-label="Cerrar formulario">×</button>
+    </header>
+    <p id="finance-demo-description" class="finance-demo-description">Ningún dato se enviará al sistema real.</p>
+    <form id="finance-demo-form" novalidate>
+      <div id="finance-demo-fields"></div>
+      <p class="finance-demo-disclaimer">Vista de prueba · Sin efecto contable ni validez fiscal.</p>
+      <div class="finance-demo-dialog__actions"><button type="button" class="action alt" data-finance-close>Cancelar</button><button type="submit" class="action" id="finance-demo-submit">Guardar demostración</button></div>
+    </form>
+  </section>
+</div>
+<div id="finance-demo-toast" class="finance-demo-toast" role="status" aria-live="polite" hidden></div>
+<script src="/mobile-finance-demo.js" defer></script>
 </body>
 </html>

@@ -75,6 +75,7 @@ jobs:
               'critical-journey.spec.ts',
               'cross-browser-critical.spec.ts',
               'mobile-workspace.spec.ts',
+              'mobile-finance-demo.spec.ts',
               'overdue-installment-payment.spec.ts',
               'sap-gui-theme.spec.ts',
             ],
@@ -94,7 +95,7 @@ jobs:
           if [ "$S4P_E2E_SUITE" = "visual" ]; then
             npx playwright test e2e/sap-gui-visual.spec.ts e2e/visual-audit.spec.ts
           else
-            npx playwright test e2e/accessibility.spec.ts e2e/critical-journey.spec.ts e2e/cross-browser-critical.spec.ts e2e/mobile-workspace.spec.ts e2e/overdue-installment-payment.spec.ts e2e/sap-gui-theme.spec.ts
+            npx playwright test e2e/accessibility.spec.ts e2e/critical-journey.spec.ts e2e/cross-browser-critical.spec.ts e2e/mobile-workspace.spec.ts e2e/mobile-finance-demo.spec.ts e2e/overdue-installment-payment.spec.ts e2e/sap-gui-theme.spec.ts
           fi
       - name: Preserve isolated QA failure evidence
         if: always()

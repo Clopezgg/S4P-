@@ -297,7 +297,7 @@ export function VouchersPage() {
       const url = URL.createObjectURL(blob)
       const anchor = window.document.createElement('a')
       anchor.href = url
-      anchor.download = `NEXORA-${document?.documentNumber ?? 'comprobante'}.pdf`
+      anchor.download = `S4P-${document?.documentNumber ?? 'comprobante'}.pdf`
       anchor.rel = 'noopener'
       window.document.body.appendChild(anchor)
       anchor.click()

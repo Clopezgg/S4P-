@@ -17,7 +17,7 @@ interface QuickAction {
 /** Quick Create (§10) — sólo acciones reales y funcionales, filtradas por
  * permisos. Cada una navega a la pantalla del módulo correspondiente. */
 const ACTIONS: QuickAction[] = [
-  { label: 'Nuevo comprobante', icon: 'receipt', to: '/finanzas/comprobantes', requiredAny: ['treasury.voucher:read'] },
+  { label: 'Comprobante de pago PDF', icon: 'receipt', to: '/finanzas/comprobantes', requiredAny: ['treasury.voucher:read'] },
   { label: 'Registrar gasto', icon: 'card', to: '/finanzas/tesoreria', requiredAny: ['treasury.general_expense:create', 'treasury.account:read'] },
   { label: 'Registrar remesa', icon: 'bank', to: '/finanzas/tesoreria', requiredAny: ['treasury.remittance:create', 'treasury.account:read'] },
   { label: 'Nueva factura de proveedor', icon: 'file', to: '/finanzas/cuentas-por-pagar', requiredAny: ['ap.supplier_invoice:read'] },
