@@ -30,6 +30,7 @@ import { SapButton } from './SapButton';
 import { Topbar } from '../../layouts/Topbar';
 import { BottomNav } from '../../layouts/BottomNav';
 import { QuickCreate } from '../../layouts/QuickCreate';
+import { MobileCompanyPicker } from '../../layouts/MobileCompanyPicker';
 import { displayUserName } from '../../utils/identityLabels';
 import '../../sap-gui/tokens/sap-gui-tokens.css';
 import './SapWorkstation.css';
@@ -49,7 +50,7 @@ export const SapWorkstation = forwardRef<HTMLDivElement, SapWorkstationProps>(
   ({ children }, ref) => {
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [quickCreateOpen, setQuickCreateOpen] = useState(false);
-    const { activeCompanyId, companies, setActiveCompanyId } = useActiveCompany();
+    const { activeCompanyId } = useActiveCompany();
     const { user, logout } = useAuth();
     const visibleGroups = filterNavGroups(user?.permissions);
 
@@ -162,23 +163,7 @@ export const SapWorkstation = forwardRef<HTMLDivElement, SapWorkstationProps>(
           side="left"
           onClose={() => setMobileNavOpen(false)}
         >
-          <div className="nx-sap-mobile-company">
-            <label htmlFor="s4p-mobile-company">Empresa activa</label>
-            <select
-              id="s4p-mobile-company"
-              value={activeCompanyId ?? ''}
-              onChange={(event) => {
-                setActiveCompanyId(event.target.value || null);
-                setMobileNavOpen(false);
-              }}
-              disabled={companies.length === 0}
-            >
-              {!activeCompanyId ? <option value="">Seleccionar empresa</option> : null}
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>{company.name}</option>
-              ))}
-            </select>
-          </div>
+          <MobileCompanyPicker onSelected={() => setMobileNavOpen(false)} />
           <SapTree groups={filterNavGroups(user?.permissions)} variant="drawer" onNavigate={() => setMobileNavOpen(false)} />
           <div className="nx-sap-drawer__footer">
             <div className="nx-sap-drawer__user">

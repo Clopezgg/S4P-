@@ -9,7 +9,7 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/inicio/, { timeout: 15_000 })
 }
 
-async function selectSapGui(page: Page) {
+async function selectTheme(page: Page, themeId: string) {
   const response = await page.request.post('/api/edit-access/verify', {
     data: { token: process.env.E2E_EDIT_ACCESS_TOKEN },
   })
@@ -17,11 +17,11 @@ async function selectSapGui(page: Page) {
   const { capability } = (await response.json()) as { capability: string }
   const result = await page.request.put('/api/me/preferences', {
     headers: { 'X-Nexora-Edit-Access': capability },
-    data: { themeId: 'sap-gui-horizon', density: 'compact' },
+    data: { themeId, density: 'compact' },
   })
   expect(result.ok(), await result.text()).toBeTruthy()
   await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-nx-family', 'sap-gui')
+  await expect(page.locator('html')).toHaveAttribute('data-nx-theme', themeId)
 }
 
 async function noDocumentOverflow(page: Page, label: string) {
@@ -35,7 +35,7 @@ async function noDocumentOverflow(page: Page, label: string) {
 test('mobile S4P SAP navigation, company selector and create sheet remain usable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await signIn(page)
-  await selectSapGui(page)
+  await selectTheme(page, 'sap-gui-horizon')
   const navigation = page.getByRole('navigation', { name: 'Navegación principal (móvil)' })
   await expect(navigation).toBeVisible()
   await expect(navigation.getByRole('link', { name: 'Inicio' })).toBeVisible()
@@ -62,5 +62,25 @@ test('mobile S4P SAP navigation, company selector and create sheet remain usable
       await noDocumentOverflow(page, route + ' @' + viewport)
       await expect(navigation).toBeVisible()
     }
+  }
+})
+
+test('modern mobile workspace offers navigation and safe company switching', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 })
+  await signIn(page)
+  await selectTheme(page, 's4p-horizon-light')
+  const nav = page.getByRole('navigation', { name: 'Navegación principal (móvil)' })
+  await expect(nav).toBeVisible()
+  await nav.getByRole('button', { name: 'Más' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Navegación' })
+  await expect(drawer.getByLabel('Empresa activa')).toBeVisible()
+  await drawer.getByRole('button', { name: 'Cerrar', exact: true }).click()
+  await nav.getByRole('button', { name: 'Crear' }).click()
+  await expect(page.getByRole('dialog', { name: 'Crear' })).toBeVisible()
+  await page.getByRole('dialog', { name: 'Crear' }).getByRole('button', { name: 'Cerrar', exact: true }).click()
+  for (const width of [360, 390, 430, 768]) {
+    await page.setViewportSize({ width, height: 844 })
+    await noDocumentOverflow(page, 'Modern mobile @' + width)
+    await expect(nav).toBeVisible()
   }
 })

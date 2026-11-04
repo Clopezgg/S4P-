@@ -5,6 +5,7 @@ import { Topbar } from './Topbar'
 import { NavList } from './NavList'
 import { BottomNav } from './BottomNav'
 import { QuickCreate } from './QuickCreate'
+import { MobileCompanyPicker } from './MobileCompanyPicker'
 import { SapWorkstation } from './sap'
 import { filterNavGroups } from '../app/navigation'
 import { Button, CommandPalette, Drawer, type CommandItem } from '../design-system'
@@ -80,6 +81,7 @@ export function AppLayout() {
         side="left"
         onClose={() => setMobileNavOpen(false)}
       >
+        <MobileCompanyPicker onSelected={() => setMobileNavOpen(false)} />
         <NavList variant="drawer" onNavigate={() => setMobileNavOpen(false)} />
         <div className="nx-drawer__footer">
           <div className="nx-drawer__user">
