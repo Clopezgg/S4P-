@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#101d35">
+  <title>S4P · Validación de interfaz móvil</title>
+  <style>
+    :root{font:14px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#142943;background:#eff3f8;--navy:#101d35;--blue:#153a65;--gold:#c9a05a;--muted:#64748b;--safe:env(safe-area-inset-bottom,0px)}
+    *{box-sizing:border-box}body{margin:0;min-width:280px;-webkit-text-size-adjust:100%}button,select{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #62a8fb;outline-offset:2px}button:disabled{opacity:.5;cursor:not-allowed}
+    .outer{max-width:720px;min-height:100dvh;margin:auto;background:#f2f5f9;box-shadow:0 0 35px #081a3212;padding-bottom:calc(96px + var(--safe))}
+    .banner{background:#fdf4df;color:#624815;padding:8px 14px;font-size:11px;font-weight:700;text-align:center;border-bottom:1px solid #ead19c}
+    .header{background:linear-gradient(120deg,#101d35,#23496c);color:white;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 14px;border-bottom:3px solid var(--gold);box-shadow:0 5px 16px #081a3230}
+    .headrow{display:flex;align-items:center;gap:9px}.menu-btn,.bell{border:1px solid #ffffff27;color:white;background:#ffffff15;width:44px;height:44px;border-radius:12px;flex:none;font-size:22px;display:grid;place-items:center}.brand{display:flex;gap:9px;align-items:center;min-width:0;flex:1}.brand img{width:35px;height:35px;object-fit:contain;background:#ffffff15;padding:4px;border:1px solid #c9a05a75;border-radius:10px}.brand strong{display:block;font-size:19px;letter-spacing:.03em}.brand small{display:block;font-size:10px;color:#bdd0e5;line-height:1.1}.project-picker{margin-top:12px;width:100%;height:46px;border:1px solid #ffffff40;background:#ffffff1f;color:white;border-radius:12px;padding:0 12px;font-size:16px}.project-picker option{color:#102844}
+    main{padding:17px 14px} .eyebrow{text-transform:uppercase;color:#8a6a34;font-size:10px;letter-spacing:.14em;font-weight:800}.heading{font-size:23px;line-height:1.1;letter-spacing:-.04em;margin:4px 0 5px}.sub{color:#6a7c92;font-size:12px;margin:0 0 17px}
+    .chip{display:inline-flex;align-items:center;padding:5px 9px;border-radius:20px;background:#f4e8d3;color:#805b20;font-size:10px;font-weight:800}.section{display:none}.section.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{min-width:0;background:white;border:1px solid #e0e7ef;border-radius:14px;padding:13px 12px;box-shadow:0 3px 12px #122c4910}.stat .symbol{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#ecf3fd;color:#234a79;font-size:17px}.stat label{display:block;margin-top:10px;color:#617188;font-size:10px;font-weight:700;min-height:28px}.stat b{display:block;font-size:clamp(15px,4.1vw,21px);letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat em{font-style:normal;font-size:10px;color:#188460}
+    .card{margin-top:13px;background:white;border:1px solid #e1e8f0;border-radius:14px;padding:15px 14px;box-shadow:0 3px 14px #1429430c}.card h2{font-size:14px;margin:0 0 13px;display:flex;align-items:center;justify-content:space-between}.card h2 small{font-size:10px;color:#718196;font-weight:600}.rowitem{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 0;border-top:1px solid #edf0f5}.rowitem:first-of-type{border:0}.rowitem strong{font-size:12px;display:block}.rowitem small{font-size:11px;color:#687a8e;display:block}.rowitem b{font-size:12px;white-space:nowrap}.dot{width:9px;height:9px;border-radius:50%;background:#16a37a;display:inline-block;margin-right:7px}.dot.warn{background:#db9b37}.action{background:#153a65;color:white;border:0;border-radius:11px;min-height:44px;padding:10px 14px;font-weight:750}.action.alt{background:#eaf1fa;color:#153a65}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions>*{flex:1}.smallnote{margin:12px 0 0;font-size:11px;color:#758398}
+    .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:720px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:3px;background:#fff;border-top:1px solid #e0e7ee;padding:7px 7px max(8px,var(--safe));min-height:70px;box-shadow:0 -4px 19px #1028441a;z-index:20}
+    .nav-btn{min-width:0;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;border-radius:11px;background:transparent;color:#667b92;font-size:10px;font-weight:750}.nav-btn span:first-child{font-size:21px;line-height:22px}.nav-btn.active{background:#edf3fa;color:#163c69;box-shadow:inset 0 3px var(--gold)}.nav-btn.create{background:#153a65;color:white;border-radius:14px;max-width:48px;height:48px;margin:auto;min-height:48px;font-size:24px}
+    .scrim{position:fixed;inset:0;z-index:50;background:#0a1b31a8;display:none}.scrim.show{display:block}.drawer{height:100dvh;max-width:360px;width:86vw;background:#fff;box-shadow:12px 0 30px #0003;padding:calc(20px + env(safe-area-inset-top,0px)) 16px 24px;overflow:auto}.drawer .top{display:flex;justify-content:space-between;align-items:center;gap:10px}.drawer h2{font-size:18px;margin:0}.close{width:44px;height:44px;border:0;border-radius:10px;background:#edf2f8;color:#163d65;font-size:22px}.drawer label{display:block;margin:18px 0 6px;color:#5b6b7f;font-size:12px;font-weight:700}.drawer select{width:100%;min-height:46px;border:1px solid #d8e0e9;border-radius:10px;padding:0 10px;background:white;color:#263e5e;font-size:16px}.drawer .menu-link{display:block;width:100%;min-height:48px;background:transparent;text-align:left;border:0;border-bottom:1px solid #e8edf4;color:#182e47;font-weight:650}.sheetwrap{display:flex;justify-content:center;align-items:flex-end;height:100%}.sheet{background:white;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + var(--safe));width:min(720px,100%);max-height:90dvh;overflow:auto}.sheet h2{margin:0 0 8px}.sheet .menu-link{display:block;width:100%;border:0;border-bottom:1px solid #e9edf2;padding:15px 8px;text-align:left;background:white;color:#142943;min-height:48px}
+    .tag{color:#7c899a;font-size:10px;font-weight:700;text-align:center;padding:12px}.switch{display:flex;border:1px solid #d7e1eb;border-radius:10px;overflow:hidden}.switch button{border:0;padding:10px 13px;background:#fff;color:#153a65;font-weight:700}.switch button.active{background:#153a65;color:white}
+    .pill{font-size:10px;border-radius:10px;background:#e9f7ef;color:#197856;padding:4px 7px;white-space:nowrap}
+    @media(min-width:721px){.outer{border-left:1px solid #e2e6ec;border-right:1px solid #e2e6ec}.header{padding-left:26px;padding-right:26px}main{padding:22px 24px}.heading{font-size:27px}.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stat b{font-size:16px}}
+    @media(max-width:340px){.brand small{display:none}.nav-btn{font-size:9px}.stat{padding:11px 9px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+<div class="outer">
+  <div class="banner">VISTA DE VALIDACIÓN · DATOS FICTICIOS · NO CONECTADA A PRODUCCIÓN</div>
+  <header class="header">
+    <div class="headrow"><button class="menu-btn" id="menu" aria-label="Abrir menú">☰</button>
+      <div class="brand"><img src="/s4p-mark.svg" alt=""><div><strong>S4P</strong><small>PLATAFORMA EMPRESARIAL</small></div></div>
+      <button class="bell" id="notifications" aria-label="Notificaciones">♧</button>
+    </div>
+    <select class="project-picker" id="project" aria-label="Proyecto activo"><option value="">Vista empresa · sin proyecto</option><option value="A">PRY-001 · Residencial Los Robles</option><option value="B">PRY-002 · Centro Comercial Norte</option></select>
+  </header>
+  <main>
+    <section id="home" class="section active">
+      <div class="eyebrow">Vista empresarial</div><h1 class="heading" id="main-title">Panel ejecutivo</h1><p class="sub">Resumen de operaciones · Lempiras hondureños</p>
+      <div class="grid">
+        <div class="stat"><div class="symbol">▣</div><label>Disponible en tesorería</label><b>L 248,500</b><em>● Activo</em></div>
+        <div class="stat"><div class="symbol">↗</div><label>Ingresos del mes</label><b>L 178,200</b><em>+12.4% referencia</em></div>
+        <div class="stat"><div class="symbol">⇥</div><label>Egresos del mes</label><b>L 65,720</b><em>Revisión mensual</em></div>
+        <div class="stat"><div class="symbol">▤</div><label>Proyectos activos</label><b>04</b><em>En ejecución</em></div>
+      </div>
+      <div class="card"><h2>Mi trabajo hoy <small>Vista demostrativa</small></h2>
+        <div class="rowitem"><div><strong><span class="dot warn"></span>Aprobaciones por revisar</strong><small>Compras y tesorería</small></div><b>03</b></div>
+        <div class="rowitem"><div><strong><span class="dot"></span>Liquidaciones del período</strong><small>Documentos vinculados</small></div><b>08</b></div>
+        <div class="rowitem"><div><strong><span class="dot"></span>Conciliaciones pendientes</strong><small>Contabilidad y bancos</small></div><b>02</b></div>
+      </div>
+      <div class="card"><h2>Accesos rápidos</h2><div class="actions"><button class="action" data-to="projects">Proyectos</button><button class="action alt" data-to="finances">Finanzas</button></div></div>
+    </section>
+    <section id="finances" class="section"><div class="eyebrow">Operación financiera</div><h1 class="heading">Finanzas</h1><p class="sub">Tesorería · Remesas · Recibos · Pagos</p>
+      <div class="grid"><div class="stat"><div class="symbol">▣</div><label>Bancos</label><b>L 248,500</b></div><div class="stat"><div class="symbol">✓</div><label>Por conciliar</label><b>02</b></div></div>
+      <div class="card"><h2>Últimas operaciones <small>Ejemplos</small></h2><div class="rowitem"><div><strong>Ingreso de remesa</strong><small>REM-2026-001 · Aprobado</small></div><b>L 18,500</b></div><div class="rowitem"><div><strong>Pago a proveedor</strong><small>PAG-2026-024 · Registrado</small></div><b>L 9,200</b></div><div class="rowitem"><div><strong>Recibo</strong><small>REC-2026-015 · Emitido</small></div><span class="pill">Completado</span></div></div>
+      <div class="card"><h2>Gestión financiera</h2><div class="actions"><button class="action" data-quick="Registrar remesa">Remesa</button><button class="action alt" data-quick="Nuevo recibo">Recibo</button></div><p class="smallnote">Los botones muestran el flujo de interfaz; no crean operaciones reales.</p></div>
+    </section>
+    <section id="projects" class="section"><div class="eyebrow">Planificación</div><h1 class="heading">Proyectos</h1><p class="sub">Portafolio de proyectos y fases</p>
+      <div class="card"><h2>Proyectos en ejecución <small>2 resultados</small></h2><div class="rowitem"><div><strong>Residencial Los Robles</strong><small>PRY-001 · Obra civil · 68% avance</small></div><span class="pill">Activo</span></div><div class="rowitem"><div><strong>Centro Comercial Norte</strong><small>PRY-002 · Instalaciones · 23% avance</small></div><span class="pill">Activo</span></div></div>
+      <div class="card"><h2>Fases de trabajo</h2><div class="rowitem"><div><strong>Diseño y planificación</strong><small>Completada</small></div><b>100%</b></div><div class="rowitem"><div><strong>Construcción</strong><small>En ejecución</small></div><b>68%</b></div><div class="actions"><button class="action" data-quick="Nuevo proyecto">+ Nuevo proyecto</button></div></div>
+    </section>
+  </main>
+  <nav class="bottom" aria-label="Navegación móvil">
+    <button class="nav-btn active" data-to="home"><span>⌂</span><span>Inicio</span></button>
+    <button class="nav-btn" data-to="finances"><span>▣</span><span>Finanzas</span></button>
+    <button class="nav-btn create" id="quick" aria-label="Crear registro">＋</button>
+    <button class="nav-btn" data-to="projects"><span>▤</span><span>Proyectos</span></button>
+    <button class="nav-btn" id="more"><span>☰</span><span>Más</span></button>
+  </nav>
+  <div class="tag">S4P · Validación visual móvil aislada · Sin transacciones ni almacenamiento</div>
+</div>
+<div id="drawer-scrim" class="scrim" aria-hidden="true"><aside class="drawer" role="dialog" aria-modal="true" aria-label="Navegación"><div class="top"><h2>Menú S4P</h2><button class="close" data-close aria-label="Cerrar menú">×</button></div>
+  <label for="company">Empresa activa</label><select id="company"><option>Compañía de demostración</option><option>S4P Proyectos (ejemplo)</option></select>
+  <button class="menu-link" data-to="home">⌂ &nbsp; Inicio</button><button class="menu-link" data-to="finances">▣ &nbsp; Finanzas</button><button class="menu-link" data-to="projects">▤ &nbsp; Proyectos y fases</button><button class="menu-link" data-quick="Aprobaciones">✓ &nbsp; Aprobaciones</button><button class="menu-link" data-quick="Configuración">⚙ &nbsp; Configuración</button>
+  <p class="smallnote">Esta vista no solicita contraseñas. Inicie sesión únicamente en el ERP oficial, una vez certificado.</p>
+</aside></div>
+<div id="sheet-scrim" class="scrim" aria-hidden="true"><div class="sheetwrap"><div class="sheet" role="dialog" aria-modal="true" aria-label="Crear"><div class="top"><h2>Crear registro</h2><button class="close" data-close aria-label="Cerrar ventana">×</button></div>
+  <p class="smallnote">Interacciones demostrativas. No se almacenan datos.</p><button class="menu-link" data-quick="Nuevo proyecto">▤ &nbsp; Nuevo proyecto</button><button class="menu-link" data-quick="Registrar remesa">▣ &nbsp; Registrar remesa</button><button class="menu-link" data-quick="Nuevo comprobante">▧ &nbsp; Nuevo comprobante</button><button class="menu-link" data-quick="Nueva evidencia">◫ &nbsp; Nueva evidencia</button>
+</div></div></div>
+<script>
+(function(){
+  const $=q=>document.querySelector(q);
+  const scrims=['#drawer-scrim','#sheet-scrim'];
+  function close(){scrims.forEach(q=>$(q).classList.remove('show'));document.body.style.overflow=''}
+  function open(q){close();$(q).classList.add('show');document.body.style.overflow='hidden';$(q).querySelector('button')?.focus()}
+  function show(tab){close();document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===tab));document.querySelectorAll('.nav-btn[data-to]').forEach(x=>{x.classList.toggle('active',x.dataset.to===tab);x.setAttribute('aria-current',x.dataset.to===tab?'page':'false')});window.scrollTo(0,0)}
+  document.addEventListener('click',e=>{const x=e.target.closest('[data-to],[data-close],[data-quick]');if(!x)return;if(x.dataset.close!==undefined){close();return}if(x.dataset.to){show(x.dataset.to);return}if(x.dataset.quick){close();const value=x.dataset.quick;alert('Vista de validación: '+value+'\\n\\nEste ejemplo no guarda información ni modifica datos empresariales.') }});
+  $('#menu').onclick=()=>open('#drawer-scrim');$('#more').onclick=()=>open('#drawer-scrim');$('#quick').onclick=()=>open('#sheet-scrim');$('#notifications').onclick=()=>alert('Notificaciones de demostración. Sin conexión a producción.');
+  $('#project').onchange=e=>{$('#main-title').textContent=e.target.value?'Resumen de proyecto':'Panel ejecutivo';show('home')};
+  document.querySelectorAll('.scrim').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)close()}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+})();
+</script>
+</body>
+</html>
