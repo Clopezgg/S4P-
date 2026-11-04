@@ -1,6 +1,7 @@
-import { useMemo, useSyncExternalStore } from 'react'
+import { useContext, useMemo, useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { masterDataService } from '../services/masterDataService'
+import { AuthContext } from '../features/auth/auth-context'
 
 const STORAGE_KEY = 'nexora.activeCompanyId'
 type CompanyStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>
@@ -73,9 +74,14 @@ export function resolveActiveCompanyId(
  * mantenga una compañía distinta de forma accidental.
  */
 export function useActiveCompany() {
+  const auth = useContext(AuthContext)
   const companiesQuery = useQuery({
     queryKey: ['master-data', 'companies'],
     queryFn: masterDataService.listCompanies,
+    // The theme/layout can mount before auth/me has resolved. Unauthenticated
+    // requests used to generate a 401 -> session-expired -> cache-clear loop.
+    // Keep isolated component previews without an AuthProvider compatible.
+    enabled: auth === null || auth.isAuthenticated,
   })
   const selectedId = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
   const companies = useMemo(
