@@ -67,6 +67,15 @@ export function Topbar({ onOpenNav }: TopbarProps) {
           className="nx-topbar__nav-toggle"
           onClick={onOpenNav}
         />
+        <div className="nx-topbar__mobile-brand" aria-label="S4P · Plataforma empresarial">
+          <span className="nx-topbar__mobile-mark" aria-hidden="true">
+            <img src="/s4p-mark.svg" width="26" height="26" alt="" />
+          </span>
+          <span className="nx-topbar__mobile-identity">
+            <strong>S4P</strong>
+            <small>Plataforma empresarial</small>
+          </span>
+        </div>
         <div className="nx-topbar__company" title="Empresa activa">
           {companies.length > 1 ? (
             <Select
