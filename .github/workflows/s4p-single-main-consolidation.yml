@@ -1,0 +1,129 @@
+name: S4P single-main branch consolidation
+on:
+  workflow_run:
+    workflows:
+      - S4P validation
+      - S4P authenticated browser critical journeys
+      - S4P secret leakage guard
+      - S4P corporate identity audit
+      - S4P dependency vulnerability guard
+      - S4P CodeQL security analysis
+    types: [completed]
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+concurrency:
+  group: s4p-consolidate-single-main
+  cancel-in-progress: false
+jobs:
+  archive-and-remove-superseded-branches:
+    if: ${{ github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Preserve every prior branch as a verified tag before branch cleanup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          repo = os.environ["REPOSITORY"]
+          release_sha = os.environ["RELEASE_SHA"]
+          token = os.environ["GH_TOKEN"]
+          base = f"https://api.github.com/repos/{repo}"
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {token}",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "s4p-branch-preservation",
+          }
+
+          def api(method, path, payload=None, missing_ok=False):
+              data = None if payload is None else json.dumps(payload).encode()
+              request = urllib.request.Request(base + path, data=data, method=method, headers=headers)
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as result:
+                      raw = result.read()
+                      return json.loads(raw) if raw else {}
+              except urllib.error.HTTPError as error:
+                  if error.code == 404 and missing_ok:
+                      return None
+                  raise RuntimeError(f"GitHub {method} {path}: HTTP {error.code}") from None
+
+          head = api("GET", "/branches/main")["commit"]["sha"]
+          if head != release_sha:
+              print("Main moved since CI; do not delete branch references.")
+              raise SystemExit(0)
+
+          pr = api("GET", "/pulls/11")
+          if not pr.get("merged") or pr["base"]["ref"] != "main":
+              print("PR #11 not yet merged into main; archive cleanup postponed.")
+              raise SystemExit(0)
+
+          required = {
+              "S4P validation",
+              "S4P authenticated browser critical journeys",
+              "S4P secret leakage guard",
+              "S4P corporate identity audit",
+              "S4P dependency vulnerability guard",
+              "S4P CodeQL security analysis",
+          }
+          runs = api("GET", "/actions/runs?branch=main&event=push&per_page=100")["workflow_runs"]
+          latest = {}
+          for run in sorted(runs, key=lambda item: item["id"], reverse=True):
+              if run["head_sha"] == release_sha and run["name"] in required:
+                  latest.setdefault(run["name"], run)
+          incomplete = sorted(name for name in required if latest.get(name, {}).get("conclusion") != "success")
+          if incomplete:
+              print("CI for exact main SHA not wholly green; preserve all branches:", ", ".join(incomplete))
+              raise SystemExit(0)
+
+          old = {
+              "feat/residential-project-startup-20261030":
+                  "05164ac6ace289cbf9349d192ff21b91f21076e0",
+              "fix/session-isolation-20261030":
+                  "cbf33db1d5973ddc66a9bfb439383613209a96e4",
+              "hardening/official-go-live-20261103":
+                  "12c8ca307b7f7c9181dbb00c774ed93a1381754c",
+              "hardening/official-go-live-clean-20261103":
+                  pr["head"]["sha"],
+          }
+          open_prs = api("GET", "/pulls?state=open&per_page=100")
+          for name, expected in old.items():
+              ref_path = urllib.parse.quote(name, safe="/")
+              branch = api("GET", f"/branches/{ref_path}", missing_ok=True)
+              if branch is None:
+                  print("Already deleted:", name)
+                  continue
+              current = branch["commit"]["sha"]
+              if current != expected:
+                  raise RuntimeError(f"Branch changed; refusing cleanup: {name}")
+              if branch.get("protected"):
+                  raise RuntimeError(f"Branch protected; refusing cleanup: {name}")
+              if any(p["head"]["ref"] == name and p["head"]["repo"]["full_name"] == repo for p in open_prs):
+                  raise RuntimeError(f"Branch has an open PR; refusing cleanup: {name}")
+              tag = "refs/tags/archive/pre-single-main-20261103/" + name.replace("/", "-")
+              tag_path = urllib.parse.quote(tag.removeprefix("refs/"), safe="/")
+              existing = api("GET", "/git/ref/" + tag_path, missing_ok=True)
+              if existing is None:
+                  api("POST", "/git/refs", {"ref": tag, "sha": current})
+              elif existing["object"]["sha"] != current:
+                  raise RuntimeError(f"Archived tag points elsewhere: {name}")
+              verify = api("GET", "/git/ref/" + tag_path)
+              if verify["object"]["sha"] != current:
+                  raise RuntimeError(f"Backup tag verification failed: {name}")
+              # Only delete the exact branch after its commit is independently reachable.
+              api("DELETE", "/git/refs/heads/" + ref_path)
+              if api("GET", f"/branches/{ref_path}", missing_ok=True) is not None:
+                  raise RuntimeError(f"Branch still exists after deletion: {name}")
+              print("Archived commit and removed branch:", name)
+          print("PASS: main remains the sole working branch; historical commits retained in tags.")
+          PY

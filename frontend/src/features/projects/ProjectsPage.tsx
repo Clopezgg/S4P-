@@ -148,7 +148,7 @@ export function ProjectsPage() {
             {quickCreateOpen ? 'Cerrar alta rápida' : 'Crear proyecto básico'}
           </Button>
           <Button variant="secondary" onClick={() => { setResidentialPreset(false); setWizardOpen((open) => !open); setQuickCreateOpen(false) }}>
-            {wizardOpen ? 'Cerrar asistente' : 'Proyecto con configuración completa'}
+            {wizardOpen ? 'Cerrar asistente' : 'Nuevo proyecto'}
           </Button>
         </div>
       </header>

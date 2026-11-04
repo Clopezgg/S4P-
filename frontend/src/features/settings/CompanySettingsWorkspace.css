@@ -1,0 +1,27 @@
+/* Keep company settings form controls within the available mobile viewport.
+   The default input/select intrinsic width must not expand nested flex/grid items. */
+.nx-company-settings-workspace,
+.nx-company-settings-workspace > *,
+.nx-company-settings-workspace .nx-card,
+.nx-company-settings-workspace .nx-field,
+.nx-company-settings-workspace fieldset {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nx-company-settings-workspace .nx-input,
+.nx-company-settings-workspace .nx-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nx-company-settings-workspace .nx-dashboard__kpi-grid > * {
+  min-width: 0;
+}
+
+.nx-company-settings-workspace .nx-field__hint,
+.nx-company-settings-workspace .nx-page__header {
+  overflow-wrap: anywhere;
+}

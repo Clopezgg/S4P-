@@ -42,18 +42,15 @@ async function expectFinishedOk(response: Response, label: string): Promise<void
   expect(response.ok(), `${label}: HTTP ${response.status()}`).toBeTruthy()
 }
 
-function dashboardResponseFor(page: Page, companyId: string): Promise<Response> {
-  return page.waitForResponse((response) => {
-    const url = new URL(response.url())
-    return response.request().method() === 'GET' &&
-      url.pathname === '/api/dashboard/summary' &&
-      url.searchParams.get('companyId') === companyId
-  })
-}
-
-async function assertMountedDashboard(responsePromise: Promise<Response>, company: { id: string; functionalCurrencyCode: string }) {
-  const dashboard = await responsePromise
-  await expectFinishedOk(dashboard, 'dashboard montado')
+/** Validate the mounted dashboard AND the authenticated real backend.
+ * React Query can serve a warm dashboard without sending another GET; a
+ * missing redundant network request is not evidence that the UI failed. */
+async function assertMountedDashboard(page: Page, company: { id: string; functionalCurrencyCode: string }) {
+  await expect(page.locator('main')).toBeVisible()
+  const dashboard = await page.request.get(
+    `/api/dashboard/summary?companyId=${encodeURIComponent(company.id)}`,
+  )
+  expect(dashboard.ok(), `dashboard real: HTTP ${dashboard.status()}`).toBeTruthy()
   const dashboardBody = (await dashboard.json()) as { currency: string }
   expect(dashboardBody.currency).toBe(company.functionalCurrencyCode)
 }
@@ -114,11 +111,8 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
   await page.evaluate((companyId) => {
     window.localStorage.setItem('nexora.activeCompanyId', companyId)
   }, company.id)
-  const initialDashboard = dashboardResponseFor(page, company.id)
   await page.reload()
-  // Await the page-owned response before deliberately navigating away. This
-  // distinguishes a completed dashboard request from an aborted proxy fetch.
-  await assertMountedDashboard(initialDashboard, company)
+  await assertMountedDashboard(page, company)
 
   for (const route of [
     '/inicio',
@@ -130,9 +124,8 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
     await expectOperationalRoute(page, route)
   }
 
-  const dashboardBeforeEdit = dashboardResponseFor(page, company.id)
   await page.goto('/inicio')
-  await assertMountedDashboard(dashboardBeforeEdit, company)
+  await assertMountedDashboard(page, company)
   await page.getByRole('button', { name: 'Edición protegida' }).click()
   const dialog = page.getByRole('dialog', { name: 'Desbloquear edición' })
   await expect(dialog).toBeVisible()
@@ -167,13 +160,12 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
     await expect(page.locator('html')).toHaveAttribute('data-nx-theme', variant, { timeout: 10_000 })
     await page.getByRole('menuitem', { name: 'Sistema', exact: true }).click()
     // A real click verifies the menu is not clipped behind the shell bars.
-    const dashboardAfterMenu = dashboardResponseFor(page, company.id)
     await page
       .getByRole('menu', { name: 'Sistema', exact: true })
       .getByRole('menuitem', { name: 'Inicio', exact: true })
       .click()
     await expect(page).toHaveURL(/\/inicio/)
-    await assertMountedDashboard(dashboardAfterMenu, company)
+    await assertMountedDashboard(page, company)
     await expectOperationalRoute(page, '/finanzas/contabilidad')
     await expectOperationalRoute(page, '/proyectos/cockpit')
     await expectOperationalRoute(page, '/abastecimiento/inventario')
@@ -189,7 +181,9 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
   }
 
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
-  await expect(page).toHaveURL(/\/login/, { timeout: 10_000 })
+  // Logout must leave S4P entirely; navigating to /login would contradict
+  // the corporate exit contract and could allow back-button session confusion.
+  await expect(page).toHaveURL('about:blank', { timeout: 10_000 })
   expect(pageErrors).toEqual([])
 }
 

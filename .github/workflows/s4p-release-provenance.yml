@@ -1,0 +1,63 @@
+name: S4P production release SHA and restore freshness gate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-proof:
+    name: Compare deployed SHA to approved main and check private backups
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: production
+    steps:
+      - name: Require independently signed corporate acceptance
+        env:
+          S4P_DB_CUTOVER_CERTIFIED: ${{ vars.S4P_DB_CUTOVER_CERTIFIED }}
+          S4P_RESTORE_DRILL_CERTIFIED: ${{ vars.S4P_RESTORE_DRILL_CERTIFIED }}
+          S4P_FINANCE_E2E_CERTIFIED: ${{ vars.S4P_FINANCE_E2E_CERTIFIED }}
+        run: |
+          set -euo pipefail
+          for key in S4P_DB_CUTOVER_CERTIFIED S4P_RESTORE_DRILL_CERTIFIED S4P_FINANCE_E2E_CERTIFIED; do
+            if [ "${!key:-}" != "true" ]; then
+              echo "::error::Missing production approval for $key; do not certify or release."
+              exit 1
+            fi
+          done
+      - name: Verify exact deployed revision, PostgreSQL and backup freshness
+        env:
+          S4P_ORIGIN: https://s4p-erp-api.onrender.com
+          S4P_EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time, urllib.error, urllib.request
+          origin = os.environ["S4P_ORIGIN"].rstrip("/")
+          expected = os.environ["S4P_EXPECTED_SHA"]
+          def call(path):
+              request = urllib.request.Request(origin + path, headers={"Accept": "application/json"})
+              with urllib.request.urlopen(request, timeout=45) as resp:
+                  if resp.status != 200:
+                      raise AssertionError(f"{path}: unexpected HTTP {resp.status}")
+                  return json.loads(resp.read())
+          last = None
+          for attempt in range(5):
+              try:
+                  ready = call("/api/readyz")
+                  assert ready.get("status") == "ok", "Database or evidence not ready"
+                  break
+              except Exception as exc:
+                  last = type(exc).__name__
+                  if attempt == 4: raise AssertionError(f"Readiness failed: {last}") from exc
+                  time.sleep(10)
+          version = call("/api/version")
+          assert version.get("environment") == "production", "Wrong environment"
+          observed = version.get("gitSha")
+          assert observed == expected, f"Release mismatch: expected {expected}, deployed {observed}"
+          assert call("/api/backupz").get("status") == "ok", "Encrypted backup not recent"
+          try:
+              urllib.request.urlopen(urllib.request.Request(origin + "/api/auth/me"), timeout=20)
+          except urllib.error.HTTPError as error:
+              assert error.code == 401, f"Unauthenticated access returned {error.code}"
+          else:
+              raise AssertionError("Unauthenticated access unexpectedly accepted")
+          print("PASS: exact SHA, production runtime, DB, private evidence, recent backup and auth guard")
+          PY

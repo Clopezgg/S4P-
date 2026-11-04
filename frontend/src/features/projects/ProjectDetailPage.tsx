@@ -497,13 +497,12 @@ export function ProjectDetailPage() {
           </div>
           <div className="nx-object-header__actions">
             <Badge>{projectStatusLabel(project.status)}</Badge>
-            {context.activeProjectId !== project.id ? (
-              <Button variant="secondary" onClick={() => setActiveProject(project.id)}>
-                Seleccionar como contexto
-              </Button>
-            ) : (
+            <Button variant="secondary" onClick={() => setActiveProject(project.id)}>
+              Seleccionar como contexto
+            </Button>
+            {context.activeProjectId === project.id ? (
               <Badge tone="info">Contexto activo</Badge>
-            )}
+            ) : null}
           </div>
         </div>
         <dl className="nx-object-header__facts">
