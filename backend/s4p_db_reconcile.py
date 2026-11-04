@@ -122,16 +122,18 @@ def _invalid_posted_documents(conn: psycopg.Connection) -> int:
     row = conn.execute(
         "SELECT COUNT(*) FROM ("
         "SELECT d.id FROM public.accounting_documents d "
-        "JOIN public.journal_lines l ON l.accounting_document_id=d.id "
+        "LEFT JOIN public.journal_lines l ON l.accounting_document_id=d.id "
         "WHERE d.status IN ('POSTED','REVERSED') GROUP BY d.id "
-        "HAVING SUM(l.debit_amount) <> SUM(l.credit_amount)"
+        "HAVING COUNT(l.accounting_document_id) = 0 "
+        "OR COALESCE(SUM(l.debit_amount), 0) <> COALESCE(SUM(l.credit_amount), 0)"
         ") unbalanced"
     ).fetchone()
     return int(row[0]) if row else 0
 
 
 def _snapshot(conn: psycopg.Connection) -> dict:
-    conn.execute("SET TRANSACTION READ ONLY")
+    # Every scan must see one stable snapshot even if the source has concurrent writes.
+    conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
     conn.execute("SET TIME ZONE 'UTC'")
     tables = _public_tables(conn)
     missing = REQUIRED_TABLES - set(tables)
