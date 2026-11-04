@@ -19,7 +19,9 @@ jobs:
   browser-e2e:
     name: Browser + PostgreSQL + private evidence E2E
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # Full SAP/visual matrix spans nine viewport widths plus three browser engines.
+    # Preserve every assertion while allowing this integration run to finish.
+    timeout-minutes: 90
     services:
       postgres:
         image: postgres:16-alpine
