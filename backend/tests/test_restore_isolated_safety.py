@@ -1,6 +1,7 @@
 """Fail-closed checks for restoring a REAL backup into a local disposable DB only."""
 from __future__ import annotations
 
+from importlib import import_module
 import subprocess
 import sys
 from pathlib import Path
@@ -11,7 +12,7 @@ import pytest
 # The Render image installs s4p_backup.py at /app; local checkouts use scripts/.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 
-from restore_from_supabase import _validate_empty_isolated_target
+_validate_empty_isolated_target = import_module('restore_from_supabase')._validate_empty_isolated_target
 
 
 def _dsn(db: str, host: str = "localhost") -> str:
