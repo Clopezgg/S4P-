@@ -46,3 +46,30 @@ This file is a **release gate**, never an assertion that S4P is already certifie
 - Remove redundant deployment paths only after the canonical Render + Supabase configuration is reproducible.
 
 **Status (2026-11-03): NOT CERTIFIED — do not claim official go-live.**
+
+
+## Production PostgreSQL parity tool (read-only)
+
+After restoring the real Render backup to a **separate** PostgreSQL target,
+run the following from a secured worker with private access to both servers:
+
+```sh
+export S4P_SOURCE_DATABASE_URL='<injected privately; use sslmode=require>'
+export S4P_TARGET_DATABASE_URL='<injected privately; use sslmode=require>'
+cd backend
+python s4p_db_reconcile.py
+```
+
+The tool executes read-only transactions on **both** connections and refuses
+equal source/target identities. It requires S4P's essential business tables,
+compares **every row of every public table** using deterministic SHA-256
+fingerprints (including all column values, not merely table counts), the
+single Alembic head and critical financial totals, and rejects any unbalanced
+posted or reversed accounting documents. It never prints connection strings
+or financial records. A mismatch fails with exit code 1. It does not restore,
+delete, migrate, change Render `DATABASE_URL` or enable users; the separate
+supervised cutover remains an explicit operation after all checks pass.
+
+**Security:** do not paste real DSNs into a GitHub action, shared file, chat,
+a terminal recording, or any public log. Use a private secret injection
+mechanism. This script does not bypass Render's closed IP allowlist.
