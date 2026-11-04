@@ -73,3 +73,25 @@ supervised cutover remains an explicit operation after all checks pass.
 **Security:** do not paste real DSNs into a GitHub action, shared file, chat,
 a terminal recording, or any public log. Use a private secret injection
 mechanism. This script does not bypass Render's closed IP allowlist.
+
+
+## Fail-closed production database startup
+
+The Render application container must not run schema migrations implicitly.
+`Dockerfile.render` executes `alembic current --check-heads` before starting FastAPI.
+The command reads the current database revision and fails closed when the database
+is not at *every* expected head. It does **not** apply migrations, stamp revisions,
+modify `DATABASE_URL`, or repair an incompatible database.
+
+Any required schema migration is a separate, supervised release activity:
+1. Obtain a verifiable recent production backup and test an isolated restoration.
+2. Confirm the source/target database identity and exact released Git SHA.
+3. Reconcile Alembic, foreign keys, accounting balances, users and documents.
+4. Obtain written human approval and a tested rollback procedure before running
+   `alembic upgrade head` against the explicitly approved target using a
+   private, authenticated connection; never insert secrets in tickets or logs.
+5. Re-run the read-only head check, then deploy and verify `/api/version`,
+   `/api/readyz`, `/api/backupz`, access controls and financial QA.
+
+An application startup aborted by the read-only check is **not** authorization
+to migrate production automatically or open the database IP allowlist.
