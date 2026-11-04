@@ -17,8 +17,12 @@ permissions:
   contents: read
 jobs:
   browser-e2e:
-    name: Browser + PostgreSQL + private evidence E2E
+    name: Browser + PostgreSQL + private evidence E2E (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [functional, visual]
     # Full SAP/visual matrix spans nine viewport widths plus three browser engines.
     # Preserve every assertion while allowing this integration run to finish.
     timeout-minutes: 90
@@ -68,14 +72,42 @@ jobs:
       - name: Install real browsers
         working-directory: frontend
         run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify that no Playwright spec is omitted from the two suites
+        working-directory: frontend
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs')
+          const suites = {
+            functional: [
+              'accessibility.spec.ts',
+              'critical-journey.spec.ts',
+              'cross-browser-critical.spec.ts',
+              'overdue-installment-payment.spec.ts',
+              'sap-gui-theme.spec.ts',
+            ],
+            visual: ['sap-gui-visual.spec.ts', 'visual-audit.spec.ts'],
+          }
+          const assigned = Object.values(suites).flat().sort()
+          const actual = fs.readdirSync('e2e').filter((name) => name.endsWith('.spec.ts')).sort()
+          if (JSON.stringify(actual) !== JSON.stringify(assigned)) {
+            throw new Error('E2E spec inventory changed; update suite matrix to retain full coverage')
+          }
+          NODE
       - name: Execute end-to-end project, financial, accessibility and browser scenarios
         working-directory: frontend
-        run: npm run test:e2e
+        env:
+          S4P_E2E_SUITE: ${{ matrix.suite }}
+        run: |
+          if [ "$S4P_E2E_SUITE" = "visual" ]; then
+            npx playwright test e2e/sap-gui-visual.spec.ts e2e/visual-audit.spec.ts
+          else
+            npx playwright test e2e/accessibility.spec.ts e2e/critical-journey.spec.ts e2e/cross-browser-critical.spec.ts e2e/overdue-installment-payment.spec.ts e2e/sap-gui-theme.spec.ts
+          fi
       - name: Preserve isolated QA failure evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: s4p-browser-test-evidence
+          name: s4p-browser-test-evidence-${{ matrix.suite }}
           path: |
             frontend/e2e-report/
             frontend/test-results/
