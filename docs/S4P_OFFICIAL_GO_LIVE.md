@@ -14,7 +14,7 @@ This file is a **release gate**, never an assertion that S4P is already certifie
 - `s4p-codeql.yml`: Python and TypeScript static analysis.
 - `s4p-dependency-audit.yml`: npm and pip vulnerability checks.
 - `s4p-browser-e2e.yml`: actual browser, PostgreSQL, authenticated critical journey, private Azurite test storage and screenshot/trace evidence on failures.
-- `s4p-release-provenance.yml`: manually-run production read-only gate; rejects any deployed SHA differing from `main` and checks readiness and fresh offsite backups.
+- `s4p-release-provenance.yml`: manually-run gate that **fails closed** until protected GitHub `production` environment variables `S4P_DB_CUTOVER_CERTIFIED=true`, `S4P_RESTORE_DRILL_CERTIFIED=true` and `S4P_FINANCE_E2E_CERTIFIED=true` are set only after independent evidence; then rejects deployed SHA mismatches and checks readiness and fresh offsite backups.
 - These jobs complement, not replace, existing transactional CI, backup checks and production login certification.
 
 ## Dependency scan findings discovered 2026-11-03
