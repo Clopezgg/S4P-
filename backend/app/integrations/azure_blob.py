@@ -36,8 +36,13 @@ def get_evidence_container_client(settings: Settings):
             raise EvidenceStorageNotConfigured(
                 "AZURE_STORAGE_CONNECTION_STRING no se admite en producción; usa Managed Identity."
             )
+        # The current SDK may default to a newer service API version than
+        # the disposable Azurite emulator understands. Pin a supported API
+        # solely for the explicit non-production connection-string path.
+        # Real cloud production continues to negotiate its own API version.
         service_client = BlobServiceClient.from_connection_string(
-            settings.azure_storage_connection_string
+            settings.azure_storage_connection_string,
+            api_version="2023-11-03",
         )
         container_client = service_client.get_container_client(settings.evidence_container_name)
         from azure.core.exceptions import ResourceExistsError
