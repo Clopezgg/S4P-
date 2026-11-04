@@ -10,6 +10,19 @@ jobs:
     timeout-minutes: 8
     environment: production
     steps:
+      - name: Require independently signed corporate acceptance
+        env:
+          S4P_DB_CUTOVER_CERTIFIED: ${{ vars.S4P_DB_CUTOVER_CERTIFIED }}
+          S4P_RESTORE_DRILL_CERTIFIED: ${{ vars.S4P_RESTORE_DRILL_CERTIFIED }}
+          S4P_FINANCE_E2E_CERTIFIED: ${{ vars.S4P_FINANCE_E2E_CERTIFIED }}
+        run: |
+          set -euo pipefail
+          for key in S4P_DB_CUTOVER_CERTIFIED S4P_RESTORE_DRILL_CERTIFIED S4P_FINANCE_E2E_CERTIFIED; do
+            if [ "${!key:-}" != "true" ]; then
+              echo "::error::Missing production approval for $key; do not certify or release."
+              exit 1
+            fi
+          done
       - name: Verify exact deployed revision, PostgreSQL and backup freshness
         env:
           S4P_ORIGIN: https://s4p-erp-api.onrender.com
