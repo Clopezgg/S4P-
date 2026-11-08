@@ -1,0 +1,8 @@
+[
+  {
+    "suite": "tests.test_voucher_pdf_format",
+    "test": "test_official_cash_voucher_has_two_letter_pages_and_verifiable_gl_link",
+    "seconds": "1.876",
+    "result": "PASS"
+  }
+]
