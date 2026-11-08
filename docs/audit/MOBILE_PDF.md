@@ -1,0 +1,9 @@
+# Frontend, móvil y comprobantes
+
+El shell SAP de escritorio se conserva; móvil utiliza las mismas rutas, API, sesión, permisos y DB. `mobile-workspace.spec.ts` prueba 360/390/430/768px, drawer, selector empresa, QuickCreate, rutas y overflow. `cross-browser-critical.spec.ts` prueba login, preferencias SAP, navegación y sesión; esto no cubre cada control de todas las pantallas. La demo `mobile-validation.html` y su PDF son SIMULADOS y no cuentan como operación financiera.
+
+Evidencia local: typecheck, eslint, 79 archivos Vitest/273 tests y build Vite pasaron. Chromium real se instaló y arrancó. WebKit real se descargó; faltaban librerías GTK/Graphene/Harfbuzz/Manette/Hyphen/GLES. Se extrajeron paquetes Debian en /workspace y se enlazaron al directorio sys/lib del navegador, sin alterar código de negocio. Configuración temporal de QA usa executablePath de WebKit oficial, porque ldconfig del sistema no registra librerías instaladas sin root. No se eliminan aserciones. Los primeros recorridos estuvieron contaminados por ENOSPC y no cuentan como verificación exitosa.
+
+PDF oficial: comparación textual con Nexora confirma solo cambios de marca en `backend/app/services/voucher_service.py`: docstring, footer, fallback de empresa, título y author. Se conservan ReportLab letter, PageBreak, firmas, anexo, token QR verificable, snapshot de emisión y vínculo contable. No se sustituyó el renderer por el PDF de demo. La presencia de PageBreak no garantiza exactamente dos páginas con anexos/extremos de longitud: verificar límites y contenido con PDFs reales por caso.
+
+Pendiente para certificación: generar/descargar comprobante oficial autorizado y analizar páginas carta, marcas, firmas/anexos, QR verificable y documento GL; rechazar acceso cruzado; inspección visual. El baseline CI acredita jobs E2E verdes, pero no se presume que cada test inspeccione contenido PDF o escanee QR. Safari en dispositivo físico sigue separado de WebKit automatizado.

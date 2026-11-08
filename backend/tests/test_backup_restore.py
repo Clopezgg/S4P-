@@ -147,6 +147,19 @@ def test_real_pg_dump_backup_then_pg_restore_reproduces_the_same_financial_reali
         assert user_row[0] == seeded["userPasswordHash"]
         assert verify_password("BackupRestoreTest123!", user_row[0])
 
+        # A second invocation must preserve the restored ERP, never drop it.
+        repeat = _run(
+            ["bash", str(_REPO_ROOT / "scripts" / "db_restore.sh"), str(_DUMP_PATH), _TARGET_DB],
+            env=_pg_env(),
+        )
+        assert repeat.returncode != 0
+        assert _trial_balance(target_engine) == (target_debit, target_credit)
+        with target_engine.connect() as conn:
+            assert conn.execute(
+                text("SELECT name FROM companies WHERE id = :id"),
+                {"id": seeded["companyId"]},
+            ).scalar_one() == seeded["companyName"]
+
         target_engine.dispose()
     finally:
         for db_name in (_SOURCE_DB, _TARGET_DB):

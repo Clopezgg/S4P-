@@ -1,0 +1,9 @@
+{
+  "functions": 1104,
+  "endpoints": 297,
+  "models": 111,
+  "frontend": 238,
+  "migrations": 70,
+  "tests": 201,
+  "workflows": 20
+}

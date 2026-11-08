@@ -1,0 +1,56 @@
+[
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides0-s4p_restore_qa]",
+    "seconds": "0.005",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides1-production]",
+    "seconds": "0.006",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides2-postgresql://remote/s4p_restore_qa]",
+    "seconds": "0.007",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides3-s4p_restore_qa]",
+    "seconds": "0.005",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides4-s4p_restore_qa]",
+    "seconds": "0.003",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_restore_script_safety",
+    "test": "test_unsafe_shell_restore_never_invokes_postgres[overrides5-s4p_restore_qa]",
+    "seconds": "0.003",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_backup_restore",
+    "test": "test_real_pg_dump_backup_then_pg_restore_reproduces_the_same_financial_reality",
+    "seconds": "8.254",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_render_startup_gate",
+    "test": "test_render_boot_does_not_run_schema_migrations",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_render_startup_gate",
+    "test": "test_alembic_floor_supports_read_only_head_check",
+    "seconds": "0.000",
+    "result": "PASS"
+  }
+]

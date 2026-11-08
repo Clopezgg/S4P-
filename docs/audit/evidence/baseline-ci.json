@@ -1,0 +1,922 @@
+[
+  {
+    "id": 41790108007,
+    "name": "S4P secret leakage guard",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790108007",
+    "jobs": [
+      {
+        "name": "Scan introduced changes for secrets",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:46Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:49Z"
+          },
+          {
+            "name": "Check introduced code changes for exposed secrets",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:49Z",
+            "completed_at": "2026-11-04T07:07:52Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:07:52Z",
+            "completed_at": "2026-11-04T07:07:52Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:07:52Z",
+            "completed_at": "2026-11-04T07:07:52Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41790107908,
+    "name": "S4P corporate identity audit",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790107908",
+    "jobs": [
+      {
+        "name": "identity",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:46Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Verify S4P branding and compatibility exclusions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41790107987,
+    "name": "S4P dependency vulnerability guard",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790107987",
+    "jobs": [
+      {
+        "name": "Python dependency audit",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:46Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Run python -m pip install pip-audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:51Z"
+          },
+          {
+            "name": "Reject known vulnerabilities in runtime dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:07:51Z",
+            "completed_at": "2026-11-04T07:08:01Z"
+          },
+          {
+            "name": "Post Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:08:01Z",
+            "completed_at": "2026-11-04T07:08:01Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-04T07:08:01Z",
+            "completed_at": "2026-11-04T07:08:01Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-11-04T07:08:01Z",
+            "completed_at": "2026-11-04T07:08:01Z"
+          }
+        ]
+      },
+      {
+        "name": "Frontend dependency audit",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:46Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:49Z"
+          },
+          {
+            "name": "Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:49Z",
+            "completed_at": "2026-11-04T07:07:51Z"
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:07:51Z",
+            "completed_at": "2026-11-04T07:07:58Z"
+          },
+          {
+            "name": "Reject high and critical vulnerabilities",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:07:58Z",
+            "completed_at": "2026-11-04T07:07:58Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:07:58Z",
+            "completed_at": "2026-11-04T07:07:58Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-04T07:07:58Z",
+            "completed_at": "2026-11-04T07:07:59Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-11-04T07:07:59Z",
+            "completed_at": "2026-11-04T07:07:59Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41790107994,
+    "name": "S4P CodeQL security analysis",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790107994",
+    "jobs": [
+      {
+        "name": "CodeQL / python",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:49Z"
+          },
+          {
+            "name": "Run github/codeql-action/init@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:49Z",
+            "completed_at": "2026-11-04T07:08:04Z"
+          },
+          {
+            "name": "Run github/codeql-action/analyze@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:08:04Z",
+            "completed_at": "2026-11-04T07:09:18Z"
+          },
+          {
+            "name": "Post Run github/codeql-action/analyze@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:09:18Z",
+            "completed_at": "2026-11-04T07:09:18Z"
+          },
+          {
+            "name": "Post Run github/codeql-action/init@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:09:18Z",
+            "completed_at": "2026-11-04T07:09:19Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:09:19Z",
+            "completed_at": "2026-11-04T07:09:20Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:09:20Z",
+            "completed_at": "2026-11-04T07:09:20Z"
+          }
+        ]
+      },
+      {
+        "name": "CodeQL / javascript-typescript",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:46Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Run github/codeql-action/init@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:59Z"
+          },
+          {
+            "name": "Run github/codeql-action/analyze@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:07:59Z",
+            "completed_at": "2026-11-04T07:09:02Z"
+          },
+          {
+            "name": "Post Run github/codeql-action/analyze@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:09:02Z",
+            "completed_at": "2026-11-04T07:09:02Z"
+          },
+          {
+            "name": "Post Run github/codeql-action/init@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:09:02Z",
+            "completed_at": "2026-11-04T07:09:03Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:09:03Z",
+            "completed_at": "2026-11-04T07:09:03Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:09:03Z",
+            "completed_at": "2026-11-04T07:09:03Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41790108006,
+    "name": "S4P validation",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790108006",
+    "jobs": [
+      {
+        "name": "Backend transaction regressions",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:08:00Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:08:00Z",
+            "completed_at": "2026-11-04T07:08:01Z"
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:08:01Z",
+            "completed_at": "2026-11-04T07:08:04Z"
+          },
+          {
+            "name": "Install",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:08:04Z",
+            "completed_at": "2026-11-04T07:08:26Z"
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:08:26Z",
+            "completed_at": "2026-11-04T07:08:26Z"
+          },
+          {
+            "name": "Python compile",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:08:26Z",
+            "completed_at": "2026-11-04T07:08:27Z"
+          },
+          {
+            "name": "Prepare worktree-isolated test database",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:08:27Z",
+            "completed_at": "2026-11-04T07:08:27Z"
+          },
+          {
+            "name": "Tests with real PostgreSQL",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:08:27Z",
+            "completed_at": "2026-11-04T07:26:39Z"
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16,
+            "started_at": "2026-11-04T07:26:39Z",
+            "completed_at": "2026-11-04T07:26:40Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17,
+            "started_at": "2026-11-04T07:26:40Z",
+            "completed_at": "2026-11-04T07:26:40Z"
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18,
+            "started_at": "2026-11-04T07:26:40Z",
+            "completed_at": "2026-11-04T07:26:40Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-04T07:26:40Z",
+            "completed_at": "2026-11-04T07:26:40Z"
+          }
+        ]
+      },
+      {
+        "name": "Frontend SAP regressions",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:47Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:07:53Z"
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:07:53Z",
+            "completed_at": "2026-11-04T07:07:57Z"
+          },
+          {
+            "name": "Run npm run typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:07:57Z",
+            "completed_at": "2026-11-04T07:08:03Z"
+          },
+          {
+            "name": "Run npm run lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:08:03Z",
+            "completed_at": "2026-11-04T07:08:14Z"
+          },
+          {
+            "name": "Run npm test -- --run",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:08:14Z",
+            "completed_at": "2026-11-04T07:08:48Z"
+          },
+          {
+            "name": "Production build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:08:48Z",
+            "completed_at": "2026-11-04T07:08:57Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15,
+            "started_at": "2026-11-04T07:08:57Z",
+            "completed_at": "2026-11-04T07:08:58Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16,
+            "started_at": "2026-11-04T07:08:58Z",
+            "completed_at": "2026-11-04T07:08:58Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17,
+            "started_at": "2026-11-04T07:08:58Z",
+            "completed_at": "2026-11-04T07:08:58Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 41790107978,
+    "name": "S4P authenticated browser critical journeys",
+    "head_sha": "a2ff300696f7be81ef1afd2116f19d83010af56f",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/Clopezgg/S4P-/actions/runs/41790107978",
+    "jobs": [
+      {
+        "name": "Browser + PostgreSQL + private evidence E2E (visual)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:48Z"
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:48Z",
+            "completed_at": "2026-11-04T07:08:03Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:08:03Z",
+            "completed_at": "2026-11-04T07:08:05Z"
+          },
+          {
+            "name": "Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:08:05Z",
+            "completed_at": "2026-11-04T07:08:05Z"
+          },
+          {
+            "name": "Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:08:05Z",
+            "completed_at": "2026-11-04T07:08:07Z"
+          },
+          {
+            "name": "Install backend in isolated virtual environment",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:08:07Z",
+            "completed_at": "2026-11-04T07:08:31Z"
+          },
+          {
+            "name": "Install frontend",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:08:31Z",
+            "completed_at": "2026-11-04T07:08:37Z"
+          },
+          {
+            "name": "Install real browsers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:08:37Z",
+            "completed_at": "2026-11-04T07:09:35Z"
+          },
+          {
+            "name": "Verify that no Playwright spec is omitted from the two suites",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:09:35Z",
+            "completed_at": "2026-11-04T07:09:35Z"
+          },
+          {
+            "name": "Execute end-to-end project, financial, accessibility and browser scenarios",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-04T07:09:35Z",
+            "completed_at": "2026-11-04T07:43:19Z"
+          },
+          {
+            "name": "Preserve isolated QA failure evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-11-04T07:43:19Z",
+            "completed_at": "2026-11-04T07:43:25Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-04T07:43:25Z",
+            "completed_at": "2026-11-04T07:43:26Z"
+          },
+          {
+            "name": "Post Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-04T07:43:26Z",
+            "completed_at": "2026-11-04T07:43:26Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-04T07:43:26Z",
+            "completed_at": "2026-11-04T07:43:26Z"
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22,
+            "started_at": "2026-11-04T07:43:26Z",
+            "completed_at": "2026-11-04T07:43:26Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23,
+            "started_at": "2026-11-04T07:43:26Z",
+            "completed_at": "2026-11-04T07:43:26Z"
+          }
+        ]
+      },
+      {
+        "name": "Browser + PostgreSQL + private evidence E2E (functional)",
+        "status": "completed",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-11-04T07:07:47Z",
+            "completed_at": "2026-11-04T07:07:49Z"
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-11-04T07:07:49Z",
+            "completed_at": "2026-11-04T07:08:07Z"
+          },
+          {
+            "name": "Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-11-04T07:08:07Z",
+            "completed_at": "2026-11-04T07:08:08Z"
+          },
+          {
+            "name": "Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-11-04T07:08:08Z",
+            "completed_at": "2026-11-04T07:08:09Z"
+          },
+          {
+            "name": "Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-11-04T07:08:09Z",
+            "completed_at": "2026-11-04T07:08:12Z"
+          },
+          {
+            "name": "Install backend in isolated virtual environment",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-11-04T07:08:12Z",
+            "completed_at": "2026-11-04T07:08:41Z"
+          },
+          {
+            "name": "Install frontend",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7,
+            "started_at": "2026-11-04T07:08:41Z",
+            "completed_at": "2026-11-04T07:08:49Z"
+          },
+          {
+            "name": "Install real browsers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8,
+            "started_at": "2026-11-04T07:08:49Z",
+            "completed_at": "2026-11-04T07:10:08Z"
+          },
+          {
+            "name": "Verify that no Playwright spec is omitted from the two suites",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9,
+            "started_at": "2026-11-04T07:10:08Z",
+            "completed_at": "2026-11-04T07:10:08Z"
+          },
+          {
+            "name": "Execute end-to-end project, financial, accessibility and browser scenarios",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10,
+            "started_at": "2026-11-04T07:10:08Z",
+            "completed_at": "2026-11-04T07:17:08Z"
+          },
+          {
+            "name": "Preserve isolated QA failure evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11,
+            "started_at": "2026-11-04T07:17:08Z",
+            "completed_at": "2026-11-04T07:17:10Z"
+          },
+          {
+            "name": "Post Run actions/setup-node@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19,
+            "started_at": "2026-11-04T07:17:10Z",
+            "completed_at": "2026-11-04T07:17:10Z"
+          },
+          {
+            "name": "Post Run actions/setup-python@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20,
+            "started_at": "2026-11-04T07:17:10Z",
+            "completed_at": "2026-11-04T07:17:11Z"
+          },
+          {
+            "name": "Post Run actions/checkout@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21,
+            "started_at": "2026-11-04T07:17:11Z",
+            "completed_at": "2026-11-04T07:17:11Z"
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22,
+            "started_at": "2026-11-04T07:17:11Z",
+            "completed_at": "2026-11-04T07:17:11Z"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23,
+            "started_at": "2026-11-04T07:17:11Z",
+            "completed_at": "2026-11-04T07:17:12Z"
+          }
+        ]
+      }
+    ]
+  }
+]

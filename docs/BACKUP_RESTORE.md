@@ -13,6 +13,15 @@ Los scripts autoritativos son:
 
 Usan `pg_dump --format=custom` y `pg_restore`. El restore se realiza siempre sobre una base nueva/vacía; nunca se usa como mecanismo para sobrescribir silenciosamente una base productiva viva.
 
+El script de restore acepta solo `PGHOST=localhost` o `127.0.0.1` y un nombre
+`s4p_restore_*` (o `nexora_backup_target_*` para regresiones históricas).
+Rechaza overrides `PGHOSTADDR`, `PGSERVICE` y `PGSERVICEFILE`. `createdb` debe
+crear un destino nuevo: si ya existe, aborta sin borrarlo. La importación usa
+`--exit-on-error --single-transaction`; un fallo conserva el destino para diagnóstico.
+El respaldo cifrado de Supabase usa el procedimiento separado
+`backend/restore_from_supabase.py`; una restauración de fixture local no certifica
+la recuperabilidad de los respaldos de producción.
+
 `backend/tests/test_backup_restore.py` ejecuta un ciclo real contra PostgreSQL:
 
 1. crea una base de origen;
