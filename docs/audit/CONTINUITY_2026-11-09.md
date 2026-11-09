@@ -31,3 +31,7 @@ Render PG16 free vence 2026-11-27T23:47:28.940374Z. Supabase PG17.11 mantiene ce
 5. Antes de go-live: seis push SUCCESS efectivos del SHA exacto, Safari/WebKit y desktop reales, restore productivo real, RBAC, protección main y gate manual s4p-release-provenance.yml con aprobación humana. No activar flags de aceptación artificiales.
 
 Automatización 6aea875595c48191809b334935400550 revalidada activa. Issue #13 se actualiza solo con cambios verificables. Sin nuevas ramas, merge de PR #11 ni movimientos QA en producción.
+
+## Reparación adicional de texto PDF
+
+Después de 941973b se reprodujo AUD-017: markup de beneficiario interpretado como imagen y error 500. Se escapan todos los párrafos del recibo antes de ReportLab; tres entradas públicas reales (beneficiario/perfil de empresa/pie) se verifican contra un servidor HTTP loopback que debe recibir cero peticiones. No se afirma SSRF externo exitoso. Once pruebas de seguridad PDF, formato, branding y ciclo integrado PASS; el commit adicional exige nuevamente seis push CI del HEAD exacto.

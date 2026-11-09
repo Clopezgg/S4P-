@@ -1,0 +1,21 @@
+{
+  "baseline": "941973b3565ecd543fc536a58aa8706a2f34207b",
+  "before": {
+    "beneficiaryMarkup": "500/resource loader invoked",
+    "successfulSSRFObserved": false
+  },
+  "after": {
+    "tests": "11",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "18.233"
+  },
+  "negativeCases": [
+    "beneficiary",
+    "companyName via /profile",
+    "companyFooter via /profile"
+  ],
+  "realHttpProbeRequests": 0,
+  "environment": "local isolated PostgreSQL and authenticated API; no production writes"
+}

@@ -11,6 +11,7 @@ import io
 import uuid
 from datetime import date
 from decimal import Decimal
+from html import escape
 
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
@@ -128,7 +129,7 @@ def _styles() -> dict[str, ParagraphStyle]:
 def _section(title: str, styles: dict[str, ParagraphStyle], *, top: float = 12) -> list:
     rule = Table([[""]], colWidths=[17 * cm], rowHeights=[2])
     rule.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, -1), 1.1, _ACCENT)]))
-    return [Spacer(1, top), Paragraph(title, styles["section"]), rule, Spacer(1, 4)]
+    return [Spacer(1, top), _plain_paragraph(title, styles["section"]), rule, Spacer(1, 4)]
 
 
 def _page_furniture(document_number: str, verification_code: str):
@@ -275,6 +276,11 @@ def _resolve_contract_context(db: Session, document: AccountingDocument) -> dict
     }
 
 
+def _plain_paragraph(value: str, style: ParagraphStyle) -> Paragraph:
+    """ERP fields are text, never ReportLab XML or external image references."""
+    return Paragraph(escape(str(value), quote=False).replace("\n", "<br/>"), style)
+
+
 def _q_amount(value) -> Decimal:
     return Decimal(str(value)).quantize(Decimal("0.01"))
 
@@ -378,7 +384,7 @@ def _evidence_image(evidence: Evidence, *, max_width: float, max_height: float) 
 
 def _kv_table(rows: list[tuple[str, str]], styles: dict[str, ParagraphStyle]) -> Table:
     data = [
-        [Paragraph(label, styles["label"]), Paragraph(value or "-", styles["value"])]
+        [_plain_paragraph(label, styles["label"]), _plain_paragraph(value or "-", styles["value"])]
         for label, value in rows
     ]
     table = Table(data, colWidths=[5 * cm, 11.5 * cm])
@@ -506,31 +512,31 @@ def generate_voucher_pdf(
     identity: list = []
     if logo_image is not None:
         identity.extend([logo_image, Spacer(1, 3)])
-    identity.append(Paragraph("S4P", styles["brand"]))
+    identity.append(_plain_paragraph("S4P", styles["brand"]))
     trade = issuance.company_trade_name_snapshot or issuance.company_name_snapshot
     if trade and trade != "S4P":
-        identity.append(Paragraph(trade, styles["value"]))
+        identity.append(_plain_paragraph(trade, styles["value"]))
     if issuance.company_legal_name_snapshot:
-        identity.append(Paragraph(issuance.company_legal_name_snapshot, styles["identity"]))
+        identity.append(_plain_paragraph(issuance.company_legal_name_snapshot, styles["identity"]))
     id_bits = []
     if issuance.company_fiscal_id_snapshot:
         id_bits.append(f"RTN {issuance.company_fiscal_id_snapshot}")
     if issuance.company_address_snapshot:
         id_bits.append(issuance.company_address_snapshot)
     if id_bits:
-        identity.append(Paragraph(" · ".join(id_bits), styles["identity"]))
+        identity.append(_plain_paragraph(" · ".join(id_bits), styles["identity"]))
     contact = " · ".join(
         p for p in [issuance.company_phone_snapshot, issuance.company_email_snapshot, issuance.company_website_snapshot] if p
     )
     if contact:
-        identity.append(Paragraph(contact, styles["identity"]))
+        identity.append(_plain_paragraph(contact, styles["identity"]))
 
     meta_card = Table(
         [
-            [Paragraph("COMPROBANTE DE PAGO", styles["docmark"])],
-            [Paragraph(f"N.º {document.document_number}", styles["doctype"])],
-            [Paragraph(
-                f"Emitido {issued_on.strftime('%d/%m/%Y')}<br/>Contabilizado {posted}<br/>Estado {status_label}",
+            [_plain_paragraph("COMPROBANTE DE PAGO", styles["docmark"])],
+            [_plain_paragraph(f"N.º {document.document_number}", styles["doctype"])],
+            [_plain_paragraph(
+                f"Emitido {issued_on.strftime('%d/%m/%Y')}\nContabilizado {posted}\nEstado {status_label}",
                 styles["identity"],
             )],
         ],
@@ -552,16 +558,16 @@ def generate_voucher_pdf(
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
     ]))
     story.append(header)
-    story.append(Paragraph("Escanea el QR para verificar la autenticidad de este comprobante.", styles["small"]))
+    story.append(_plain_paragraph("Escanea el QR para verificar la autenticidad de este comprobante.", styles["small"]))
 
-    benef = [Paragraph("PAGADO A / BENEFICIARIO", styles["label"]), Paragraph(issuance.beneficiary_name_snapshot, styles["value"])]
+    benef = [_plain_paragraph("PAGADO A / BENEFICIARIO", styles["label"]), _plain_paragraph(issuance.beneficiary_name_snapshot, styles["value"])]
     if issuance.beneficiary_tax_id_snapshot:
-        benef.append(Paragraph(f"ID / RTN {issuance.beneficiary_tax_id_snapshot}", styles["small"]))
+        benef.append(_plain_paragraph(f"ID / RTN {issuance.beneficiary_tax_id_snapshot}", styles["small"]))
     if issuance.beneficiary_address_snapshot:
-        benef.append(Paragraph(issuance.beneficiary_address_snapshot, styles["small"]))
-    payer_flow = [Paragraph("PAGADO POR", styles["label"]), Paragraph(issuance.payer_name_snapshot, styles["value"])]
+        benef.append(_plain_paragraph(issuance.beneficiary_address_snapshot, styles["small"]))
+    payer_flow = [_plain_paragraph("PAGADO POR", styles["label"]), _plain_paragraph(issuance.payer_name_snapshot, styles["value"])]
     if issuance.project_name_snapshot:
-        payer_flow.append(Paragraph(f"Proyecto: {issuance.project_name_snapshot}", styles["small"]))
+        payer_flow.append(_plain_paragraph(f"Proyecto: {issuance.project_name_snapshot}", styles["small"]))
     band = Table([[benef, payer_flow]], colWidths=[9.5 * cm, 7.0 * cm])
     band.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -598,7 +604,7 @@ def generate_voucher_pdf(
     story.append(_kv_table(info_rows, styles))
     story.append(Spacer(1, 10))
     total_box = Table(
-        [[Paragraph("TOTAL PAGADO", styles["label"]), Paragraph(format_money(total, currency), styles["amount"])]],
+        [[_plain_paragraph("TOTAL PAGADO", styles["label"]), _plain_paragraph(format_money(total, currency), styles["amount"])]],
         colWidths=[8 * cm, 8.5 * cm],
     )
     total_box.setStyle(TableStyle([
@@ -667,7 +673,7 @@ def generate_voucher_pdf(
         ]))
         story.append(plan_table)
         story.append(Spacer(1, 4))
-        story.append(Paragraph(
+        story.append(_plain_paragraph(
             f"Total acordado {format_money(invoice_total, invoice.currency_code)} · "
             f"Pagado acumulado {format_money(invoice.amount_paid, invoice.currency_code)} · "
             f"Saldo pendiente {format_money(invoice_total - invoice.amount_paid, invoice.currency_code)}",
@@ -700,7 +706,7 @@ def generate_voucher_pdf(
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
     ]))
     accounting_flow.append(acc_table)
-    accounting_flow.append(Paragraph(
+    accounting_flow.append(_plain_paragraph(
         "Doble partida: TOTAL DÉBITO = TOTAL CRÉDITO. El comprobante no puede alterar el asiento contabilizado.",
         styles["small"],
     ))
@@ -708,11 +714,11 @@ def generate_voucher_pdf(
     evidence = _load_payment_evidence(db, document)
     story.extend(_section("Evidencia de pago", styles))
     if evidence is None:
-        story.append(Paragraph("Sin evidencia adjunta (no requerida para este método de pago).", styles["body"]))
+        story.append(_plain_paragraph("Sin evidencia adjunta (no requerida para este método de pago).", styles["body"]))
     else:
         digest = (evidence.content_hash or "").upper()
         short = f"{digest[:8]}...{digest[-4:]}" if digest else "no registrado"
-        story.append(Paragraph(
+        story.append(_plain_paragraph(
             f"Evidencia adjunta: {evidence.original_filename} - {round(evidence.size_bytes / 1024)} KB · SHA-256 {short}",
             styles["body"],
         ))
@@ -731,21 +737,21 @@ def generate_voucher_pdf(
         if label == "Aprobado por" and signature_image is not None:
             flows.extend([signature_image, Spacer(1, 2)])
         else:
-            flows.append(Paragraph("<br/><br/>_____________________________", styles["small"]))
-        flows.extend([Paragraph(label, styles["label"]), Paragraph(name, styles["value"])])
+            flows.append(_plain_paragraph("\n\n_____________________________", styles["small"]))
+        flows.extend([_plain_paragraph(label, styles["label"]), _plain_paragraph(name, styles["value"])])
         sign_cells.append(flows)
     sign_table = Table([sign_cells], colWidths=[5.5 * cm, 5.5 * cm, 5.5 * cm])
     sign_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM")]))
     story.append(sign_table)
 
     story.append(Spacer(1, 8))
-    story.append(Paragraph(
+    story.append(_plain_paragraph(
         f"Aprobación: {approved_by or 'PENDIENTE'} · emitido {issued_on.strftime('%d/%m/%Y')} · "
         f"código de verificación {verification_code}. Verificable en {verify_url}",
         styles["small"],
     ))
     if issuance.company_footer_snapshot:
-        story.extend([Spacer(1, 4), Paragraph(issuance.company_footer_snapshot, styles["small"])])
+        story.extend([Spacer(1, 4), _plain_paragraph(issuance.company_footer_snapshot, styles["small"])])
 
     receipt_story = story
     story = list(accounting_flow)
