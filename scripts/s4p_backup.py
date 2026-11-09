@@ -10,6 +10,7 @@ import base64
 import datetime as dt
 import os
 import pathlib
+import re
 import secrets
 import subprocess
 import tempfile
@@ -26,6 +27,13 @@ def db_environment(url, *, target=False):
         raise RuntimeError("PostgreSQL DSN required")
     if not all((parsed.hostname, parsed.username, parsed.password, parsed.path.strip("/"))):
         raise RuntimeError("Incomplete PostgreSQL connection")
+    if target:
+        if any(os.environ.get(name) for name in ("PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE")):
+            raise RuntimeError("Restore refuses PGHOSTADDR/PGSERVICE/PGSERVICEFILE connection overrides")
+        if parsed.hostname not in ("localhost", "127.0.0.1"):
+            raise RuntimeError("Restore target must be a local isolated PostgreSQL instance")
+        if not re.fullmatch(r"s4p_restore_[a-z0-9_]+", unquote(parsed.path.lstrip("/"))):
+            raise RuntimeError("Target database name must match s4p_restore_[a-z0-9_]+")
     opts = parse_qs(parsed.query)
     sslmode = opts.get("sslmode", ["require" if parsed.hostname not in ("localhost", "127.0.0.1") else "disable"])[0]
     if parsed.hostname not in ("localhost", "127.0.0.1") and sslmode != "require":
@@ -104,7 +112,7 @@ def perform_backup():
     env, _identity = db_environment(url)
     key = key_bytes()
     client, bucket = s3_client()
-    timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y/%m/%d/%H%M%S")
+    timestamp = dt.datetime.now(dt.UTC).strftime("%Y/%m/%d/%H%M%S")
     object_key = f"encrypted-postgres/{timestamp}-{secrets.token_hex(6)}.s4penc"
     with tempfile.TemporaryDirectory(prefix="s4p-backup-") as work:
         workdir = pathlib.Path(work)
@@ -123,16 +131,34 @@ def perform_backup():
     return object_key
 
 
+def validate_empty_restore_target(target_url):
+    """Shared fail-closed guard, before any archive download or decryption."""
+    target_env, target_id = db_environment(target_url, target=True)
+    source_url = os.environ.get("DATABASE_URL")
+    if source_url:
+        _, source_id = db_environment(source_url)
+        if source_id == target_id:
+            raise RuntimeError("Refusing to overwrite the source S4P database")
+    sql = (
+        "SELECT count(*) FROM pg_class c "
+        "JOIN pg_namespace n ON n.oid=c.relnamespace "
+        "WHERE n.nspname <> 'information_schema' "
+        "AND n.nspname NOT LIKE 'pg_%' "
+        "AND c.relkind IN ('r','p','v','m','S','f')"
+    )
+    result = subprocess.run(
+        ["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c", sql],
+        env=target_env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        text=True, check=True, timeout=30,
+    )
+    if result.stdout.strip() != "0":
+        raise RuntimeError("Restore target is not empty; refusing to modify it")
+    return target_env, target_id
+
+
 def restore_verify_local_only(backup, target_url):
     """Restore locally to a separate, empty, throwaway DB for disaster-recovery tests."""
-    source_url = os.environ.get("DATABASE_URL", "")
-    source_env, source_id = db_environment(source_url)
-    del source_env
-    target_env, target_id = db_environment(target_url, target=True)
-    if source_id == target_id:
-        raise RuntimeError("Refusing to restore a backup into its source database")
-    if target_id[0] not in ("localhost", "127.0.0.1"):
-        raise RuntimeError("Restore verification must use an isolated local test DB")
+    target_env, target_id = validate_empty_restore_target(target_url)
     client, bucket = s3_client()
     with tempfile.TemporaryDirectory(prefix="s4p-restore-") as work:
         path = pathlib.Path(work)
@@ -141,9 +167,9 @@ def restore_verify_local_only(backup, target_url):
         dump = path / "archive.dump"
         client.download_file(bucket, backup, str(encrypted))
         decrypt_file(encrypted, dump, key_bytes())
-        subprocess.run(["pg_restore", "--exit-on-error", "--no-owner", "--no-acl",
+        subprocess.run(["pg_restore", "--exit-on-error", "--single-transaction", "--no-owner", "--no-acl",
                         "--dbname", target_id[2], str(dump)],
-                       env=target_env, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                       env=target_env, check=True, timeout=180, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("PASS: authenticated backup decrypted and restored into isolated test PostgreSQL")
 
 

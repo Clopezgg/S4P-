@@ -1,0 +1,23 @@
+{
+  "environment": "local isolated PostgreSQL QA",
+  "suite": {
+    "tests": "24",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.872"
+  },
+  "entrypoints": [
+    "backend/restore_from_supabase.py",
+    "scripts/s4p_backup.py restore-verify",
+    "scripts/db_restore.sh"
+  ],
+  "checked": [
+    "connection overrides rejected before DB access",
+    "conninfo-style database names rejected",
+    "existing real target data unchanged",
+    "truncated custom archive with valid TOC rolls back all restored objects",
+    "source retains 100 seeded rows"
+  ],
+  "faultInjection": "Only S3 transport supplies deliberately corrupt QA archive; cryptography/pg_restore/PostgreSQL real; not production backup proof"
+}

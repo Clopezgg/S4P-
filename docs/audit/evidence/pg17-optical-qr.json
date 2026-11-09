@@ -1,0 +1,14 @@
+{
+  "environment": "isolated restored PostgreSQL 17 QA; current API",
+  "opticalQrDecodedFromActualPdfRaster": true,
+  "decodedPathShape": "/verificar/comprobante/<opaque token>",
+  "matchesPersistentVerification": true,
+  "publicApiStatus": 200,
+  "verified": true,
+  "documentNumber": "PAY-2026-000001",
+  "pages": 2,
+  "pageSizePoints": [
+    612,
+    792
+  ]
+}

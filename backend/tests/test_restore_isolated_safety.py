@@ -69,3 +69,107 @@ def test_restore_refuses_own_source_database(monkeypatch):
     monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: pytest.fail("must not query"))
     with pytest.raises(RuntimeError, match="source S4P database"):
         _validate_empty_isolated_target(url)
+
+
+@pytest.mark.parametrize("variable", ["PGHOSTADDR", "PGSERVICE", "PGSERVICEFILE"])
+@pytest.mark.parametrize("entry", ["bridge", "legacy-s3"])
+def test_all_python_restore_paths_reject_connection_overrides(monkeypatch, variable, entry):
+    backup = import_module('s4p_backup')
+    monkeypatch.setenv(variable, '192.0.2.1' if variable == 'PGHOSTADDR' else 'unexpected')
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **k: pytest.fail('must reject before DB access'))
+    target = _dsn('s4p_restore_verification')
+    with pytest.raises(RuntimeError, match='connection overrides'):
+        if entry == 'bridge':
+            _validate_empty_isolated_target(target)
+        else:
+            backup.restore_verify_local_only('unused-object', target)
+
+
+@pytest.mark.parametrize("dbname", ["production", "s4p_restore_qa host=db.example.test", "s4p_restore_qa?hostaddr=192.0.2.1"])
+def test_legacy_restore_rejects_unmarked_or_conninfo_database_names(monkeypatch, dbname):
+    from urllib.parse import quote
+
+    backup = import_module('s4p_backup')
+    monkeypatch.setattr(subprocess, 'run', lambda *a, **k: pytest.fail('must reject before DB access'))
+    with pytest.raises(RuntimeError, match='s4p_restore_'):
+        backup.restore_verify_local_only('unused-object', _dsn(quote(dbname, safe='')))
+
+
+def test_python_restore_guard_preserves_real_existing_local_data(monkeypatch):
+    import os
+    import uuid
+
+    import psycopg
+
+    backup = import_module('s4p_backup')
+    name = 's4p_restore_guard_' + uuid.uuid4().hex
+    password = os.environ.get('POSTGRES_PASSWORD', 'nexora')
+    env = {k: v for k, v in os.environ.items() if k not in {'PGHOSTADDR', 'PGSERVICE', 'PGSERVICEFILE'}}
+    env.update(PGHOST='127.0.0.1', PGPORT='5432', PGUSER='nexora', PGPASSWORD=password)
+    subprocess.run(['createdb', name], env=env, check=True, timeout=30)
+    target = f'postgresql+psycopg://nexora:{password}@127.0.0.1:5432/{name}'
+    try:
+        assert _validate_empty_isolated_target(target)[1][2] == name
+        with psycopg.connect(host='127.0.0.1', port=5432, user='nexora', password=password, dbname=name) as conn:
+            conn.execute('CREATE TABLE restore_guard_probe (value integer PRIMARY KEY)')
+            conn.execute('INSERT INTO restore_guard_probe VALUES (17)')
+        monkeypatch.setattr(backup, 's3_client', lambda: pytest.fail('must reject before storage access'))
+        for restore in [lambda: _validate_empty_isolated_target(target),
+                        lambda: backup.restore_verify_local_only('unused-object', target)]:
+            with pytest.raises(RuntimeError, match='not empty'):
+                restore()
+        with psycopg.connect(host='127.0.0.1', port=5432, user='nexora', password=password, dbname=name) as conn:
+            assert conn.execute('SELECT value FROM restore_guard_probe').fetchone() == (17,)
+    finally:
+        subprocess.run(['dropdb', name], env=env, check=True, timeout=30)
+
+
+def test_legacy_restore_rolls_back_real_postgres_on_late_archive_failure(monkeypatch, tmp_path):
+    """Fault injection for transport only; crypto, CLI and PostgreSQL are real."""
+    import base64
+    import os
+    import uuid
+
+    import psycopg
+
+    backup = import_module('s4p_backup')
+    suffix = uuid.uuid4().hex
+    source = 's4p_restore_seed_' + suffix
+    target = 's4p_restore_atomic_' + suffix
+    password = os.environ.get('POSTGRES_PASSWORD', 'nexora')
+    env = {k: v for k, v in os.environ.items() if k not in {'PGHOSTADDR', 'PGSERVICE', 'PGSERVICEFILE'}}
+    env.update(PGHOST='127.0.0.1', PGPORT='5432', PGUSER='nexora', PGPASSWORD=password)
+    made = []
+    try:
+        for name in [source, target]:
+            subprocess.run(['createdb', name], env=env, check=True, timeout=30)
+            made.append(name)
+        with psycopg.connect(host='127.0.0.1', port=5432, user='nexora', password=password, dbname=source) as conn:
+            conn.execute('CREATE TABLE restore_probe (value integer PRIMARY KEY, note text)')
+            conn.execute("INSERT INTO restore_probe SELECT n, repeat('QA archive corruption ', 20) FROM generate_series(1,100) n")
+        archive = tmp_path / 'source.dump'
+        subprocess.run(['pg_dump', '-Fc', '--compress=0', '--file', str(archive), source],
+                       env=env, check=True, timeout=30)
+        archive.write_bytes(archive.read_bytes()[:-64])
+        subprocess.run(['pg_restore', '--list', str(archive)], check=True, stdout=subprocess.DEVNULL)
+        key = os.urandom(32)
+        encrypted = tmp_path / 'source.s4penc'
+        backup.encrypt_file(archive, encrypted, key)
+
+        class CorruptArchiveTransport:
+            def download_file(self, bucket, object_key, filename):
+                Path(filename).write_bytes(encrypted.read_bytes())
+
+        monkeypatch.setattr(backup, 's3_client', lambda: (CorruptArchiveTransport(), 'qa-only'))
+        monkeypatch.setenv('S4P_BACKUP_AES_KEY_B64', base64.b64encode(key).decode())
+        monkeypatch.setenv('DATABASE_URL', f'postgresql+psycopg://nexora:{password}@127.0.0.1:5432/{source}')
+        with pytest.raises(subprocess.CalledProcessError):
+            backup.restore_verify_local_only('deliberately-corrupt-qa-archive',
+                f'postgresql+psycopg://nexora:{password}@127.0.0.1:5432/{target}')
+        with psycopg.connect(host='127.0.0.1', port=5432, user='nexora', password=password, dbname=target) as conn:
+            assert conn.execute("SELECT count(*) FROM pg_tables WHERE schemaname='public'").fetchone()[0] == 0
+        with psycopg.connect(host='127.0.0.1', port=5432, user='nexora', password=password, dbname=source) as conn:
+            assert conn.execute('SELECT count(*) FROM restore_probe').fetchone()[0] == 100
+    finally:
+        for name in reversed(made):
+            subprocess.run(['dropdb', name], env=env, check=True, timeout=30)

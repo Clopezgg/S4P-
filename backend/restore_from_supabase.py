@@ -15,40 +15,13 @@ import subprocess
 import tempfile
 
 import s4p_backup
+
 from app.services.backup_worker import _bridge, _json_call
 
 
 def _validate_empty_isolated_target(target_dsn: str):
     """Fail closed before downloading or decrypting any production backup."""
-    target_env, target_id = s4p_backup.db_environment(target_dsn)
-    if target_id[0] not in ("localhost", "127.0.0.1"):
-        raise RuntimeError("Restore target must be a local isolated PostgreSQL instance")
-    if not target_id[2].startswith("s4p_restore_"):
-        raise RuntimeError("Target database name must start with s4p_restore_")
-
-    source_url = os.environ.get("DATABASE_URL")
-    if source_url:
-        _, source_id = s4p_backup.db_environment(source_url)
-        if source_id == target_id:
-            raise RuntimeError("Refusing to overwrite the source S4P database")
-
-    # Inspect metadata only. All target objects must be absent before restore.
-    # This prevents a partial import or overwrite of an existing local ERP.
-    sql = (
-        "SELECT count(*) FROM pg_class c "
-        "JOIN pg_namespace n ON n.oid=c.relnamespace "
-        "WHERE n.nspname <> 'information_schema' "
-        "AND n.nspname NOT LIKE 'pg_%' "
-        "AND c.relkind IN ('r','p','v','m','S','f')"
-    )
-    result = subprocess.run(
-        ["psql", "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c", sql],
-        env=target_env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-        text=True, check=True, timeout=30,
-    )
-    if result.stdout.strip() != "0":
-        raise RuntimeError("Restore target is not empty; refusing to modify it")
-    return target_env, target_id
+    return s4p_backup.validate_empty_restore_target(target_dsn)
 
 
 def restore_to_test_database(target_dsn: str) -> None:

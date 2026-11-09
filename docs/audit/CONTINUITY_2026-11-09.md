@@ -52,3 +52,16 @@ Evidencia: pg17-qa-restore.json, pg17-critical-content-parity.json, pg17-restore
 Última revalidación externa: 25 objetos privados de backup (más reciente 2026-11-09 08:05:14 UTC); Supabase PG17.11 sin tablas ERP. Frontend LIVE 9f746a41b4a85f83dfe8c7e09661f858f8f55c6e antes del commit de esta evidencia, backend LIVE antiguo 62258277. Dos HTTP timeouts iniciales; en repetición readyz/version/backupz=200, auth/me=401, login/CSS/JS=200. El JS static redirige al backend anterior. Protección main sigue 403 por integración; logs request solicitados vacíos. No hay deploy backend ni modificación de allowlist, secretos o DATABASE_URL productivos.
 
 El guard de secretos de 2320bac detectó cuatro falsos positivos generic-api-key al asociar hashes MD5 calculados a nombres user_company_access/user_project_access. Se retiran los hashes crudos del JSON publicado y se conserva igualdad verificada por tabla; no eran claves. No se altera la configuración ni se excluye archivo/regla del guard. El nuevo SHA requiere sus seis CI.
+
+
+## Cierre adicional de restauración y gates
+
+AUD-019 corrige las rutas Python restantes: helper común de destino vacío y aislado, rechazo PGHOSTADDR/PGSERVICE/PGSERVICEFILE, nombre completo seguro sin conninfo y restore S3 atómico/timeout. 24 regresiones PASS; el fallo tardío de un pg_dump custom truncado revierte toda la importación real. Solo el transporte del archivo corrupto se inyecta; no se simulan criptografía, PostgreSQL ni pg_restore. Ver evidence/python-restore-guards.json. Este cambio exige nuevamente seis CI del nuevo SHA.
+
+El QR fue decodificado ópticamente con libzbar desde raster del PDF real del PG17 restaurado: token resuelve en API pública a verified=true y PAY-2026-000001, dos páginas carta; evidence/pg17-optical-qr.json.
+
+Protección GitHub ahora comprobada con otros endpoints de lectura: única rama main, protected:false, reglas efectivas [] y rulesets []; la consulta administrativa /protection sigue 403. Es un bloqueo concreto de release, no solo falta de visibilidad. No se modifican reglas ni se borran tags de archivo.
+
+Compatibilidad de rollback comprobada parcialmente en QA: archivo de código exacto 62258277 (sin nueva rama) ejecuta alembic current --check-heads contra PG17 restaurado con default_transaction_read_only=on y falla "Database is not on all head revisions". Su Dockerfile contiene upgrade implícito; main conserva el check read-only. No se ejecuta upgrade del código anterior, ni se prueba ese arranque sobre producción. No hay artefacto retenido/rollback productivo verificado.
+
+Sigue NO-GO: DB permanente, restauración cifrada productiva, autorización de migración/head productivos, rollback seguro compatible, protección main y aprobación humana. La QA PG17 exitosa no autoriza ninguna de esas mutaciones.
