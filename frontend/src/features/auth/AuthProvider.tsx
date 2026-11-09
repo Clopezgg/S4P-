@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { authService } from '../../services/authService'
-import { ApiError, clearEditCapability } from '../../services/httpClient'
+import { ApiError, cancelPendingApiReads, clearEditCapability } from '../../services/httpClient'
 import { exitApplication } from './exitApplication'
 import { clearActiveCompanySelection } from '../../hooks/useActiveCompany'
 import type { CurrentUser } from '../../types/auth'
@@ -59,9 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await queryClient.cancelQueries()
+      await cancelPendingApiReads()
       return authService.logout()
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // The server has revoked the session and removed the HttpOnly cookie.
       // Exit the web application rather than routing back to S4P's login.
       setSignedOut(true)
@@ -71,6 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // begins. This prevents a browser from retaining stale user context.
       queryClient.setQueryData(['auth', 'me'], null)
       queryClient.clear()
+      // Cache/context cleanup can unmount further readers. Drain those too
+      // before WebKit leaves the document and reports late fetch errors.
+      await cancelPendingApiReads()
       // Safari cannot close a manually opened tab. Leave S4P entirely.
       exitApplication()
     },

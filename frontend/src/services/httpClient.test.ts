@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiFetch, clearEditCapability, friendlyApiMessage, storeEditCapability } from './httpClient'
+import { ApiError, apiFetch, apiFetchBlob, cancelPendingApiReads, clearEditCapability, friendlyApiMessage, storeEditCapability } from './httpClient'
 
 describe('httpClient', () => {
   afterEach(() => {
@@ -104,5 +104,73 @@ describe('httpClient', () => {
     await expect(import('./httpClient')).rejects.toThrow(/HTTPS/i)
     vi.unstubAllEnvs()
     vi.resetModules()
+  })
+})
+
+
+describe('pending API read cancellation', () => {
+  afterEach(async () => {
+    await cancelPendingApiReads()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  function holdFetchUntilAbort() {
+    const signals: AbortSignal[] = []
+    vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, options?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        const signal = options?.signal
+        if (!signal) throw new Error('A pending read must have an abort signal')
+        signals.push(signal)
+        signal.addEventListener('abort', () => reject(new DOMException('Read cancelled', 'AbortError')), { once: true })
+      })))
+    return signals
+  }
+
+  it('aborts and settles pending JSON reads before logout continues', async () => {
+    const signals = holdFetchUntilAbort()
+    const request = apiFetch('/treasury/accounts')
+    const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' })
+    await cancelPendingApiReads()
+    await rejection
+    expect(signals[0].aborted).toBe(true)
+  })
+
+  it('aborts pending private document downloads too', async () => {
+    const signals = holdFetchUntilAbort()
+    const request = apiFetchBlob('/treasury/vouchers/qa')
+    const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' })
+    await cancelPendingApiReads()
+    await rejection
+    expect(signals[0].aborted).toBe(true)
+  })
+
+  it('preserves cancellation from the query owner', async () => {
+    const signals = holdFetchUntilAbort()
+    const owner = new AbortController()
+    const request = apiFetch('/treasury/accounts', { signal: owner.signal })
+    const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' })
+    owner.abort()
+    await rejection
+    expect(signals[0].aborted).toBe(true)
+  })
+
+  it('never cancels an in-flight financial POST', async () => {
+    let finish: (response: Response) => void = () => undefined
+    vi.stubGlobal('fetch', vi.fn((_input: RequestInfo | URL, _options?: RequestInit) =>
+      new Promise<Response>(resolve => { finish = resolve })))
+    const mutation = apiFetch('/ap/supplier-payments', { method: 'POST' })
+    await cancelPendingApiReads()
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.signal).toBeUndefined()
+    finish(new Response('{"id":"committed-payment"}', { status: 200 }))
+    await expect(mutation).resolves.toEqual({ id: 'committed-payment' })
+  })
+
+  it('removes completed reads from the cancellation registry', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 200 })))
+    await apiFetch('/treasury/accounts')
+    const signal = vi.mocked(fetch).mock.calls[0]?.[1]?.signal
+    await cancelPendingApiReads()
+    expect(signal?.aborted).toBe(false)
   })
 })

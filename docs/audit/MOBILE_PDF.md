@@ -11,3 +11,7 @@ Pendiente para certificación: generar/descargar comprobante oficial autorizado 
 Avance PDF: `test_voucher_pdf_format.py` ya prueba un comprobante oficial de efectivo de dos páginas carta mediante API y DB reales, con GL, snapshot de emisión único, URL de verificación del token y 401 tras logout. El dataset persistió tras reinicio real del PostgreSQL aislado. Inspección visual, lectura óptica QR y anexos/identidad desde storage privado siguen pendientes; no se eleva ese caso a certificación documental universal.
 
 Resultado posterior de producción: se encontró y corrigió manifiesto PWA duplicado por HTML manual + VitePWA. Tras usar un único manifiesto y validar el artefacto en cada build, pasaron seis escenarios contra bundle servido por vite preview y backend/DB reales: escritorio Chromium/WebKit, SAP/modern móvil Chromium/iPhone WebKit y 360/390/430/768px. La misma matriz antes del arreglo fallaba en ambos shells modernos por dos manifest links. Evidencia production-browser-tests.json; no se debilitó el selector ni se usó la demo.
+
+## Cancelación WebKit posterior
+
+AUD-020: cierre con lecturas pendientes reproducido en CI y en regresión nativa sobre código anterior; reparación verificada en bundle Chromium/WebKit, manteniendo about:blank, 401 y cero errores. No cambia SAP escritorio ni CSS. Ver CONTINUITY_2026-11-09.md y evidence/logout-cancellation.json.

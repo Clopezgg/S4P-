@@ -21,8 +21,9 @@ export interface CashForecast {
 }
 
 export const cashForecastService = {
-  get: (companyId: string) =>
+  get: (companyId: string, signal?: AbortSignal) =>
     apiFetch<CashForecast>(
       `/financial-control/cash-forecast?companyId=${encodeURIComponent(companyId)}`,
+      { signal },
     ),
 }

@@ -15,7 +15,7 @@ function mask(reference: string | null): string {
 export function HomeBankAccountsCard({ companyId }: { companyId: string }) {
   const query = useQuery({
     queryKey: ['treasury', 'accounts', companyId],
-    queryFn: () => treasuryService.listAccounts(companyId),
+    queryFn: ({ signal }) => treasuryService.listAccounts(companyId, signal),
     enabled: Boolean(companyId),
   })
 

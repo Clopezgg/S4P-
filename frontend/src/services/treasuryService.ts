@@ -182,8 +182,8 @@ function normalizeRestriction(item: FundRestrictionWire): FundRestriction {
 }
 
 export const treasuryService = {
-  listAccounts: async (companyId: string) =>
-    (await apiFetch<TreasuryAccountWire[]>(`/treasury/accounts?companyId=${companyId}`)).map(
+  listAccounts: async (companyId: string, signal?: AbortSignal) =>
+    (await apiFetch<TreasuryAccountWire[]>(`/treasury/accounts?companyId=${companyId}`, { signal })).map(
       normalizeTreasuryAccount,
     ),
   createAccount: async (payload: CreateTreasuryAccountPayload) =>

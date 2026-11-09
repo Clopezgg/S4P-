@@ -147,7 +147,39 @@ async function throwApiError(response: Response, path: string): Promise<never> {
   throw new ApiError(message, response.status, correlationId, code)
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+const activeApiReads = new Map<AbortController, Promise<unknown>>()
+
+function trackApiRead<T>(run: (signal: AbortSignal) => Promise<T>, callerSignal?: AbortSignal | null): Promise<T> {
+  const controller = new AbortController()
+  const forwardAbort = () => controller.abort(callerSignal?.reason)
+  if (callerSignal?.aborted) forwardAbort()
+  else callerSignal?.addEventListener('abort', forwardAbort, { once: true })
+  const request = run(controller.signal)
+  activeApiReads.set(controller, request)
+  const cleanup = () => {
+    activeApiReads.delete(controller)
+    callerSignal?.removeEventListener('abort', forwardAbort)
+  }
+  // Handle the original read promise before navigation can destroy its owner.
+  // Both handlers resolve; no unhandled .finally() rejection is introduced.
+  void request.then(cleanup, cleanup)
+  return request
+}
+
+export async function cancelPendingApiReads(): Promise<void> {
+  const pending = [...activeApiReads.entries()]
+  for (const [controller] of pending) controller.abort()
+  await Promise.allSettled(pending.map(([, request]) => request))
+}
+
+export function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const method = (options.method ?? 'GET').toUpperCase()
+  // Never abort financial mutations as part of read cancellation.
+  if (!['GET', 'HEAD'].includes(method)) return performApiFetch<T>(path, options)
+  return trackApiRead(signal => performApiFetch<T>(path, { ...options, signal }), options.signal)
+}
+
+async function performApiFetch<T>(path: string, options: RequestInit): Promise<T> {
   // A FormData body (evidence uploads) must not force application/json; the
   // browser owns the multipart boundary.
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
@@ -208,10 +240,15 @@ function downloadFilename(response: Response): string | null {
   return safeDownloadFilename(quoted ?? null)
 }
 
-export async function apiFetchBlob(path: string): Promise<ApiDownload> {
+export function apiFetchBlob(path: string): Promise<ApiDownload> {
+  return trackApiRead(signal => performApiFetchBlob(path, signal))
+}
+
+async function performApiFetchBlob(path: string, signal: AbortSignal): Promise<ApiDownload> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'include',
     headers: { Accept: 'application/octet-stream,*/*' },
+    signal,
   })
 
   if (!response.ok) {

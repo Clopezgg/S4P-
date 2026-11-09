@@ -91,19 +91,19 @@ export function useCashFlowSeries({
 
   const seriesQuery = useQuery({
     queryKey: ['cash-flow-series', companyId, from, to, granularity],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       cashFlowActualService.series({
         companyId: companyId as string,
         from,
         to,
         granularity: granularity === 'auto' ? undefined : granularity,
-      }),
+      }, signal),
     enabled: Boolean(companyId) && mode === 'REALIZADO',
   })
 
   const forecastQuery = useQuery({
     queryKey: ['cash-forecast', companyId],
-    queryFn: () => cashForecastService.get(companyId as string),
+    queryFn: ({ signal }) => cashForecastService.get(companyId as string, signal),
     enabled: Boolean(companyId) && mode === 'PROYECTADO',
   })
 

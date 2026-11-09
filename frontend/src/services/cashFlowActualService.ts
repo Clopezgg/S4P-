@@ -50,10 +50,10 @@ export const cashFlowActualService = {
     from: string
     to: string
     granularity?: CashFlowGranularity
-  }) => {
+  }, signal?: AbortSignal) => {
     const q = new URLSearchParams({ companyId: params.companyId, from: params.from, to: params.to })
     if (params.granularity) q.set('granularity', params.granularity)
-    return apiFetch<CashFlowSeries>(`/financial-control/cash-flow-actual/series?${q.toString()}`)
+    return apiFetch<CashFlowSeries>(`/financial-control/cash-flow-actual/series?${q.toString()}`, { signal })
   },
 
   /** Drill-down: los movimientos individuales de un rango. */

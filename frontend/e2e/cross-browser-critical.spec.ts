@@ -188,3 +188,94 @@ async function verifyCrossBrowserCompatibility({ page }: { page: Page }) {
 }
 
 test('cross-browser critical compatibility', verifyCrossBrowserCompatibility)
+
+test.describe('pending dashboard cancellation', () => {
+  // Playwright cannot retain a response already handled by a service worker.
+  // Only this latency regression bypasses the metadata-only PWA worker; the
+  // compatibility journey above exercises the actual worker and build.
+  test.use({ serviceWorkers: 'block' })
+
+test('logout aborts pending real dashboard reads before leaving S4P', async ({ page }) => {
+  // Observe native AbortSignal events without changing fetch arguments/results.
+  await page.addInitScript(() => {
+    const state = window as Window & {
+      __s4pAbortedReads: string[]
+      __s4pReadSignals: Record<string, AbortSignal | null | undefined>
+    }
+    state.__s4pAbortedReads = []
+    state.__s4pReadSignals = {}
+    const nativeFetch = window.fetch.bind(window)
+    window.fetch = (input, init) => {
+      const address = input instanceof Request ? input.url : String(input)
+      const path = new URL(address, location.href).pathname
+      if (['/api/treasury/accounts', '/api/financial-control/cash-flow-actual/series'].includes(path)) {
+        const signal = init?.signal
+        state.__s4pReadSignals[path] = signal
+        state.__s4pAbortedReads = state.__s4pAbortedReads.filter(value => value !== path)
+        signal?.addEventListener('abort', () => {
+          if (state.__s4pReadSignals[path] === signal) state.__s4pAbortedReads.push(path)
+        }, { once: true })
+      }
+      return nativeFetch(input, init)
+    }
+  })
+  const pageErrors: string[] = []
+  page.on('pageerror', error => pageErrors.push(String(error)))
+  await login(page)
+  const company = await ensureCompany(page)
+  const capability = await unlockEdit(page.request)
+  const preferences = await page.request.put('/api/me/preferences', {
+    headers: { 'X-Nexora-Edit-Access': capability },
+    data: { themeId: 'sap-gui-horizon', density: 'compact' },
+  })
+  expect(preferences.ok(), await preferences.text()).toBeTruthy()
+  await page.reload()
+  await assertMountedDashboard(page, company)
+
+  // Retain responses from the REAL backend; only their delivery is delayed.
+  // No endpoint body, status, permissions or persisted financial data is mocked.
+  let release: () => void = () => undefined
+  const delivery = new Promise<void>(resolve => { release = resolve })
+  const pending = new Set<import('@playwright/test').Request>()
+  await page.route(/\/api\/(treasury\/accounts|financial-control\/cash-flow-actual\/series)\?/, async route => {
+    const request = route.request()
+    try {
+      const response = await route.fetch()
+      expect(response.status()).toBe(200)
+      pending.add(request)
+      await delivery
+      if (!request.failure()) await route.fulfill({ response })
+    } catch (error) {
+      // An explicitly aborted browser request needs no response delivery.
+      if (!request.failure()) throw error
+    }
+  })
+  let cancelledBeforeRevocation = false
+  await page.route('**/api/auth/logout', async route => {
+    const aborted = await page.evaluate(() =>
+      (window as Window & { __s4pAbortedReads: string[] }).__s4pAbortedReads)
+    cancelledBeforeRevocation = ['/api/treasury/accounts', '/api/financial-control/cash-flow-actual/series']
+      .every(path => aborted.includes(path))
+    // Revocation itself still reaches the real backend, even on a failing case.
+    await route.continue()
+  })
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect.poll(() => new Set([...pending]
+      .filter(request => !request.failure())
+      .map(request => new URL(request.url()).pathname)).size).toBe(2)
+    await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click()
+    await expect(page).toHaveURL('about:blank', { timeout: 10_000 })
+    await expect.poll(() => [...pending].filter(request => !request.failure()).length).toBe(0)
+    expect(cancelledBeforeRevocation, 'Dashboard reads must stop before session revocation').toBe(true)
+    expect(pageErrors).toEqual([])
+    expect((await page.request.get('/api/auth/me')).status()).toBe(401)
+  } finally {
+    release()
+    // The requests are already proven aborted. Do not await cancelled route
+    // delivery after about:blank; Playwright can retain those handler promises.
+    await page.unrouteAll({ behavior: 'ignoreErrors' })
+  }
+})
+
+})

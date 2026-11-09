@@ -1,0 +1,34 @@
+{
+  "baselineSha": "983f6f69e31b6a004b9d9678a4c9d299d4b962cf",
+  "before": {
+    "ciRun": 42612481304,
+    "job": 129144130412,
+    "functionalPassed": 18,
+    "functionalFailed": 1,
+    "engine": "webkit",
+    "cause": "Pending dashboard read transport outlived logical query cancellation and document exit",
+    "focusedNativeRegression": "FAIL: Dashboard reads must stop before session revocation; previous source restored temporarily with concurrent-edit checks, no branch created"
+  },
+  "after": {
+    "developmentWebKitRegression": "1 PASS (13.7s)",
+    "productionBundle": "4 PASS (1.9m): compatibility and forced pending-read logout, Chromium and WebKit",
+    "serviceRegressionUnitTests": "18 PASS; five new cancellation cases",
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "productionBuild": "PASS; single PWA manifest guard passes",
+    "financialMutationPostCancelled": false
+  },
+  "method": {
+    "backend": "real isolated PostgreSQL API",
+    "latency": "Retains delivery of two real 200 responses; no body/status mock",
+    "fetchObservation": "Delegates unchanged native fetch and observes last signals before actual logout POST",
+    "worker": "Blocked only for latency instrumentation; original compatibility journey keeps actual PWA",
+    "retainedAssertions": [
+      "about:blank exit",
+      "no pageerror",
+      "auth/me without session=401",
+      "native read abort before revocation"
+    ],
+    "notProductionProof": "No production login/session or financial movement used"
+  }
+}

@@ -22,6 +22,7 @@ describe('documentService evidence download', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/evidence/evidence-1/download', {
       credentials: 'include',
       headers: { Accept: 'application/octet-stream,*/*' },
+      signal: expect.any(AbortSignal),
     })
     expect(await result.blob.text()).toBe('private bytes')
     expect(result.filename).toBe('plano final.pdf')
