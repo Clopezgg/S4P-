@@ -16,7 +16,8 @@
     "typecheck": "PASS",
     "lint": "PASS",
     "productionBuild": "PASS; single PWA manifest guard passes",
-    "financialMutationPostCancelled": false
+    "financialMutationPostCancelled": false,
+    "multiCompanyRunnerFollowup": "CI 2a2a78e exposed missing explicit company-selection precondition. See company-selection-regression.json: six production-bundle scenarios pass after fixture/desktop placeholder correction."
   },
   "method": {
     "backend": "real isolated PostgreSQL API",

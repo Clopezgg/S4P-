@@ -224,13 +224,35 @@ test('logout aborts pending real dashboard reads before leaving S4P', async ({ p
   await login(page)
   const company = await ensureCompany(page)
   const capability = await unlockEdit(page.request)
+  const companies = await page.request.get('/api/master-data/companies')
+  expect(companies.ok(), await companies.text()).toBeTruthy()
+  if ((await companies.json()).length < 2) {
+    const extra = await page.request.post('/api/master-data/companies', {
+      headers: { 'X-Nexora-Edit-Access': capability },
+      data: { name: `Logout isolation ${test.info().project.name}`, functionalCurrencyCode: 'HNL' },
+    })
+    expect(extra.status()).toBe(201)
+  }
+  const context = await page.request.put('/api/context', {
+    headers: { 'X-Nexora-Edit-Access': capability },
+    data: { activeProjectId: null },
+  })
+  expect(context.ok(), await context.text()).toBeTruthy()
+  expect((await context.json()).activeProjectId).toBeNull()
   const preferences = await page.request.put('/api/me/preferences', {
     headers: { 'X-Nexora-Edit-Access': capability },
     data: { themeId: 'sap-gui-horizon', density: 'compact' },
   })
   expect(preferences.ok(), await preferences.text()).toBeTruthy()
   await page.reload()
+  const selector = page.getByRole('combobox', { name: 'Empresa activa', exact: true })
+  await expect(selector).toHaveValue('')
+  await expect(selector.locator('option:checked')).toHaveText('Seleccionar empresa')
+  await selector.selectOption(company.id)
+  await expect(selector).toHaveValue(company.id)
   await assertMountedDashboard(page, company)
+  await expect(page.getByText('Cuentas bancarias · saldos en libros', { exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Realizado', exact: true })).toBeVisible()
 
   // Retain responses from the REAL backend; only their delivery is delayed.
   // No endpoint body, status, permissions or persisted financial data is mocked.

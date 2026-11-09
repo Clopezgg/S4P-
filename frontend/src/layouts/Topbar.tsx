@@ -84,6 +84,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
               disabled={companyLoading}
               onChange={(event) => setActiveCompanyId(event.target.value || null)}
             >
+              {!activeCompanyId ? <option value="">Seleccionar empresa</option> : null}
               {companies.map((company) => (
                 <option key={company.id} value={company.id}>
                   {company.name}

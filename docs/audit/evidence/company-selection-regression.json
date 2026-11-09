@@ -1,0 +1,34 @@
+{
+  "parentSha": "2a2a78e2d8f74ee33c7a97606dc972dbf5f380ea",
+  "ciFailure": {
+    "run": 42619089208,
+    "job": 129166285006,
+    "artifact": 13675915387,
+    "passed": 20,
+    "failed": 2,
+    "engines": [
+      "firefox",
+      "webkit"
+    ],
+    "runnerSnapshot": "Sin empresa activa; multiple companies; no explicit company selection in the test"
+  },
+  "correction": [
+    "Desktop placeholder reflects activeCompanyId=null",
+    "Keep multi-company selection explicit across sessions",
+    "Real API clears project context; real selector chooses company",
+    "Require actual company Home cards before delaying requests",
+    "Retain all cancellation/auth/exit/pageerror assertions"
+  ],
+  "localResult": {
+    "build": "PASS with VITE_API_BASE_URL=/api; one PWA manifest",
+    "lint": "PASS",
+    "productionBrowsers": "6 passed (2.3m)",
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "backend": "real isolated PostgreSQL QA; no production financial writes"
+  },
+  "notProductionCertification": true
+}
