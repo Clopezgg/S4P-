@@ -20,7 +20,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     Image,
-    KeepTogether,
+    KeepInFrame,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -736,7 +736,7 @@ def generate_voucher_pdf(
         sign_cells.append(flows)
     sign_table = Table([sign_cells], colWidths=[5.5 * cm, 5.5 * cm, 5.5 * cm])
     sign_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM")]))
-    story.append(KeepTogether(sign_table))
+    story.append(sign_table)
 
     story.append(Spacer(1, 8))
     story.append(Paragraph(
@@ -747,8 +747,8 @@ def generate_voucher_pdf(
     if issuance.company_footer_snapshot:
         story.extend([Spacer(1, 4), Paragraph(issuance.company_footer_snapshot, styles["small"])])
 
-    story.append(PageBreak())
-    story.extend(accounting_flow)
+    receipt_story = story
+    story = list(accounting_flow)
     full_image = _evidence_image(evidence, max_width=17 * cm, max_height=20 * cm) if evidence is not None else None
     if full_image is not None:
         story.append(Spacer(1, 14))
@@ -778,5 +778,15 @@ def generate_voucher_pdf(
     )
     doc.pageCompression = 0
     furniture = _page_furniture(document.document_number, verification_code)
-    doc.build(story, onFirstPage=furniture, onLaterPages=furniture)
+    # Two official letter pages: contractual history and branding can otherwise
+    # push signatures onto a third page. Fit each complete section without
+    # clipping, dropping rows or separating the signatures from the receipt.
+    frame_width = doc.width - 12  # ReportLab Frame's default inner padding.
+    frame_height = doc.height - 12
+    pages = [
+        KeepInFrame(frame_width, frame_height, receipt_story, mode="shrink"),
+        PageBreak(),
+        KeepInFrame(frame_width, frame_height, story, mode="shrink"),
+    ]
+    doc.build(pages, onFirstPage=furniture, onLaterPages=furniture)
     return buffer.getvalue()

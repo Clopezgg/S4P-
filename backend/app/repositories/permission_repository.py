@@ -252,6 +252,7 @@ _BASE_PERMISSIONS: tuple[tuple[str, str, str], ...] = (
 _ROLE_GRANTS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "Administrator": tuple((resource, action, SCOPE_ANY) for resource, action, _ in _BASE_PERMISSIONS),
     "Finance Manager": (
+        ("contract.payment_schedule", "read", SCOPE_OWN),
         ("core.company", "read", SCOPE_OWN),
         ("core.user", "read", SCOPE_OWN),
         ("core.company", "update", SCOPE_OWN),
@@ -400,7 +401,6 @@ _ROLE_GRANTS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("procurement.supplier", "read", SCOPE_ANY),
         ("procurement.contract", "read", SCOPE_ANY),
         ("contract.payment_schedule", "read", SCOPE_ANY),
-        ("contract.payment_schedule", "manage", SCOPE_ANY),
         ("procurement.requisition", "read", SCOPE_ANY),
         ("procurement.rfq", "read", SCOPE_ANY),
         ("procurement.quotation", "read", SCOPE_ANY),
@@ -716,6 +716,15 @@ def ensure_base_permissions(db: Session) -> None:
         (grant.role_id, grant.permission_id): grant
         for grant in db.execute(select(RolePermission)).scalars()
     }
+
+    # Revoke the legacy seeded write grant: Auditor is a read-only role.
+    # Removing it from the matrix alone would leave existing installations unsafe.
+    auditor = roles_by_name.get("Auditor")
+    unsafe_permission = existing_permissions.get(("contract.payment_schedule", "manage"))
+    if auditor is not None and unsafe_permission is not None:
+        unsafe_grant = existing_grants.pop((auditor.id, unsafe_permission.id), None)
+        if unsafe_grant is not None:
+            db.delete(unsafe_grant)
 
     for role_name, grants in _ROLE_GRANTS.items():
         role = roles_by_name.get(role_name)

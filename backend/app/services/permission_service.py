@@ -14,6 +14,10 @@ from app.models.approval_request import ApprovalRequest
 from app.models.ar import CustomerInvoice, CustomerReceipt
 from app.models.asset import DepreciationEntry, FixedAsset
 from app.models.change_order import ChangeOrder
+from app.models.contract_payment import (
+    ContractPaymentInstallment,
+    ContractPaymentSchedule,
+)
 from app.models.crm import Quotation as CustomerQuotation
 from app.models.crm import SalesContract
 from app.models.document import Document
@@ -43,6 +47,7 @@ from app.models.role import Role
 from app.models.safety import SafetyIncident, SafetyObservation
 from app.models.site_report import DailySiteReport
 from app.models.submittal import Submittal
+from app.models.supplier import SupplierContract
 from app.models.treasury import FundRestriction
 from app.models.user import User
 from app.models.user_role import UserRole
@@ -66,6 +71,7 @@ PROJECT_AWARE_RESOURCE_PREFIXES = (
     "safety.",
     "equipment.",
     "workforce.",
+    "contract.",
     "procurement.",
     "inventory.",
     "ap.",
@@ -206,6 +212,16 @@ def _indirect_entity_project_ids(
             entity = db.get(model, entity_id)
             if entity is not None:
                 add(getattr(entity, attribute, None))
+
+    if resource.startswith("contract."):
+        add_direct(SupplierContract, ("contract_id", "supplierContractId"))
+        add_direct(ContractPaymentSchedule, ("schedule_id", "scheduleId"))
+        for installment_id in ids("installment_id", "installmentId"):
+            installment = db.get(ContractPaymentInstallment, installment_id)
+            if installment is not None:
+                schedule = db.get(ContractPaymentSchedule, installment.schedule_id)
+                if schedule is not None:
+                    add(schedule.project_id)
 
     document_ids = ids("document_id", "documentId")
     accounting_document_ids = ids("accounting_document_id", "accountingDocumentId")

@@ -1,6 +1,8 @@
-# S4P — auditoría ejecutada, 8 de noviembre de 2026
+# S4P — auditoría ejecutada, 8–9 de noviembre de 2026
 
 Estado: **NO-GO financiero**. Este expediente no es una certificación ni acredita todas las acciones del ERP. El baseline inspeccionado es `a2ff300696f7be81ef1afd2116f19d83010af56f` de `main`; referencia Nexora `2ca980446654f3c92e3ddb1e8f55d847ef073968`. Solo se trabaja en main, issue #13; no se repite PR #11.
+
+Última continuación: [CONTINUITY_2026-11-09.md](CONTINUITY_2026-11-09.md). Conserva el baseline histórico y distingue las verificaciones posteriores.
 
 ## Evidencia y alcance
 

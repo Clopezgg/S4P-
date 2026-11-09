@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-09",
+  "environment": "local isolated PostgreSQL 16; real APIs; no production financial writes",
+  "baselineMain": "0b30b27e5dc4c121b3fe918c0a8a4ba43d81fc19",
+  "suites": {
+    "integrated_residential": {
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "12.619"
+    },
+    "contract_rbac_pdf": {
+      "tests": "56",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "78.446"
+    }
+  },
+  "persistence": {
+    "before": {
+      "accounting_documents": 4,
+      "alembic": "7b2c1af4849c",
+      "audit_logs": 48,
+      "companies": 2,
+      "gl": {
+        "credit": "13000.00",
+        "debit": "13000.00"
+      },
+      "invoice": [
+        {
+          "amount_paid": "0.00",
+          "status": "APPROVED"
+        }
+      ],
+      "journal_lines": 8,
+      "projects": 1,
+      "roles": 14,
+      "supplier_contracts": 1,
+      "supplier_invoices": 1,
+      "supplier_payments": 1,
+      "unbalanced": 0,
+      "user_project_access": 3,
+      "user_roles": 6,
+      "users": 6,
+      "voucher_issuances": 1,
+      "voucher_verifications": 1,
+      "wbs_nodes": 14
+    },
+    "after": {
+      "accounting_documents": 4,
+      "alembic": "7b2c1af4849c",
+      "audit_logs": 48,
+      "companies": 2,
+      "gl": {
+        "credit": "13000.00",
+        "debit": "13000.00"
+      },
+      "invoice": [
+        {
+          "amount_paid": "0.00",
+          "status": "APPROVED"
+        }
+      ],
+      "journal_lines": 8,
+      "projects": 1,
+      "roles": 14,
+      "supplier_contracts": 1,
+      "supplier_invoices": 1,
+      "supplier_payments": 1,
+      "unbalanced": 0,
+      "user_project_access": 3,
+      "user_roles": 6,
+      "users": 6,
+      "voucher_issuances": 1,
+      "voucher_verifications": 1,
+      "wbs_nodes": 14
+    },
+    "httpFreshProcess": {
+      "login": 200,
+      "identity": 200,
+      "invoice": {
+        "status": "APPROVED",
+        "amountPaid": "0.00"
+      },
+      "balances": [
+        {
+          "type": "QA Cash",
+          "balance": "10000.00"
+        },
+        {
+          "type": "QA Bank",
+          "balance": "0"
+        }
+      ],
+      "pdf": {
+        "status": 200,
+        "sha256": "12c1b5de378b5a373d94428ce5394507f599e22d21c53755e346817260283f22"
+      },
+      "verification": true,
+      "logoutProtectedPdf": 401,
+      "loginPage": 200
+    }
+  },
+  "pdf": {
+    "pages": 2,
+    "sizePoints": [
+      612,
+      792
+    ],
+    "contractNumberPresent": true,
+    "historyPresent": true,
+    "visualReview": "local rasterized contractual receipt page 1; no clipped signatures or history in this fixture",
+    "remainingRisk": "Long contractual history may shrink text; all possible lengths not certified. Regenerated reversed voucher omits contractual block; header correctly marks Reversado."
+  },
+  "pg17Rehearsal": {
+    "status": "BLOCKED",
+    "reason": "Official postgres:17-alpine image registration failed: no space left on device; source QA and existing PG16 remained available. No PG17 migration success claimed."
+  },
+  "production": {
+    "backendSha": "62258277cf006d875fbb381197ca7dbbcdf09fbd",
+    "frontendSha": "0b30b27e5dc4c121b3fe918c0a8a4ba43d81fc19",
+    "deployTriggered": false,
+    "supabasePg": "17.11",
+    "supabaseErpTables": 0,
+    "mainAutomationEnabled": true
+  }
+}
