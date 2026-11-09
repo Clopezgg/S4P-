@@ -35,3 +35,18 @@ Automatización 6aea875595c48191809b334935400550 revalidada activa. Issue #13 se
 ## Reparación adicional de texto PDF
 
 Después de 941973b se reprodujo AUD-017: markup de beneficiario interpretado como imagen y error 500. Se escapan todos los párrafos del recibo antes de ReportLab; tres entradas públicas reales (beneficiario/perfil de empresa/pie) se verifican contra un servidor HTTP loopback que debe recibir cero peticiones. No se afirma SSRF externo exitoso. Once pruebas de seguridad PDF, formato, branding y ciclo integrado PASS; el commit adicional exige nuevamente seis push CI del HEAD exacto.
+
+
+## Restauración independiente PG16 → PG17 conseguida
+
+La limitación inicial de espacio se resolvió sin tocar producción: otro contenedor reutiliza la base Debian existente e instala PostgreSQL 17.11 desde PGDG oficial. Origen QA local en 5432; destino independiente, solo loopback, 5433. El origen no cambió de conexión ni versión. Se generó pg_dump custom del ciclo residencial real, se cifró/descifró con AES-256-GCM mediante `scripts/s4p_backup.py` y clave aleatoria mantenida solo en memoria; el dump descifrado coincide byte por byte y se restauró con `--single-transaction --exit-on-error --no-owner --no-acl`.
+
+Paridad inicial: 112 tablas con conteos iguales, cero FKs sin validar, cero documentos GL desbalanceados y Alembic 7b2c1af4849c. Paridad adicional de contenido: 18 tablas críticas completas y campos inmutables de voucher_verifications; se excluyen document_status/updated_at del token, que se actualizan al regenerar el PDF reversado. No se excluyen importes, identidades, grants ni tokens. Sesiones/último login/audit pueden variar al probar la nueva API.
+
+API real contra PG17 restaurado: login/auth/me/PDF=200, PDF sin sesión=401, QR válido, factura APPROVED/pagado=0, caja 10.000 y banco 0, recibo 2 páginas carta. Chromium y WebKit autenticados: 30 comprobaciones de ruta/viewport (inicio/proyectos/tesorería × 360/390/430/768/1440 × dos motores), cero overflow y cero pageerror. La primera configuración local con Origin incorrecto fue rechazada 403 por CSRF; se corrigió FRONTEND_URL solo en QA. Se esperó a finalizar requests entre navegaciones para no confundir cancelaciones WebKit con fallos de negocio. Sin mock de API.
+
+AUD-018 P1 reparado: Finance Manager carecía de `project:read`, de modo que el selector/listado devolvía 403 incluso con UserProjectAccess asignado. Se añade lectura OWN, sin crear/editar proyectos. Regresión API con proyecto asignado visible, sin asignación lista vacía y empresa ajena 403; 24 regresiones pasan.
+
+Evidencia: pg17-qa-restore.json, pg17-critical-content-parity.json, pg17-restored-http.json, pg17-restored-browser.json y finance-project-read-regressions.json. El tiempo medido de dump/cifrado/restauración/paridad es un ensayo QA (ver JSON), no RTO/RPO productivos. **No se restauró un backup de Supabase/producción ni se contrató DB permanente.** Esto demuestra compatibilidad de estos datos QA en PG17, no un cutover autorizado.
+
+Última revalidación externa: 25 objetos privados de backup (más reciente 2026-11-09 08:05:14 UTC); Supabase PG17.11 sin tablas ERP. Frontend LIVE 9f746a41b4a85f83dfe8c7e09661f858f8f55c6e antes del commit de esta evidencia, backend LIVE antiguo 62258277. Dos HTTP timeouts iniciales; en repetición readyz/version/backupz=200, auth/me=401, login/CSS/JS=200. El JS static redirige al backend anterior. Protección main sigue 403 por integración; logs request solicitados vacíos. No hay deploy backend ni modificación de allowlist, secretos o DATABASE_URL productivos.

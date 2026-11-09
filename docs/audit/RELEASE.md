@@ -15,3 +15,7 @@ Gates de liberación pendientes: restauración cifrada real, DB permanente, cicl
 ## Gate adicional tras reparar cobros parciales
 
 El head de la reparación incluye migración **7b2c1af4849c** (anterior eb8ce8e18b2d). A diferencia del baseline inicial, ahora sí existe delta de esquema: `customer_invoices.status` pasa de varchar(16) a varchar(32). Fue probado solo en QA. **No desplegar backend aunque seis CI estén verdes hasta obtener aprobación expresa para la migración productiva y verificar backup/rollback/head.** No cambiar DATABASE_URL ni ejecutar upgrade en producción desde esta misión. El gate `alembic current --check-heads` sigue intacto y debe rechazar una DB sin esa revisión. Un rollback de imagen antigua puede desconocer la nueva revisión Alembic: debe ensayarse con artefacto concreto, sin deducir compatibilidad solo por ampliar una columna.
+
+## Continuación PG17/RBAC
+
+El ciclo financiero QA con reinicio, RBAC contractual y compatibilidad PG17 ya tienen evidencia adicional en CONTINUITY_2026-11-09.md. El restore productivo cifrado, base permanente, rollback del artefacto real, Alembic productivo, protección y aprobación humana siguen pendientes. Cada nuevo commit de evidencia/código exige sus seis push CI exactos. Estado NO-GO.

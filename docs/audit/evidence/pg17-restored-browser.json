@@ -1,0 +1,201 @@
+{
+  "environment": "restored isolated PostgreSQL 17.11; real bundle served by current FastAPI; no API mocking",
+  "results": [
+    {
+      "engine": "chromium",
+      "login": true,
+      "identity": 200,
+      "pageErrors": [],
+      "probes": [
+        {
+          "width": 360,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "login": true,
+      "identity": 200,
+      "pageErrors": [],
+      "probes": [
+        {
+          "width": 360,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/inicio",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/proyectos",
+          "status": 200,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "route": "/finanzas/tesoreria",
+          "status": 200,
+          "overflow": false
+        }
+      ]
+    }
+  ]
+}

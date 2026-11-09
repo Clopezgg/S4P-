@@ -17,3 +17,7 @@ La restauración de un backup **cifrado de producción** continúa BLOQUEADA: es
 RPO de producción no acreditado: fecha de objeto más reciente no prueba punto recuperable. RTO de producción no medido. Faltan verificar FK, head, empresas, roles, recibos/snapshots y saldos sobre restauración real cifrada, y aprobar base permanente antes de caducidad. No se cambia DATABASE_URL ni se ejecuta migración productiva.
 
 Actualización 2026-11-09: consulta SQL read-only a Supabase confirma PostgreSQL **17.11** y cero tablas public/s4p. Se añadió migración local `7b2c1af4849c` para estado AR de 32 caracteres, probada desde revisión previa y con rechazo seguro de downgrade sobre cobro parcial. No aplicada en Render/Supabase. La lectura de Alembic productivo y aprobación de migración quedan como gates adicionales.
+
+## Ensayo local PG17 posterior
+
+Ver CONTINUITY_2026-11-09.md y evidence/pg17-qa-restore.json: restauración cifrada real de datos QA en cluster PG17.11 independiente, paridad de 112 tablas y contenido crítico, API/PDF/QR y navegadores. No reemplaza el restore de backup productivo ni el destino permanente.

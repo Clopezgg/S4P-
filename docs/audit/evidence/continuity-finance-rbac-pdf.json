@@ -115,8 +115,11 @@
     "remainingRisk": "Long contractual history may shrink text; all possible lengths not certified. Regenerated reversed voucher omits contractual block; header correctly marks Reversado."
   },
   "pg17Rehearsal": {
-    "status": "BLOCKED",
-    "reason": "Official postgres:17-alpine image registration failed: no space left on device; source QA and existing PG16 remained available. No PG17 migration success claimed."
+    "status": "PASS \u2014 LOCAL QA ONLY",
+    "initialAttempt": "Official image registration failed due to local disk capacity",
+    "successfulMethod": "Independent container using existing postgres:16 Debian base and official PGDG PostgreSQL 17.11 package; loopback 5433. Source PG16 container untouched.",
+    "evidence": "pg17-qa-restore.json",
+    "productionBackupRestore": "STILL BLOCKED; production encrypted archive and its key not available"
   },
   "production": {
     "backendSha": "62258277cf006d875fbb381197ca7dbbcdf09fbd",

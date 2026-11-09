@@ -1,0 +1,25 @@
+{
+  "login": 200,
+  "identity": 200,
+  "invoice": {
+    "status": "APPROVED",
+    "amountPaid": "0.00"
+  },
+  "balances": [
+    {
+      "type": "QA Cash",
+      "balance": "10000.00"
+    },
+    {
+      "type": "QA Bank",
+      "balance": "0"
+    }
+  ],
+  "pdf": {
+    "status": 200,
+    "sha256": "f5cb166ec5edef2db1319b06c6b6d9c8ad7d170625af54f98eca078e29ecdb73"
+  },
+  "verification": true,
+  "logoutProtectedPdf": 401,
+  "loginPage": 200
+}

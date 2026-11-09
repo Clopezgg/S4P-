@@ -252,6 +252,7 @@ _BASE_PERMISSIONS: tuple[tuple[str, str, str], ...] = (
 _ROLE_GRANTS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "Administrator": tuple((resource, action, SCOPE_ANY) for resource, action, _ in _BASE_PERMISSIONS),
     "Finance Manager": (
+        ("project", "read", SCOPE_OWN),
         ("contract.payment_schedule", "read", SCOPE_OWN),
         ("core.company", "read", SCOPE_OWN),
         ("core.user", "read", SCOPE_OWN),

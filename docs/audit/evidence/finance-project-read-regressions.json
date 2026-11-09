@@ -1,0 +1,16 @@
+{
+  "environment": "isolated PostgreSQL QA",
+  "suite": {
+    "tests": "24",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "39.795"
+  },
+  "behavior": [
+    "Finance Manager with assigned project can list it",
+    "same company without project assignment receives empty list",
+    "foreign company rejected 403",
+    "no write permission added"
+  ]
+}

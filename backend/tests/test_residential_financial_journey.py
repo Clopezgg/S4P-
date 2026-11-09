@@ -163,6 +163,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         'email': 'residential-auditor@example.com', 'fullName': 'QA auditor',
         'password': 'ResidentialQA123!', 'roleName': 'Auditor'}, code=201)
     login(unassigned['email'])
+    assert call('GET', f"/projects?company_id={company['id']}") == []
     call('GET', f"/contract-payments/by-contract/{contract['id']}", code=403)
     call('GET', f"/contract-payments/schedules/{schedule['id']}/summary", code=403)
     login(auditor['email'])
@@ -182,6 +183,8 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     login(approver['email'])
     call('POST', f'/approvals/{approval_id}/decide', {'decision': 'APPROVED'})
     login(executor['email'])
+    assert [p['id'] for p in call('GET', f"/projects?company_id={company['id']}")] == [project_id]
+    call('GET', f"/projects?company_id={foreign['id']}", code=403)
     payment_payload = {'treasuryAccountId': cash['id'], 'amount': '1000.00',
                        'paymentDate': '2026-10-15', 'paymentMethod': 'CASH',
                        'contractAllocations': [{'installmentId': installment_id, 'amountApplied': '1000.00'}]}
