@@ -1,0 +1,36 @@
+{
+  "environment": "local compiled production frontend + real FastAPI + isolated PostgreSQL 16",
+  "before": {
+    "passed": 4,
+    "failed": 2,
+    "root_cause": "Duplicate production manifest links; 2 != 1"
+  },
+  "after": {
+    "passed": 6,
+    "failed": 0,
+    "duration": "2.1m",
+    "chromium": [
+      "desktop compatibility",
+      "SAP mobile workspace",
+      "modern mobile workspace"
+    ],
+    "iphone_webkit": [
+      "SAP mobile workspace",
+      "modern mobile workspace"
+    ],
+    "webkit": [
+      "desktop compatibility"
+    ],
+    "mobile_widths": [
+      360,
+      390,
+      430,
+      768
+    ]
+  },
+  "limits": [
+    "Not physical Safari",
+    "Not every financial UI action",
+    "No production data writes"
+  ]
+}

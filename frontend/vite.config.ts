@@ -9,29 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-icon.svg'],
-      manifest: {
-        name: 'S4P Enterprise Platform',
-        short_name: 'S4P',
-        description: 'S4P Enterprise Platform: proyectos, finanzas, operaciones y analítica.',
-        theme_color: '#101D35',
-        background_color: '#101D35',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
-          {
-            src: '/pwa-icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any',
-          },
-          {
-            src: '/pwa-icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'maskable',
-          },
-        ],
-      },
+      // index.html already links public/manifest.webmanifest in dev and build.
+      // Generating another manifest injects a duplicate link only in production.
+      manifest: false,
       workbox: {
         // S4P is an online transactional ERP. Never precache the SPA HTML
         // or JavaScript/CSS application shell: doing so can keep an old bundle

@@ -40,3 +40,19 @@ Se reinició realmente el contenedor PostgreSQL local y se comparó el dataset a
 - **1 passed (7.62s)**: `test_ar_status_migration.py` crea DB local con revisión anterior eb8ce8e18b2d, registra factura aprobada, ejecuta upgrade a 7b2c1af4849c, cobra parcialmente y comprueba que downgrade se rechaza preservando estado, importe, ancho 32 y revisión. No es rollback productivo.
 
 Evidencia por caso: local-atomicity-tests.json, local-financial-regressions.json y local-ar-migration.json. El nuevo commit invalida los seis checks de los dos commits anteriores para fines de release.
+
+## Artefacto frontend de producción
+
+Una corrida contra bundle compilado detectó un defecto ausente en dev: dos `<link rel="manifest">` en producción. Resultado previo: 4 escenarios pasan/2 fallan por strict mode; `node frontend/scripts/check-pwa-build.mjs` reproduce `2 !== 1`. Se eliminó generación duplicada, conservando manifiesto público existente; el gate se ejecuta en cada `npm run build`.
+
+Después: typecheck/lint PASS; 79 archivos/273 tests PASS (80.57s); build con gate PWA PASS; **6 escenarios reales de producción PASS (2.1m)**: compatibilidad desktop Chromium/WebKit y dos shells móviles en Chromium/iPhone WebKit. Matriz móvil 360/390/430/768. Usan la misma API autenticada y PostgreSQL QA; no la demo ni mocks. El manifiesto solo tiene metadata y no almacena datos financieros. No equivale a Safari físico ni a recorrer cada acción del ERP.
+
+Reproducir, con prerrequisitos PostgreSQL/venv/browsers de frontend/e2e/README.md:
+
+```bash
+cd frontend
+VITE_API_BASE_URL=/api npm run build
+E2E_SERVE_BUILD=1 npx playwright test e2e/mobile-workspace.spec.ts e2e/cross-browser-critical.spec.ts --project=chromium --project=iphone-webkit --project=webkit
+```
+
+El modo por defecto conserva dev; el flag opt-in sirve `vite preview`, con idénticos asserts y backend. En este entorno se utilizó además configuración temporal con executablePath de WebKit oficial para las bibliotecas instaladas sin root. No se modifica CI para saltarse escenarios.
