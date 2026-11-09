@@ -1,5 +1,5 @@
 {
-  "baseline_sha": "78880cbfa505a3044407a77ae2fd691cd0a1bf07",
+  "baseline_sha": "7a14397e8d38f4ca74e4f495a71581ee0f864c51",
   "nexora_sha": "2ca980446654f3c92e3ddb1e8f55d847ef073968",
   "classification": "Static presence only; no implicit VERIFIED status",
   "tracked_files": [
@@ -508,6 +508,7 @@
     "backend/tests/test_treasury_operations.py",
     "backend/tests/test_user_management.py",
     "backend/tests/test_voucher_beneficiary_address.py",
+    "backend/tests/test_voucher_pdf_format.py",
     "backend/tests/test_workforce.py",
     "backend/verify_evidence_storage.py",
     "brand/S4P/README.md",
@@ -567,8 +568,11 @@
     "docs/audit/RELEASE.md",
     "docs/audit/SECURITY.md",
     "docs/audit/evidence/baseline-ci.json",
+    "docs/audit/evidence/local-finance-tests.json",
+    "docs/audit/evidence/local-postgres-restart.json",
     "docs/audit/evidence/local-restore-tests.json",
     "docs/audit/evidence/npm-audit.json",
+    "docs/audit/evidence/official-pdf-test.json",
     "docs/audit/evidence/pip-audit.json",
     "docs/audit/inventory-summary.json",
     "docs/audit/inventory.json",
@@ -2129,7 +2133,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 197,
+      "line": 198,
       "function": "approve_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'approve')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -2154,7 +2158,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 230,
+      "line": 231,
       "function": "cancel_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'cancel')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -2179,7 +2183,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 265,
+      "line": 266,
       "function": "pay_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, payload: SupplierPaymentCreateRequest, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'create')), idempotency_key: str | None=Header(default=None, alias='Idempotency-Key'), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -2217,7 +2221,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 357,
+      "line": 358,
       "function": "get_payment_plan",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'read'))",
       "purpose": null,
@@ -2240,7 +2244,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 380,
+      "line": 381,
       "function": "set_payment_plan",
       "signature": "invoice_id: uuid.UUID, payload: PaymentPlanRequest, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'update')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -2272,7 +2276,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 427,
+      "line": 428,
       "function": "payment_proposal",
       "signature": "company_id: uuid.UUID=Query(alias='companyId'), horizon_days: int=Query(default=14, ge=1, le=90, alias='horizonDays'), db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'read'))",
       "purpose": null,
@@ -2295,7 +2299,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 451,
+      "line": 452,
       "function": "update_supplier_payment_bank_reference",
       "signature": "payment_id: uuid.UUID, payload: dict, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'update')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": "Update bank transaction reference on a supplier payment.\nOnly the bank_transaction_reference field can be updated.\nRequires Protected Edit capability.",
@@ -12704,7 +12708,7 @@
     },
     {
       "file": "backend/app/repositories/permission_repository.py",
-      "line": 698,
+      "line": 700,
       "function": "ensure_base_permissions",
       "signature": "db: Session",
       "purpose": "Idempotente. Crea el catálogo de permisos y los otorgamientos por rol\nsi aún no existen (y corrige company_scope si la matriz cambió).",
@@ -12729,7 +12733,7 @@
     },
     {
       "file": "backend/app/repositories/permission_repository.py",
-      "line": 739,
+      "line": 741,
       "function": "grant_company_access",
       "signature": "db: Session, *, user_id: uuid.UUID, company_id: uuid.UUID",
       "purpose": "DEFERRED-FINAL-015: mismo modelo `UserCompanyAccess` que ya usa\nINV-COMP-001 en todo el motor de permisos, ahora con un caller real\nfuera de tests (antes solo `db_session.add(UserCompanyAccess(...))`\ndirecto en `tests/helpers.py`).",
@@ -15396,7 +15400,7 @@
       "file": "backend/app/services/ap_service.py",
       "line": 187,
       "function": "submit_supplier_invoice_for_approval",
-      "signature": "db: Session, *, invoice_id: uuid.UUID, requested_by: uuid.UUID, assigned_to: uuid.UUID, priority: str='NORMAL'",
+      "signature": "db: Session, *, invoice_id: uuid.UUID, requested_by: uuid.UUID, assigned_to: uuid.UUID, priority: str='NORMAL', commit: bool=True",
       "purpose": "DRAFT -> REVIEW mediante Approval Inbox y SoD.",
       "calls": [
         "InvalidInvoiceStateError",
@@ -15421,7 +15425,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 225,
+      "line": 229,
       "function": "approve_supplier_invoice",
       "signature": "db: Session, *, invoice_id: uuid.UUID, commit: bool=True",
       "purpose": null,
@@ -15455,7 +15459,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 288,
+      "line": 292,
       "function": "cancel_supplier_invoice",
       "signature": "db: Session, *, invoice_id: uuid.UUID, commit: bool=True",
       "purpose": null,
@@ -15477,7 +15481,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 308,
+      "line": 312,
       "function": "_validate_payment_evidence",
       "signature": "db: Session, *, invoice: SupplierInvoice, payment_method: str, evidence_ids: list[uuid.UUID] | None",
       "purpose": null,
@@ -15504,7 +15508,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 340,
+      "line": 344,
       "function": "pay_supplier_invoice",
       "signature": "db: Session, *, invoice_id: uuid.UUID, treasury_account_id: uuid.UUID, amount: Decimal, payment_date: date, payment_method: str='OTHER', payment_evidence_ids: list[uuid.UUID] | None=None, contract_allocations: list[dict] | None=None, contract_override_reason: str | None=None, bank_transaction_reference: str | None=None, payment_observations: str | None=None, commit: bool=True",
       "purpose": "Paga una factura como un único evento económico atómico.\n\nEl método y la evidencia se validan ANTES de postear Treasury/GL. La\nevidencia subida queda staged contra la factura y, tras crear el asiento,\nse religa al AccountingDocument; así Voucher, Auditoría e Inspector ven la\nmisma cadena sin capturar el evento dos veces. Callers legacy que no tenían\ncampo de método se preservan como OTHER; la UI productiva siempre envía el\nmétodo explícito.",
@@ -15561,7 +15565,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 531,
+      "line": 535,
       "function": "apply_approval_decision",
       "signature": "db: Session, *, invoice_id: uuid.UUID, decision: str",
       "purpose": null,
@@ -15576,7 +15580,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 538,
+      "line": 542,
       "function": "get_supplier_invoice",
       "signature": "db: Session, *, invoice_id: uuid.UUID",
       "purpose": null,
@@ -15590,7 +15594,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 545,
+      "line": 549,
       "function": "list_payment_plan",
       "signature": "db: Session, *, invoice_id: uuid.UUID",
       "purpose": null,
@@ -15609,7 +15613,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 557,
+      "line": 561,
       "function": "set_payment_plan",
       "signature": "db: Session, *, invoice_id: uuid.UUID, installments: list[dict], commit: bool=True",
       "purpose": null,
@@ -15651,7 +15655,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 622,
+      "line": 626,
       "function": "list_supplier_payments",
       "signature": "db: Session, *, invoice_id: uuid.UUID",
       "purpose": null,
@@ -15670,7 +15674,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 634,
+      "line": 638,
       "function": "list_supplier_invoices",
       "signature": "db: Session, *, company_id: uuid.UUID",
       "purpose": null,
@@ -15690,7 +15694,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 644,
+      "line": 648,
       "function": "apply_accrual_reversal",
       "signature": "db: Session, *, invoice_id: uuid.UUID, document_type_code: str",
       "purpose": null,
@@ -15719,7 +15723,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "line": 684,
+      "line": 688,
       "function": "build_payment_proposal",
       "signature": "db: Session, *, company_id, as_of: date, horizon_days: int=14",
       "purpose": null,
@@ -15837,7 +15841,7 @@
       "file": "backend/app/services/ar_service.py",
       "line": 89,
       "function": "approve_customer_invoice",
-      "signature": "db: Session, *, invoice_id: uuid.UUID",
+      "signature": "db: Session, *, invoice_id: uuid.UUID, commit: bool=True",
       "purpose": null,
       "calls": [
         "InvalidInvoiceStateError",
@@ -15846,6 +15850,7 @@
         "db.commit",
         "db.execute",
         "db.execute(select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update()).scalar_one_or_none",
+        "db.flush",
         "db.get",
         "db.refresh",
         "posting_service.post_manual",
@@ -15864,7 +15869,7 @@
     },
     {
       "file": "backend/app/services/ar_service.py",
-      "line": 137,
+      "line": 142,
       "function": "collect_customer_receipt",
       "signature": "db: Session, *, invoice_id: uuid.UUID, treasury_account_id: uuid.UUID, amount: Decimal, receipt_date: date, commit: bool=True",
       "purpose": null,
@@ -15902,7 +15907,7 @@
     },
     {
       "file": "backend/app/services/ar_service.py",
-      "line": 223,
+      "line": 228,
       "function": "get_customer_invoice",
       "signature": "db: Session, *, invoice_id: uuid.UUID",
       "purpose": null,
@@ -15916,7 +15921,7 @@
     },
     {
       "file": "backend/app/services/ar_service.py",
-      "line": 227,
+      "line": 232,
       "function": "list_customer_invoices",
       "signature": "db: Session, *, company_id: uuid.UUID",
       "purpose": null,
@@ -15936,7 +15941,7 @@
     },
     {
       "file": "backend/app/services/ar_service.py",
-      "line": 237,
+      "line": 242,
       "function": "apply_invoice_reversal",
       "signature": "db: Session, *, invoice_id: uuid.UUID, document_type_code: str",
       "purpose": "Adaptador para posting_service.register_reversal_hook (NXR-REQ-0025,\nCorrections) -- mismo criterio que ap_service.apply_accrual_reversal.\nRevertir el asiento de una factura (document_type_code \"CIN\") sin\nsincronizar su status dejaría la factura APPROVED apuntando a un\nAccountingDocument ya REVERSED, pero todavía cobrable. El source_type\n\"customer_invoice\" también cubre el recibo (\"REC\"); revertir un\nrecibo no está soportado todavía (reduciría amount_collected, reabriría\nla factura) y se rechaza explícitamente.",
@@ -26096,7 +26101,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 197,
+      "line": 198,
       "function": "approve_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'approve')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -26124,7 +26129,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 230,
+      "line": 231,
       "function": "cancel_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'cancel')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -26152,7 +26157,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 265,
+      "line": 266,
       "function": "pay_supplier_invoice",
       "signature": "invoice_id: uuid.UUID, payload: SupplierPaymentCreateRequest, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'create')), idempotency_key: str | None=Header(default=None, alias='Idempotency-Key'), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -26193,7 +26198,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 357,
+      "line": 358,
       "function": "get_payment_plan",
       "signature": "invoice_id: uuid.UUID, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'read'))",
       "purpose": null,
@@ -26219,7 +26224,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 380,
+      "line": 381,
       "function": "set_payment_plan",
       "signature": "invoice_id: uuid.UUID, payload: PaymentPlanRequest, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_invoice', 'update')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": null,
@@ -26254,7 +26259,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 427,
+      "line": 428,
       "function": "payment_proposal",
       "signature": "company_id: uuid.UUID=Query(alias='companyId'), horizon_days: int=Query(default=14, ge=1, le=90, alias='horizonDays'), db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'read'))",
       "purpose": null,
@@ -26280,7 +26285,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "line": 451,
+      "line": 452,
       "function": "update_supplier_payment_bank_reference",
       "signature": "payment_id: uuid.UUID, payload: dict, db: Session=Depends(get_db), user=Depends(require_permission('ap.supplier_payment', 'update')), correlation_id: str=Depends(get_correlation_id)",
       "purpose": "Update bank transaction reference on a supplier payment.\nOnly the bank_transaction_reference field can be updated.\nRequires Protected Edit capability.",
@@ -34360,7 +34365,7 @@
       "line": 34,
       "model": "CustomerInvoice",
       "table": "customer_invoices",
-      "definition": "class CustomerInvoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):\n    __tablename__ = \"customer_invoices\"\n    __table_args__ = (\n        Index(\"uq_customer_invoice_business_number\", \"company_id\", \"customer_id\", \"invoice_number_normalized\", unique=True, postgresql_where=text(\"status <> 'CANCELLED'\")),\n        CheckConstraint(\"amount > 0\", name=\"ck_customer_invoices_amount_positive\"),\n        CheckConstraint(\n            \"amount_collected >= 0 AND amount_collected <= amount\",\n            name=\"ck_customer_invoices_collected_within_total\",\n        ),\n        CheckConstraint(\n            \"(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) \"\n            \"OR (scope = 'PROJECT' AND project_id IS NOT NULL)\",\n            name=\"ck_customer_invoices_operation_scope\",\n        ),\n        CheckConstraint(\n            \"status IN ('DRAFT','APPROVED','PARTIALLY_COLLECTED','COLLECTED','CANCELLED')\",\n            name=\"ck_customer_invoices_status_valid\",\n        ),\n    )\n\n    company_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"companies.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    customer_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"customers.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    invoice_number: Mapped[str] = mapped_column(String(64), nullable=False)\n    invoice_number_normalized: Mapped[str] = mapped_column(String(64), nullable=False)\n    scope: Mapped[str] = mapped_column(String(16), nullable=False)\n    project_id: Mapped[uuid.UUID | None] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"projects.id\", ondelete=\"RESTRICT\"), nullable=True\n    )\n    revenue_account_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounts.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    receivable_account_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounts.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    currency_code: Mapped[str] = mapped_column(String(3), ForeignKey(\"currencies.code\"), nullable=False)\n    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)\n    amount_collected: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal(\"0\"))\n    invoice_date: Mapped[date] = mapped_column(Date, nullable=False)\n    due_date: Mapped[date] = mapped_column(Date, nullable=False)\n    status: Mapped[str] = mapped_column(String(16), nullable=False, default=\"DRAFT\")\n    description: Mapped[str | None] = mapped_column(String(500), nullable=True)\n    accounting_document_id: Mapped[uuid.UUID | None] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounting_documents.id\", ondelete=\"SET NULL\"), nullable=True\n    )"
+      "definition": "class CustomerInvoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):\n    __tablename__ = \"customer_invoices\"\n    __table_args__ = (\n        Index(\"uq_customer_invoice_business_number\", \"company_id\", \"customer_id\", \"invoice_number_normalized\", unique=True, postgresql_where=text(\"status <> 'CANCELLED'\")),\n        CheckConstraint(\"amount > 0\", name=\"ck_customer_invoices_amount_positive\"),\n        CheckConstraint(\n            \"amount_collected >= 0 AND amount_collected <= amount\",\n            name=\"ck_customer_invoices_collected_within_total\",\n        ),\n        CheckConstraint(\n            \"(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) \"\n            \"OR (scope = 'PROJECT' AND project_id IS NOT NULL)\",\n            name=\"ck_customer_invoices_operation_scope\",\n        ),\n        CheckConstraint(\n            \"status IN ('DRAFT','APPROVED','PARTIALLY_COLLECTED','COLLECTED','CANCELLED')\",\n            name=\"ck_customer_invoices_status_valid\",\n        ),\n    )\n\n    company_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"companies.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    customer_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"customers.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    invoice_number: Mapped[str] = mapped_column(String(64), nullable=False)\n    invoice_number_normalized: Mapped[str] = mapped_column(String(64), nullable=False)\n    scope: Mapped[str] = mapped_column(String(16), nullable=False)\n    project_id: Mapped[uuid.UUID | None] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"projects.id\", ondelete=\"RESTRICT\"), nullable=True\n    )\n    revenue_account_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounts.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    receivable_account_id: Mapped[uuid.UUID] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounts.id\", ondelete=\"RESTRICT\"), nullable=False\n    )\n    currency_code: Mapped[str] = mapped_column(String(3), ForeignKey(\"currencies.code\"), nullable=False)\n    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)\n    amount_collected: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal(\"0\"))\n    invoice_date: Mapped[date] = mapped_column(Date, nullable=False)\n    due_date: Mapped[date] = mapped_column(Date, nullable=False)\n    status: Mapped[str] = mapped_column(String(32), nullable=False, default=\"DRAFT\")\n    description: Mapped[str | None] = mapped_column(String(500), nullable=True)\n    accounting_document_id: Mapped[uuid.UUID | None] = mapped_column(\n        UUID(as_uuid=True), ForeignKey(\"accounting_documents.id\", ondelete=\"SET NULL\"), nullable=True\n    )"
     },
     {
       "file": "backend/app/models/ar.py",
@@ -44494,6 +44499,7 @@
     "backend/alembic/versions/72aed748da19_supplier_contract_payment_terms_type.py",
     "backend/alembic/versions/7423072b11d4_add_enterprise_resources_assets_.py",
     "backend/alembic/versions/773bebddf1a9_add_approval_request_extend_approval_.py",
+    "backend/alembic/versions/7b2c1af4849c_widen_customer_invoice_lifecycle_status.py",
     "backend/alembic/versions/8496f11b1227_add_cash_flow_activity_classification_.py",
     "backend/alembic/versions/8bf7c353d327_add_supply_chain_suppliers_contracts_.py",
     "backend/alembic/versions/8f5d2c7e1a44_add_change_order_contract_impact.py",
@@ -44556,6 +44562,7 @@
     "backend/tests/test_ap_proposal_ar_dso.py",
     "backend/tests/test_approval_assignment.py",
     "backend/tests/test_approvals.py",
+    "backend/tests/test_ar_status_migration.py",
     "backend/tests/test_asset_disposal.py",
     "backend/tests/test_assets.py",
     "backend/tests/test_audit.py",
@@ -44594,6 +44601,7 @@
     "backend/tests/test_evidence_download.py",
     "backend/tests/test_evidence_storage.py",
     "backend/tests/test_exception_center.py",
+    "backend/tests/test_financial_audit_atomicity.py",
     "backend/tests/test_financial_control.py",
     "backend/tests/test_financial_event_inspect.py",
     "backend/tests/test_financial_properties.py",
@@ -44614,6 +44622,7 @@
     "backend/tests/test_observability.py",
     "backend/tests/test_operation_scope_constraint.py",
     "backend/tests/test_payment_receipt_reversals.py",
+    "backend/tests/test_permission_catalog.py",
     "backend/tests/test_posting_engine.py",
     "backend/tests/test_procurement.py",
     "backend/tests/test_procurement_flow.py",
@@ -44829,7 +44838,7 @@
     },
     {
       "file": "backend/app/api/routes/ap.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/api/routes/approvals.py",
@@ -44837,7 +44846,7 @@
     },
     {
       "file": "backend/app/api/routes/ar.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/api/routes/assets.py",
@@ -44981,7 +44990,7 @@
     },
     {
       "file": "backend/app/api/routes/treasury.py",
-      "comparison": "BRAND_ONLY"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/api/routes/treasury_advanced.py",
@@ -45081,7 +45090,7 @@
     },
     {
       "file": "backend/app/models/ar.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/models/asset.py",
@@ -45345,7 +45354,7 @@
     },
     {
       "file": "backend/app/repositories/permission_repository.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/repositories/procurement_repository.py",
@@ -45609,7 +45618,7 @@
     },
     {
       "file": "backend/app/services/ap_service.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/services/approval_service.py",
@@ -45617,7 +45626,7 @@
     },
     {
       "file": "backend/app/services/ar_service.py",
-      "comparison": "IDENTICAL"
+      "comparison": "DIFF_REQUIRES_REVIEW"
     },
     {
       "file": "backend/app/services/asset_service.py",

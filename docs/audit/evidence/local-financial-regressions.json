@@ -1,0 +1,500 @@
+[
+  {
+    "suite": "tests.test_migrations",
+    "test": "test_fresh_install_then_full_downgrade_then_upgrade_roundtrip_succeeds",
+    "seconds": "7.022",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_supplier_model_declares_database_check_constraints",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_fixed_asset_model_declares_disposal_check_constraints",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[AccountingDocument-constraint_names0]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[SupplierInvoice-constraint_names1]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[ApprovalRequest-constraint_names2]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[CustomerInvoice-constraint_names3]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[ChangeOrder-constraint_names4]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[ContractPaymentSchedule-constraint_names5]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[ContractPaymentInstallment-constraint_names6]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Customer-constraint_names7]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Lead-constraint_names8]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Quotation-constraint_names9]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[SalesContract-constraint_names10]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[IdempotencyRecord-constraint_names11]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[PhysicalCount-constraint_names12]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[PhysicalCountLine-constraint_names13]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Project-constraint_names14]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[SupplierContract-constraint_names15]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[VoucherIssuance-constraint_names16]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Warehouse-constraint_names17]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[WBSNode-constraint_names18]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_model_constraint_sync",
+    "test": "test_models_declare_database_status_constraints[Crew-constraint_names19]",
+    "seconds": "0.000",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_invoice_full_lifecycle_draft_to_paid",
+    "seconds": "2.158",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_payment_exceeding_balance_is_rejected",
+    "seconds": "1.887",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_customer_invoice_lifecycle_draft_to_collected",
+    "seconds": "2.033",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_ap_resource_from_other_company_is_denied",
+    "seconds": "1.771",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_payment_account_company_must_match_invoice_company",
+    "seconds": "1.770",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_zero_and_negative_invoice_amounts_are_rejected_by_api",
+    "seconds": "1.698",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_and_customer_invoices_can_be_listed_from_database",
+    "seconds": "1.642",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_retrying_payment_with_same_idempotency_key_does_not_duplicate_posting",
+    "seconds": "2.096",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_retrying_receipt_with_same_idempotency_key_does_not_duplicate_posting",
+    "seconds": "1.705",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_invoice_project_and_cost_center_must_match_company",
+    "seconds": "1.847",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_invoice_rejects_supplier_from_other_company",
+    "seconds": "1.992",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_approving_supplier_invoice_creates_audit_log_entry",
+    "seconds": "1.960",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_paying_supplier_invoice_creates_audit_log_entry",
+    "seconds": "2.136",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_submitting_supplier_invoice_creates_a_real_approval_request",
+    "seconds": "1.939",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_deciding_the_approval_request_approves_the_invoice_via_the_real_adapter",
+    "seconds": "2.040",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_deciding_the_approval_request_rejects_the_invoice_via_the_real_adapter",
+    "seconds": "2.130",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_submitter_cannot_decide_their_own_invoice_approval",
+    "seconds": "1.643",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_submit_for_approval_accepts_an_administrator_with_no_explicit_company_access_row",
+    "seconds": "2.010",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_cannot_submit_an_invoice_that_is_not_draft",
+    "seconds": "2.230",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_submit_rejects_an_approver_without_decide_permission",
+    "seconds": "2.358",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_submit_for_approval_never_crosses_company",
+    "seconds": "2.207",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_ap_ar",
+    "test": "test_supplier_invoice_payment_plan_installments_and_history",
+    "seconds": "1.676",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_cash_closing_with_shortage_posts_adjustment_and_reduces_balance",
+    "seconds": "1.808",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_cash_closing_without_difference_requires_no_account",
+    "seconds": "1.979",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_bank_reconciliation_manual_matching_lifecycle",
+    "seconds": "1.623",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_fund_restriction_never_transfers_money_ownership_to_project",
+    "seconds": "1.806",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_is_generated_for_a_treasury_outflow",
+    "seconds": "1.589",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_is_a_premium_corporate_document",
+    "seconds": "2.067",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_prints_the_configured_footer_text",
+    "seconds": "2.109",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_uses_company_fixed_payer_and_configured_approver",
+    "seconds": "1.611",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_requires_evidence_for_bank_payment_methods",
+    "seconds": "2.110",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_evidence_gate_is_scoped_to_the_exact_document_and_company",
+    "seconds": "2.046",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_renders_accented_and_long_names_without_dropping_text",
+    "seconds": "1.749",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_shows_masked_bank_account_and_approval_code",
+    "seconds": "2.262",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_beneficiary_resolves_from_registered_entity",
+    "seconds": "2.127",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_uses_cumulative_matches_and_blocks_overmatch",
+    "seconds": "2.521",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_rejects_accounting_document_from_another_company",
+    "seconds": "1.614",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_general_expense_retry_is_idempotent",
+    "seconds": "1.837",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_transfer_retry_is_idempotent_and_creates_one_audit_event",
+    "seconds": "1.495",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_cash_closing_approval_retry_does_not_duplicate_adjustment",
+    "seconds": "1.829",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_nested_reconciliation_resource_from_other_company_is_denied",
+    "seconds": "1.923",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_rejects_same_company_document_without_treasury_gl",
+    "seconds": "2.074",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_rejects_document_treasury_gl_with_wrong_sign",
+    "seconds": "2.078",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_blocks_document_overallocation_across_statement_lines",
+    "seconds": "1.939",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_rejects_matching_an_excluded_line",
+    "seconds": "2.022",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_rejects_excluding_a_line_with_match_history",
+    "seconds": "1.618",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_approving_cash_closing_creates_audit_log_entry",
+    "seconds": "1.928",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_registering_remittance_creates_audit_log_entry",
+    "seconds": "1.641",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_registering_general_expense_creates_audit_log_entry",
+    "seconds": "2.132",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_registering_transfer_creates_audit_log_entry",
+    "seconds": "3.305",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_bank_reconciliation_match_and_exclude_create_audit_log_entries",
+    "seconds": "3.639",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_creating_fund_restriction_creates_audit_log_entry",
+    "seconds": "2.907",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_general_expense_rolls_back_when_audit_write_fails",
+    "seconds": "3.063",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_transfer_rolls_back_when_audit_write_fails",
+    "seconds": "3.211",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_match_rolls_back_when_audit_write_fails",
+    "seconds": "2.863",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_reconciliation_exclude_rolls_back_when_audit_write_fails",
+    "seconds": "3.853",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_fund_restriction_rolls_back_when_audit_write_fails",
+    "seconds": "2.661",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_treasury_operations",
+    "test": "test_voucher_pdf_embeds_qr_verification_url_and_the_token_resolves",
+    "seconds": "3.347",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_payment_receipt_reversals",
+    "test": "test_supplier_payment_reversal_preserves_original_and_restores_invoice",
+    "seconds": "3.209",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_payment_receipt_reversals",
+    "test": "test_customer_receipt_reversal_preserves_original_and_restores_invoice",
+    "seconds": "3.190",
+    "result": "PASS"
+  }
+]

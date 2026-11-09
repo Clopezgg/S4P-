@@ -62,6 +62,14 @@ def test_fresh_install_then_full_downgrade_then_upgrade_roundtrip_succeeds():
         upgrade_to_head = _run_alembic("upgrade", "head")
         assert upgrade_to_head.returncode == 0, upgrade_to_head.stderr
 
+        status_width = subprocess.run(
+            ["psql", "-X", "-A", "-t", "--dbname", _DB_NAME, "-c",
+             "SELECT character_maximum_length FROM information_schema.columns "
+             "WHERE table_schema='public' AND table_name='customer_invoices' AND column_name='status'"],
+            env=_pg_env(), capture_output=True, text=True, check=True,
+        )
+        assert status_width.stdout.strip() == "32"
+
         downgrade_to_base = _run_alembic("downgrade", "base")
         assert downgrade_to_base.returncode == 0, downgrade_to_base.stderr
 

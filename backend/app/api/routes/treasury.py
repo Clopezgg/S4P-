@@ -209,7 +209,7 @@ def create_remittance(
             reference=payload.reference,
             remittance_date=payload.remittance_date,
             notes=payload.notes,
-            commit=outcome is None,
+            commit=False,
         )
         audit_service.record(
             db,
@@ -478,7 +478,7 @@ def approve_cash_closing(
             approved_by_user_id=user.id,
             difference_account_id=payload.difference_account_id,
             company_id=company_id,
-            commit=outcome is None,
+            commit=False,
         )
         audit_service.record(
             db,

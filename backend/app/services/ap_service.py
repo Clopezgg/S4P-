@@ -191,6 +191,7 @@ def submit_supplier_invoice_for_approval(
     requested_by: uuid.UUID,
     assigned_to: uuid.UUID,
     priority: str = "NORMAL",
+    commit: bool = True,
 ) -> SupplierInvoice:
     """DRAFT -> REVIEW mediante Approval Inbox y SoD."""
     invoice = db.execute(
@@ -217,7 +218,10 @@ def submit_supplier_invoice_for_approval(
         amount=invoice.amount + invoice.tax_amount,
         project_id=invoice.project_id,
     )
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(invoice)
     return invoice
 

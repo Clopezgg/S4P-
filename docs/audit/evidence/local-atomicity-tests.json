@@ -1,0 +1,92 @@
+[
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[remittance-False]",
+    "seconds": "2.338",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[remittance-True]",
+    "seconds": "1.808",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ap_payment-False]",
+    "seconds": "2.090",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ap_payment-True]",
+    "seconds": "1.576",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ar_receipt-False]",
+    "seconds": "2.036",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ar_receipt-True]",
+    "seconds": "1.796",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[cash_closing-False]",
+    "seconds": "1.680",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[cash_closing-True]",
+    "seconds": "1.832",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ap_approve-False]",
+    "seconds": "1.912",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ap_cancel-False]",
+    "seconds": "1.884",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ap_submit-False]",
+    "seconds": "2.090",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_financial_command_rolls_back_if_its_audit_fails[ar_approve-False]",
+    "seconds": "1.916",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_partial_customer_receipt_persists_its_full_status",
+    "seconds": "2.308",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_financial_audit_atomicity",
+    "test": "test_admin_can_cancel_draft_and_update_payment_reference_but_auditor_cannot",
+    "seconds": "3.047",
+    "result": "PASS"
+  },
+  {
+    "suite": "tests.test_permission_catalog",
+    "test": "test_all_literal_route_permissions_exist_in_seeded_catalog",
+    "seconds": "0.102",
+    "result": "PASS"
+  }
+]

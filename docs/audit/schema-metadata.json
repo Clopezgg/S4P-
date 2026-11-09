@@ -150,11 +150,6 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -163,6 +158,11 @@
         "kind": "CheckConstraint",
         "name": "ck_idempotency_records_status_valid",
         "sql": "status IN ('PENDING','COMPLETED')"
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": null,
+        "sql": ""
       }
     ],
     "indexes": []
@@ -215,13 +215,13 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_permissions_resource_action",
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_permissions_resource_action",
         "sql": ""
       }
     ],
@@ -328,12 +328,12 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "UniqueConstraint",
         "name": null,
         "sql": ""
       }
@@ -642,17 +642,17 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "UniqueConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -1053,17 +1053,17 @@
     ],
     "constraints": [
       {
+        "kind": "UniqueConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "UniqueConstraint",
         "name": null,
         "sql": ""
       }
@@ -1175,13 +1175,13 @@
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_user_roles_user_role",
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_user_roles_user_role",
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
         "sql": ""
       },
       {
@@ -1325,17 +1325,17 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "UniqueConstraint",
         "name": "uq_business_units_company_code",
         "sql": ""
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -1452,11 +1452,6 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_cost_centers_company_code",
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -1464,6 +1459,11 @@
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_cost_centers_company_code",
         "sql": ""
       }
     ],
@@ -1561,17 +1561,17 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_customers_status_valid",
         "sql": "status IN ('ACTIVE','INACTIVE','BLOCKED')"
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -1628,17 +1628,17 @@
     ],
     "constraints": [
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "UniqueConstraint",
         "name": "uq_economic_categories_company_code",
         "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -2075,13 +2075,13 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_items_company_sku",
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_items_company_sku",
+        "kind": "ForeignKeyConstraint",
+        "name": null,
         "sql": ""
       }
     ],
@@ -2151,11 +2151,6 @@
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -2163,6 +2158,11 @@
       {
         "kind": "UniqueConstraint",
         "name": "uq_number_sequences_scope",
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
         "sql": ""
       }
     ],
@@ -2336,8 +2336,8 @@
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_suppliers_party_role",
-        "sql": "party_role IN ('SUPPLIER','CONTRACTOR','BOTH')"
+        "name": "ck_suppliers_status",
+        "sql": "status IN ('ACTIVE','INACTIVE','BLOCKED','ARCHIVED')"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -2346,8 +2346,8 @@
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_suppliers_status",
-        "sql": "status IN ('ACTIVE','INACTIVE','BLOCKED','ARCHIVED')"
+        "name": "ck_suppliers_party_role",
+        "sql": "party_role IN ('SUPPLIER','CONTRACTOR','BOTH')"
       }
     ],
     "indexes": []
@@ -2471,6 +2471,11 @@
     ],
     "constraints": [
       {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -2482,11 +2487,6 @@
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -2557,14 +2557,14 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_workers_standard_rate_positive",
         "sql": "standard_hourly_rate > 0"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -2654,22 +2654,22 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "UniqueConstraint",
         "name": "uq_accounts_chart_code",
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -2695,8 +2695,8 @@
         "nullable": false,
         "primary_key": false,
         "foreign_keys": [
-          "fiscal_years.company_id",
-          "companies.id"
+          "companies.id",
+          "fiscal_years.company_id"
         ]
       },
       {
@@ -2756,14 +2756,14 @@
         "sql": ""
       },
       {
+        "kind": "CheckConstraint",
+        "name": "ck_fiscal_periods_valid_status",
+        "sql": "status IN ('OPEN', 'SOFT_CLOSED', 'CLOSED')"
+      },
+      {
         "kind": "UniqueConstraint",
         "name": "uq_fiscal_periods_year_number",
         "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_fiscal_periods_positive_period_number",
-        "sql": "period_number >= 1"
       },
       {
         "kind": "CheckConstraint",
@@ -2771,9 +2771,9 @@
         "sql": "start_date <= end_date"
       },
       {
-        "kind": "ExcludeConstraint",
-        "name": "ex_fiscal_periods_company_dates",
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_fiscal_periods_positive_period_number",
+        "sql": "period_number >= 1"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -2786,9 +2786,9 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_fiscal_periods_valid_status",
-        "sql": "status IN ('OPEN', 'SOFT_CLOSED', 'CLOSED')"
+        "kind": "ExcludeConstraint",
+        "name": "ex_fiscal_periods_company_dates",
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -3124,6 +3124,21 @@
         "sql": ""
       },
       {
+        "kind": "CheckConstraint",
+        "name": "ck_projects_status_valid",
+        "sql": "status IN ('PLANNING','ACTIVE','ON_HOLD','COMPLETED','CLOSED','CANCELLED','ARCHIVED')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -3132,21 +3147,6 @@
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_projects_status_valid",
-        "sql": "status IN ('PLANNING','ACTIVE','ON_HOLD','COMPLETED','CLOSED','CANCELLED','ARCHIVED')"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -3284,14 +3284,14 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_accounting_documents_company_document_number",
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_accounting_documents_status_valid",
+        "sql": "status IN ('DRAFT','POSTED','REVERSED')"
       },
       {
         "kind": "CheckConstraint",
@@ -3309,9 +3309,9 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_accounting_documents_status_valid",
-        "sql": "status IN ('DRAFT','POSTED','REVERSED')"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -3319,8 +3319,8 @@
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_accounting_documents_company_document_number",
+        "kind": "ForeignKeyConstraint",
+        "name": null,
         "sql": ""
       },
       {
@@ -3500,19 +3500,19 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_approval_requests_status_valid",
         "sql": "status IN ('PENDING','APPROVED','REJECTED','CANCELLED','EXPIRED')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
       }
     ],
     "indexes": []
@@ -3616,12 +3616,12 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -3702,6 +3702,16 @@
         "sql": ""
       },
       {
+        "kind": "CheckConstraint",
+        "name": "ck_crews_status_valid",
+        "sql": "status IN ('ACTIVE','INACTIVE')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -3710,16 +3720,6 @@
         "kind": "UniqueConstraint",
         "name": "uq_crews_company_name",
         "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_crews_status_valid",
-        "sql": "status IN ('ACTIVE','INACTIVE')"
       }
     ],
     "indexes": []
@@ -3853,11 +3853,6 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_daily_site_reports_status_valid",
-        "sql": "status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED')"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -3871,6 +3866,11 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_daily_site_reports_status_valid",
+        "sql": "status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED')"
       }
     ],
     "indexes": []
@@ -4076,11 +4076,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -4097,6 +4092,11 @@
       },
       {
         "kind": "UniqueConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -4204,17 +4204,17 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -4317,6 +4317,21 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_project_setup_runs_project",
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_project_setup_runs_valid_status",
         "sql": "status IN ('DRAFT', 'EXECUTING', 'COMPLETED', 'FAILED')"
@@ -4334,21 +4349,6 @@
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "UniqueConstraint",
-        "name": "uq_project_setup_runs_project",
         "sql": ""
       }
     ],
@@ -4466,6 +4466,21 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_purchase_requisitions_status_valid",
         "sql": "status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED','CONVERTED','CANCELLED')"
@@ -4477,21 +4492,6 @@
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -4571,11 +4571,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_resource_posting_source_valid",
         "sql": "source_type IN ('FUEL','MAINTENANCE','LABOR')"
@@ -4593,6 +4588,11 @@
       {
         "kind": "UniqueConstraint",
         "name": "uq_resource_posting_company_source",
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
         "sql": ""
       }
     ],
@@ -4708,13 +4708,8 @@
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_safety_incidents_high_severity_requires_responsible",
-        "sql": "severity NOT IN ('HIGH','CRITICAL') OR responsible_user_id IS NOT NULL"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "name": "ck_safety_incidents_severity_valid",
+        "sql": "severity IN ('LOW','MEDIUM','HIGH','CRITICAL')"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -4722,14 +4717,19 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_safety_incidents_severity_valid",
-        "sql": "severity IN ('LOW','MEDIUM','HIGH','CRITICAL')"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_safety_incidents_high_severity_requires_responsible",
+        "sql": "severity NOT IN ('HIGH','CRITICAL') OR responsible_user_id IS NOT NULL"
       },
       {
         "kind": "CheckConstraint",
@@ -4847,26 +4847,6 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_safety_observations_severity_valid",
-        "sql": "severity IN ('LOW','MEDIUM','HIGH','CRITICAL')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_safety_observations_status_valid",
-        "sql": "status IN ('OPEN','CLOSED')"
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -4875,6 +4855,26 @@
         "kind": "CheckConstraint",
         "name": "ck_safety_observations_high_severity_requires_responsible",
         "sql": "severity NOT IN ('HIGH','CRITICAL') OR responsible_user_id IS NOT NULL"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_safety_observations_severity_valid",
+        "sql": "severity IN ('LOW','MEDIUM','HIGH','CRITICAL')"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_safety_observations_status_valid",
+        "sql": "status IN ('OPEN','CLOSED')"
       }
     ],
     "indexes": []
@@ -5034,18 +5034,8 @@
     "constraints": [
       {
         "kind": "CheckConstraint",
-        "name": "ck_supplier_contracts_retention_pct",
-        "sql": "retention_percentage >= 0 AND retention_percentage <= 100"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "name": "ck_supplier_contracts_advance_pct",
+        "sql": "advance_percentage >= 0 AND advance_percentage <= 100"
       },
       {
         "kind": "CheckConstraint",
@@ -5058,9 +5048,14 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_supplier_contracts_status_valid",
-        "sql": "status IN ('DRAFT','ACTIVE','COMPLETED','TERMINATED')"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "UniqueConstraint",
@@ -5069,8 +5064,13 @@
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_supplier_contracts_advance_pct",
-        "sql": "advance_percentage >= 0 AND advance_percentage <= 100"
+        "name": "ck_supplier_contracts_status_valid",
+        "sql": "status IN ('DRAFT','ACTIVE','COMPLETED','TERMINATED')"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_supplier_contracts_retention_pct",
+        "sql": "retention_percentage >= 0 AND retention_percentage <= 100"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -5210,13 +5210,13 @@
     "constraints": [
       {
         "kind": "CheckConstraint",
-        "name": "ck_time_entries_approved_hours_non_negative",
-        "sql": "approved_hours IS NULL OR approved_hours >= 0"
+        "name": "ck_time_entries_status_valid",
+        "sql": "status IN ('SUBMITTED','APPROVED','REJECTED')"
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_time_entries_hours_worked_positive",
-        "sql": "hours_worked > 0"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -5227,6 +5227,16 @@
         "kind": "CheckConstraint",
         "name": "ck_time_entries_hourly_rate_positive",
         "sql": "hourly_rate > 0"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_time_entries_hours_worked_positive",
+        "sql": "hours_worked > 0"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_time_entries_approved_hours_non_negative",
+        "sql": "approved_hours IS NULL OR approved_hours >= 0"
       },
       {
         "kind": "CheckConstraint",
@@ -5252,16 +5262,6 @@
         "kind": "CheckConstraint",
         "name": "ck_time_entries_labor_cost_non_negative",
         "sql": "labor_cost IS NULL OR labor_cost >= 0"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_time_entries_status_valid",
-        "sql": "status IN ('SUBMITTED','APPROVED','REJECTED')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
       }
     ],
     "indexes": []
@@ -5355,19 +5355,9 @@
     ],
     "constraints": [
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
-      },
-      {
-        "kind": "UniqueConstraint",
-        "name": "uq_treasury_accounts_gl_account",
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_treasury_accounts_status",
-        "sql": "status IN ('ACTIVE','CLOSED')"
       },
       {
         "kind": "CheckConstraint",
@@ -5385,9 +5375,19 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_treasury_accounts_gl_account",
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_treasury_accounts_status",
+        "sql": "status IN ('ACTIVE','CLOSED')"
       }
     ],
     "indexes": []
@@ -5430,12 +5430,12 @@
     ],
     "constraints": [
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -5514,17 +5514,17 @@
     ],
     "indexes": [
       {
-        "name": "ix_user_project_access_project_id",
-        "unique": false,
-        "columns": [
-          "project_id"
-        ]
-      },
-      {
         "name": "ix_user_project_access_user_id",
         "unique": false,
         "columns": [
           "user_id"
+        ]
+      },
+      {
+        "name": "ix_user_project_access_project_id",
+        "unique": false,
+        "columns": [
+          "project_id"
         ]
       }
     ]
@@ -5605,6 +5605,11 @@
         "sql": ""
       },
       {
+        "kind": "CheckConstraint",
+        "name": "ck_warehouses_status_valid",
+        "sql": "status IN ('ACTIVE','INACTIVE')"
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -5613,11 +5618,6 @@
         "kind": "UniqueConstraint",
         "name": "uq_warehouses_company_code",
         "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_warehouses_status_valid",
-        "sql": "status IN ('ACTIVE','INACTIVE')"
       }
     ],
     "indexes": []
@@ -5742,11 +5742,6 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_wbs_nodes_status_valid",
-        "sql": "status IN ('PLANNING','ACTIVE','ON_HOLD','COMPLETED','CANCELLED')"
-      },
-      {
         "kind": "UniqueConstraint",
         "name": "uq_wbs_nodes_project_code",
         "sql": ""
@@ -5755,6 +5750,11 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_wbs_nodes_status_valid",
+        "sql": "status IN ('PLANNING','ACTIVE','ON_HOLD','COMPLETED','CANCELLED')"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -6019,6 +6019,21 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_cash_closings_status",
         "sql": "status IN ('DRAFT','APPROVED')"
@@ -6032,21 +6047,6 @@
         "kind": "CheckConstraint",
         "name": "ck_cash_closings_amounts_non_negative",
         "sql": "opening_amount >= 0 AND expected_amount >= 0 AND counted_amount >= 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
       }
     ],
     "indexes": []
@@ -6156,12 +6156,7 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -6171,7 +6166,12 @@
         "sql": "status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED','IMPLEMENTED','CANCELLED')"
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -6311,6 +6311,11 @@
         "sql": ""
       },
       {
+        "kind": "UniqueConstraint",
+        "name": "uq_contract_payment_schedule_contract",
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -6318,11 +6323,6 @@
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "UniqueConstraint",
-        "name": "uq_contract_payment_schedule_contract",
         "sql": ""
       }
     ],
@@ -6373,11 +6373,6 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_crew_members_crew_worker",
-        "sql": ""
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -6390,6 +6385,11 @@
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_crew_members_crew_worker",
         "sql": ""
       }
     ],
@@ -6503,7 +6503,7 @@
       },
       {
         "name": "status",
-        "type": "VARCHAR(16)",
+        "type": "VARCHAR(32)",
         "nullable": false,
         "primary_key": false,
         "foreign_keys": []
@@ -6548,29 +6548,29 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_customer_invoices_collected_within_total",
         "sql": "amount_collected >= 0 AND amount_collected <= amount"
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_customer_invoices_operation_scope",
-        "sql": "(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_customer_invoices_operation_scope",
+        "sql": "(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -6583,14 +6583,14 @@
         "sql": "amount > 0"
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_customer_invoices_status_valid",
-        "sql": "status IN ('DRAFT','APPROVED','PARTIALLY_COLLECTED','COLLECTED','CANCELLED')"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_customer_invoices_status_valid",
+        "sql": "status IN ('DRAFT','APPROVED','PARTIALLY_COLLECTED','COLLECTED','CANCELLED')"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -6670,12 +6670,12 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -6777,11 +6777,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_document_versions_number_positive",
         "sql": "version_number > 0"
@@ -6790,6 +6785,11 @@
         "kind": "CheckConstraint",
         "name": "ck_document_versions_status_valid",
         "sql": "status IN ('ACTIVE','SUPERSEDED')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       }
     ],
     "indexes": [
@@ -6868,14 +6868,9 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_fund_restrictions_amount_positive",
+        "sql": "amount > 0"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -6883,9 +6878,14 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_fund_restrictions_amount_positive",
-        "sql": "amount > 0"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       }
     ],
     "indexes": []
@@ -6995,27 +6995,27 @@
         "sql": ""
       },
       {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_general_expenses_amount_positive",
         "sql": "amount > 0"
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -7118,14 +7118,9 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_journal_lines_single_sided_non_negative",
+        "sql": "(debit_amount = 0 OR credit_amount = 0) AND (debit_amount >= 0 AND credit_amount >= 0)"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -7133,9 +7128,14 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_journal_lines_single_sided_non_negative",
-        "sql": "(debit_amount = 0 OR credit_amount = 0) AND (debit_amount >= 0 AND credit_amount >= 0)"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -7228,17 +7228,17 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_milestones_status_valid",
         "sql": "status IN ('PLANNED','ACHIEVED','MISSED','CANCELLED')"
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -7340,21 +7340,6 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_physical_counts_status_valid",
         "sql": "status IN ('DRAFT','COUNTED','APPROVED')"
@@ -7376,6 +7361,21 @@
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -7471,22 +7471,22 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -7559,16 +7559,6 @@
     ],
     "constraints": [
       {
-        "kind": "CheckConstraint",
-        "name": "ck_pr_lines_quantity_positive",
-        "sql": "quantity > 0"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_pr_lines_cost_non_negative",
-        "sql": "estimated_unit_cost >= 0"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -7582,6 +7572,16 @@
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_pr_lines_quantity_positive",
+        "sql": "quantity > 0"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_pr_lines_cost_non_negative",
+        "sql": "estimated_unit_cost >= 0"
       }
     ],
     "indexes": []
@@ -7682,27 +7682,27 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_quality_inspections_result_valid",
         "sql": "result IN ('PENDING','PASS','FAIL')"
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -7821,11 +7821,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_quotations_amount_positive",
         "sql": "amount > 0"
@@ -7857,6 +7852,11 @@
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -8008,27 +8008,27 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_remittances_amounts_positive",
-        "sql": "original_amount > 0 AND fx_rate > 0 AND base_amount > 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_remittances_amounts_positive",
+        "sql": "original_amount > 0 AND fx_rate > 0 AND base_amount > 0"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -8170,22 +8170,17 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_rfi_status_valid",
-        "sql": "status IN ('OPEN','ANSWERED','CLOSED')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -8203,6 +8198,11 @@
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_rfi_status_valid",
+        "sql": "status IN ('OPEN','ANSWERED','CLOSED')"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -8285,16 +8285,6 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_rfq_status_valid",
-        "sql": "status IN ('DRAFT','SENT','CLOSED','CANCELLED')"
-      },
-      {
         "kind": "UniqueConstraint",
         "name": null,
         "sql": ""
@@ -8308,6 +8298,16 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_rfq_status_valid",
+        "sql": "status IN ('DRAFT','SENT','CLOSED','CANCELLED')"
       }
     ],
     "indexes": []
@@ -8438,27 +8438,27 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "UniqueConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -8658,14 +8658,24 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_submittal_revision_positive",
-        "sql": "revision > 0"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_submittal_status_valid",
+        "sql": "status IN ('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED')"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_submittal_revision_positive",
+        "sql": "revision > 0"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -8683,34 +8693,24 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_submittal_status_valid",
-        "sql": "status IN ('SUBMITTED','UNDER_REVIEW','APPROVED','REJECTED')"
       }
     ],
     "indexes": []
@@ -8818,11 +8818,6 @@
     ],
     "constraints": [
       {
-        "kind": "CheckConstraint",
-        "name": "ck_tasks_status_valid",
-        "sql": "status IN ('PLANNED','IN_PROGRESS','DONE','BLOCKED','CANCELLED')"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
@@ -8846,6 +8841,11 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_tasks_status_valid",
+        "sql": "status IN ('PLANNED','IN_PROGRESS','DONE','BLOCKED','CANCELLED')"
       }
     ],
     "indexes": []
@@ -8909,17 +8909,17 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -9019,7 +9019,27 @@
     ],
     "constraints": [
       {
+        "kind": "CheckConstraint",
+        "name": "ck_treasury_transfers_distinct_accounts",
+        "sql": "source_treasury_account_id <> destination_treasury_account_id"
+      },
+      {
         "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -9035,26 +9055,6 @@
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_treasury_transfers_distinct_accounts",
-        "sql": "source_treasury_account_id <> destination_treasury_account_id"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -9498,7 +9498,7 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -9508,7 +9508,7 @@
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "UniqueConstraint",
         "name": null,
         "sql": ""
       }
@@ -9703,11 +9703,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_budgets_status_valid",
         "sql": "status IN ('ACTIVE','SUPERSEDED')"
@@ -9724,6 +9719,11 @@
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -9868,29 +9868,14 @@
     ],
     "constraints": [
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_contract_installment_sequence",
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_contract_installment_retention",
-        "sql": "retention_amount >= 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_contract_installment_sequence",
         "sql": "sequence >= 1"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "UniqueConstraint",
@@ -9903,7 +9888,7 @@
         "sql": "installment_kind IN ('ADVANCE', 'REGULAR', 'RETENTION_RELEASE')"
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -9913,9 +9898,14 @@
         "sql": "period_month BETWEEN 1 AND 12"
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_contract_installment_retention",
+        "sql": "retention_amount >= 0"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_contract_installment_amount",
+        "sql": "scheduled_amount > 0"
       },
       {
         "kind": "CheckConstraint",
@@ -9923,9 +9913,19 @@
         "sql": "status IN ('UPCOMING','DUE','PARTIALLY_PAID','PAID','OVERDUE','CANCELLED')"
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_contract_installment_amount",
-        "sql": "scheduled_amount > 0"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_contract_installment_sequence",
+        "sql": ""
       }
     ],
     "indexes": [
@@ -10048,6 +10048,11 @@
         "sql": ""
       },
       {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_customer_receipts_amount_positive",
         "sql": "amount > 0"
@@ -10064,11 +10069,6 @@
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -10171,22 +10171,22 @@
         "sql": ""
       },
       {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_non_conformances_status_valid",
         "sql": "status IN ('OPEN','CLOSED')"
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -10258,16 +10258,6 @@
     "constraints": [
       {
         "kind": "CheckConstraint",
-        "name": "ck_physical_count_lines_counted_quantity_non_negative",
-        "sql": "counted_quantity >= 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
         "name": "ck_physical_count_lines_expected_quantity_non_negative",
         "sql": "expected_quantity >= 0"
       },
@@ -10278,6 +10268,16 @@
       },
       {
         "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_physical_count_lines_counted_quantity_non_negative",
+        "sql": "counted_quantity >= 0"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -10334,17 +10334,17 @@
         "sql": ""
       },
       {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "UniqueConstraint",
         "name": "uq_rfq_suppliers_invitation",
         "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -10472,24 +10472,19 @@
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_sales_contracts_company_number",
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_sales_contracts_amount_positive",
         "sql": "amount > 0"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "CheckConstraint",
@@ -10507,18 +10502,23 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_sales_contracts_operation_scope",
         "sql": "(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "UniqueConstraint",
         "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_sales_contracts_company_number",
         "sql": ""
       },
       {
@@ -10618,6 +10618,16 @@
     ],
     "constraints": [
       {
+        "kind": "CheckConstraint",
+        "name": "ck_supplier_quotations_status_valid",
+        "sql": "status IN ('RECEIVED','SELECTED','REJECTED')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -10636,16 +10646,6 @@
         "kind": "CheckConstraint",
         "name": "ck_supplier_quotations_delivery_non_negative",
         "sql": "delivery_days >= 0"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_supplier_quotations_status_valid",
-        "sql": "status IN ('RECEIVED','SELECTED','REJECTED')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
       }
     ],
     "indexes": []
@@ -10729,6 +10729,26 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -10742,26 +10762,6 @@
         "kind": "CheckConstraint",
         "name": "ck_budget_lines_amount_positive",
         "sql": "authorized_amount > 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
       }
     ],
     "indexes": []
@@ -10858,9 +10858,9 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_corrective_actions_status_valid",
+        "sql": "status IN ('OPEN','COMPLETED')"
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -10868,9 +10868,9 @@
         "sql": ""
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_corrective_actions_status_valid",
-        "sql": "status IN ('OPEN','COMPLETED')"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       }
     ],
     "indexes": []
@@ -10982,6 +10982,31 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_purchase_orders_status_valid",
+        "sql": "status IN ('DRAFT','APPROVAL_PENDING','APPROVED','SENT','PARTIALLY_RECEIVED','RECEIVED','CLOSED','CANCELLED')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "UniqueConstraint",
         "name": "uq_purchase_orders_supplier_quotation",
         "sql": ""
@@ -11003,31 +11028,6 @@
       },
       {
         "kind": "UniqueConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_purchase_orders_status_valid",
-        "sql": "status IN ('DRAFT','APPROVAL_PENDING','APPROVED','SENT','PARTIALLY_RECEIVED','RECEIVED','CLOSED','CANCELLED')"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -11202,17 +11202,17 @@
     ],
     "constraints": [
       {
-        "kind": "CheckConstraint",
-        "name": "ck_quotation_lines_price_non_negative",
-        "sql": "unit_price >= 0"
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "CheckConstraint",
+        "name": "ck_quotation_lines_quantity_positive",
+        "sql": "quantity > 0"
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -11222,14 +11222,14 @@
         "sql": "tax_amount >= 0"
       },
       {
+        "kind": "CheckConstraint",
+        "name": "ck_quotation_lines_price_non_negative",
+        "sql": "unit_price >= 0"
+      },
+      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_quotation_lines_quantity_positive",
-        "sql": "quantity > 0"
       }
     ],
     "indexes": []
@@ -11318,6 +11318,16 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "UniqueConstraint",
         "name": null,
         "sql": ""
@@ -11334,16 +11344,6 @@
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -11430,19 +11430,19 @@
     ],
     "constraints": [
       {
-        "kind": "PrimaryKeyConstraint",
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_po_lines_received_non_negative",
-        "sql": "quantity_received >= 0"
-      },
-      {
-        "kind": "CheckConstraint",
         "name": "ck_po_lines_quantity_positive",
         "sql": "quantity > 0"
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -11460,9 +11460,9 @@
         "sql": "unit_price >= 0"
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_po_lines_received_non_negative",
+        "sql": "quantity_received >= 0"
       }
     ],
     "indexes": []
@@ -11565,36 +11565,6 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_service_entries_value_positive",
-        "sql": "accepted_value > 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_service_entries_progress_valid",
-        "sql": "progress_percentage > 0 AND progress_percentage <= 100"
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_service_entries_period_valid",
         "sql": "period_start <= period_end"
@@ -11606,6 +11576,36 @@
       },
       {
         "kind": "UniqueConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_service_entries_value_positive",
+        "sql": "accepted_value > 0"
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_service_entries_progress_valid",
+        "sql": "progress_percentage > 0 AND progress_percentage <= 100"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -11818,36 +11818,6 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_supplier_invoices_operation_scope",
-        "sql": "(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_supplier_invoices_amount_positive",
-        "sql": "amount > 0"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -11889,8 +11859,38 @@
       },
       {
         "kind": "CheckConstraint",
+        "name": "ck_supplier_invoices_amount_positive",
+        "sql": "amount > 0"
+      },
+      {
+        "kind": "CheckConstraint",
         "name": "ck_supplier_invoices_paid_within_total",
         "sql": "amount_paid >= 0 AND amount_paid <= amount + tax_amount"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_supplier_invoices_operation_scope",
+        "sql": "(scope IN ('CENTRAL','GENERAL') AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       }
     ],
     "indexes": [
@@ -12139,6 +12139,11 @@
         "sql": ""
       },
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_fixed_assets_salvage_non_negative",
         "sql": "salvage_value >= 0"
@@ -12154,14 +12159,14 @@
         "sql": "useful_life_months > 0"
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_fixed_assets_status_valid",
         "sql": "status IN ('ACTIVE','UNDER_MAINTENANCE','DISPOSED','RETIRED')"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -12179,14 +12184,14 @@
         "sql": "cost > 0"
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_fixed_assets_accumulated_depreciation_non_negative",
         "sql": "COALESCE(accumulated_depreciation, 0) >= 0"
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "PrimaryKeyConstraint",
@@ -12221,11 +12226,6 @@
       {
         "kind": "UniqueConstraint",
         "name": "uq_fixed_assets_supplier_invoice_id",
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
         "sql": ""
       },
       {
@@ -12298,14 +12298,14 @@
     ],
     "constraints": [
       {
-        "kind": "CheckConstraint",
-        "name": "ck_gr_lines_quantity_positive",
-        "sql": "quantity_received > 0"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_gr_lines_quantity_positive",
+        "sql": "quantity_received > 0"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -12385,11 +12385,6 @@
     "constraints": [
       {
         "kind": "CheckConstraint",
-        "name": "ck_supplier_invoice_plan_amount_positive",
-        "sql": "amount > 0"
-      },
-      {
-        "kind": "CheckConstraint",
         "name": "ck_supplier_invoice_plan_sequence_positive",
         "sql": "sequence >= 1"
       },
@@ -12402,6 +12397,11 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_supplier_invoice_plan_amount_positive",
+        "sql": "amount > 0"
       }
     ],
     "indexes": []
@@ -12527,21 +12527,6 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_supplier_payments_amount_positive",
-        "sql": "amount > 0"
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_supplier_payments_method",
         "sql": "payment_method IN ('TRANSFER','DEPOSIT','CHECK','CASH','OTHER')"
@@ -12565,6 +12550,21 @@
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_supplier_payments_amount_positive",
+        "sql": "amount > 0"
       }
     ],
     "indexes": []
@@ -12729,38 +12729,8 @@
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_twm_received_quantity_non_negative",
-        "sql": "received_quantity >= 0"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_twm_amount_tolerance_valid",
-        "sql": "amount_tolerance_pct >= 0 AND amount_tolerance_pct <= 100"
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
         "name": "ck_three_way_match_results_status_valid",
         "sql": "status IN ('MATCHED','EXCEPTION')"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_twm_financial_invoice_required",
-        "sql": "match_kind = 'LEGACY_PREVIEW' OR (match_kind = 'FINANCIAL' AND supplier_invoice_id IS NOT NULL)"
-      },
-      {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
       },
       {
         "kind": "CheckConstraint",
@@ -12791,6 +12761,36 @@
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_twm_amount_tolerance_valid",
+        "sql": "amount_tolerance_pct >= 0 AND amount_tolerance_pct <= 100"
+      },
+      {
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_twm_received_quantity_non_negative",
+        "sql": "received_quantity >= 0"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_twm_financial_invoice_required",
+        "sql": "match_kind = 'LEGACY_PREVIEW' OR (match_kind = 'FINANCIAL' AND supplier_invoice_id IS NOT NULL)"
       }
     ],
     "indexes": [
@@ -12885,13 +12885,13 @@
     ],
     "constraints": [
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_contract_allocation_payment_installment",
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_contract_allocation_payment_installment",
+        "kind": "PrimaryKeyConstraint",
+        "name": null,
         "sql": ""
       },
       {
@@ -12905,13 +12905,13 @@
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
+        "kind": "UniqueConstraint",
+        "name": "uq_contract_allocation_general_expense_installment",
         "sql": ""
       },
       {
-        "kind": "UniqueConstraint",
-        "name": "uq_contract_allocation_general_expense_installment",
+        "kind": "ForeignKeyConstraint",
+        "name": null,
         "sql": ""
       },
       {
@@ -12927,17 +12927,17 @@
     ],
     "indexes": [
       {
-        "name": "ix_contract_payment_allocations_supplier_payment_id",
-        "unique": false,
-        "columns": [
-          "supplier_payment_id"
-        ]
-      },
-      {
         "name": "ix_contract_payment_allocations_general_expense_id",
         "unique": false,
         "columns": [
           "general_expense_id"
+        ]
+      },
+      {
+        "name": "ix_contract_payment_allocations_supplier_payment_id",
+        "unique": false,
+        "columns": [
+          "supplier_payment_id"
         ]
       },
       {
@@ -13015,6 +13015,21 @@
     ],
     "constraints": [
       {
+        "kind": "CheckConstraint",
+        "name": "ck_depreciation_entries_amount_positive",
+        "sql": "amount > 0"
+      },
+      {
+        "kind": "UniqueConstraint",
+        "name": "uq_depreciation_entries_asset_period",
+        "sql": ""
+      },
+      {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
@@ -13025,24 +13040,9 @@
         "sql": ""
       },
       {
-        "kind": "ForeignKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "UniqueConstraint",
-        "name": "uq_depreciation_entries_asset_period",
-        "sql": ""
-      },
-      {
         "kind": "CheckConstraint",
         "name": "ck_depreciation_entries_period_valid",
         "sql": "period_end >= period_start"
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_depreciation_entries_amount_positive",
-        "sql": "amount > 0"
       }
     ],
     "indexes": []
@@ -13290,14 +13290,19 @@
     ],
     "constraints": [
       {
-        "kind": "CheckConstraint",
-        "name": "ck_fuel_logs_quantity_positive",
-        "sql": "quantity > 0"
-      },
-      {
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_fuel_logs_operation_scope",
+        "sql": "(scope = 'GENERAL' AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
+      },
+      {
+        "kind": "CheckConstraint",
+        "name": "ck_fuel_logs_quantity_positive",
+        "sql": "quantity > 0"
       },
       {
         "kind": "CheckConstraint",
@@ -13323,11 +13328,6 @@
         "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
-      },
-      {
-        "kind": "CheckConstraint",
-        "name": "ck_fuel_logs_operation_scope",
-        "sql": "(scope = 'GENERAL' AND project_id IS NULL) OR (scope = 'PROJECT' AND project_id IS NOT NULL)"
       }
     ],
     "indexes": []
@@ -13403,17 +13403,17 @@
     ],
     "constraints": [
       {
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
+      },
+      {
         "kind": "CheckConstraint",
         "name": "ck_maintenance_plans_trigger_value_positive",
         "sql": "trigger_value > 0"
       },
       {
         "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
-      },
-      {
-        "kind": "ForeignKeyConstraint",
         "name": null,
         "sql": ""
       }
@@ -13542,9 +13542,9 @@
         "sql": ""
       },
       {
-        "kind": "PrimaryKeyConstraint",
-        "name": null,
-        "sql": ""
+        "kind": "CheckConstraint",
+        "name": "ck_maintenance_orders_downtime_hours_non_negative",
+        "sql": "downtime_hours >= 0"
       },
       {
         "kind": "ForeignKeyConstraint",
@@ -13557,7 +13557,7 @@
         "sql": "labor_cost >= 0"
       },
       {
-        "kind": "ForeignKeyConstraint",
+        "kind": "PrimaryKeyConstraint",
         "name": null,
         "sql": ""
       },
@@ -13572,14 +13572,14 @@
         "sql": "parts_cost >= 0"
       },
       {
-        "kind": "CheckConstraint",
-        "name": "ck_maintenance_orders_type_valid",
-        "sql": "order_type IN ('PREVENTIVE','CORRECTIVE')"
+        "kind": "ForeignKeyConstraint",
+        "name": null,
+        "sql": ""
       },
       {
         "kind": "CheckConstraint",
-        "name": "ck_maintenance_orders_downtime_hours_non_negative",
-        "sql": "downtime_hours >= 0"
+        "name": "ck_maintenance_orders_type_valid",
+        "sql": "order_type IN ('PREVENTIVE','CORRECTIVE')"
       }
     ],
     "indexes": []

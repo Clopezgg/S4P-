@@ -74,7 +74,7 @@ class CustomerInvoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     amount_collected: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0"))
     invoice_date: Mapped[date] = mapped_column(Date, nullable=False)
     due_date: Mapped[date] = mapped_column(Date, nullable=False)
-    status: Mapped[str] = mapped_column(String(16), nullable=False, default="DRAFT")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     accounting_document_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("accounting_documents.id", ondelete="SET NULL"), nullable=True

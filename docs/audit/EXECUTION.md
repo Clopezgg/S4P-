@@ -31,3 +31,12 @@ Suite financiera/seguridad dirigida, sin instalaciones concurrentes: **57 passed
 Nueva regresión `test_voucher_pdf_format.py`: API autenticada + PostgreSQL real, sin mocks; remesa de 1.000, gasto en efectivo de 100, doble partida del gasto, dos páginas con MediaBox carta 612×792, marca S4P, descarga, emisión única en reimpresión, URL completa de token correspondiente a GL, verificación pública mínima y descarga=401 después de logout. **PASS**. No escanea ópticamente el QR ni acredita anexos/logo/firma remotos.
 
 Se reinició realmente el contenedor PostgreSQL local y se comparó el dataset antes/después: 1 empresa, 1 usuario, 14 roles, 2 documentos, 1 emisión, 1 token y GL 1.100 debe=1.100 haber persistieron. Evidencia local-postgres-restart.json. Esto prueba ese dataset de caja; no sustituye ciclo residencial contractual completo ni restore cifrado productivo.
+
+## Reparación de atomicidad, AR y RBAC
+
+- Reproducción: escrituras financieras persistían después de fallo de audit; el cobro parcial además fallaba por VARCHAR(16). Los primeros tests de preparación omitieron dueDate y usaron un email .test no aceptado por el validador de login; se corrigió la preparación antes de considerar evidencia de dominio.
+- **15 passed (28.57s)**: doce casos de fallo de auditoría (con/sin key), ciclo de cobro parcial/completo, cancelación y referencia AP por administrador con rechazo a Auditor, y contrato global de catálogo de permisos. `test_financial_audit_atomicity.py` y `test_permission_catalog.py`.
+- **83 passed (137.07s)**: migración fresh/downgrade/upgrade, consistencia de constraints, AP/AR, operaciones Treasury y reversos de pagos/cobros. `test_migrations.py` verifica el ancho real 32 instalado en PostgreSQL.
+- **1 passed (7.62s)**: `test_ar_status_migration.py` crea DB local con revisión anterior eb8ce8e18b2d, registra factura aprobada, ejecuta upgrade a 7b2c1af4849c, cobra parcialmente y comprueba que downgrade se rechaza preservando estado, importe, ancho 32 y revisión. No es rollback productivo.
+
+Evidencia por caso: local-atomicity-tests.json, local-financial-regressions.json y local-ar-migration.json. El nuevo commit invalida los seis checks de los dos commits anteriores para fines de release.

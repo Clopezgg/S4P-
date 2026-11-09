@@ -1,0 +1,8 @@
+[
+  {
+    "suite": "tests.test_ar_status_migration",
+    "test": "test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_downgrade",
+    "seconds": "7.494",
+    "result": "PASS"
+  }
+]

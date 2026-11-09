@@ -138,7 +138,7 @@ def approve_customer_invoice(
         company_id=invoice.company_id,
     )
     before_status = invoice.status
-    invoice = ar_service.approve_customer_invoice(db, invoice_id=invoice_id)
+    invoice = ar_service.approve_customer_invoice(db, invoice_id=invoice_id, commit=False)
     audit_service.record(
         db,
         actor_user_id=user.id,
@@ -192,7 +192,7 @@ def collect_customer_receipt(
             treasury_account_id=payload.treasury_account_id,
             amount=payload.amount,
             receipt_date=payload.receipt_date,
-            commit=outcome is None,
+            commit=False,
         )
         audit_service.record(
             db,

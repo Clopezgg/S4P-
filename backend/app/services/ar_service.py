@@ -86,7 +86,9 @@ def create_customer_invoice(
     return invoice
 
 
-def approve_customer_invoice(db: Session, *, invoice_id: uuid.UUID) -> CustomerInvoice:
+def approve_customer_invoice(
+    db: Session, *, invoice_id: uuid.UUID, commit: bool = True
+) -> CustomerInvoice:
     invoice = db.execute(
         select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update()
     ).scalar_one_or_none()
@@ -129,7 +131,10 @@ def approve_customer_invoice(db: Session, *, invoice_id: uuid.UUID) -> CustomerI
 
     invoice.status = "APPROVED"
     invoice.accounting_document_id = document.id
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(invoice)
     return invoice
 

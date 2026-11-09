@@ -176,6 +176,7 @@ def submit_supplier_invoice_for_approval(
         requested_by=user.id,
         assigned_to=payload.assigned_to,
         priority=payload.priority,
+        commit=False,
     )
     audit_service.record(
         db,
@@ -209,7 +210,7 @@ def approve_supplier_invoice(
         company_id=invoice.company_id,
     )
     before_status = invoice.status
-    invoice = ap_service.approve_supplier_invoice(db, invoice_id=invoice_id)
+    invoice = ap_service.approve_supplier_invoice(db, invoice_id=invoice_id, commit=False)
     audit_service.record(
         db,
         actor_user_id=user.id,
@@ -242,7 +243,7 @@ def cancel_supplier_invoice(
         company_id=invoice.company_id,
     )
     before_status = invoice.status
-    invoice = ap_service.cancel_supplier_invoice(db, invoice_id=invoice_id)
+    invoice = ap_service.cancel_supplier_invoice(db, invoice_id=invoice_id, commit=False)
     audit_service.record(
         db,
         actor_user_id=user.id,
@@ -313,7 +314,7 @@ def pay_supplier_invoice(
             contract_override_reason=payload.contract_override_reason,
             bank_transaction_reference=payload.bank_transaction_reference,
             payment_observations=payload.payment_observations,
-            commit=outcome is None,
+            commit=False,
         )
         audit_service.record(
             db,
