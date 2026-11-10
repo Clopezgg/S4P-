@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -241,9 +242,71 @@ def verify_previous_application(local_url, engine, folder):
     return True
 
 
+def authenticated_read_smoke(client, email, password):
+    """Real auth/read/logout only. Never creates financial or QA business rows."""
+    response = client.post("/api/auth/login", json={"email": email, "password": password})
+    if response.status_code != 200:
+        raise RuntimeError("ProductionLoginRejected")
+    try:
+        identity = client.get("/api/auth/me")
+        if identity.status_code != 200 or identity.json().get("email", "").casefold() != email.casefold():
+            raise RuntimeError("ProductionIdentityMismatch")
+        if client.get("/api/master-data/companies").status_code != 200:
+            raise RuntimeError("AuthenticatedCompanyReadFailed")
+    finally:
+        logout = client.post("/api/auth/logout")
+        if logout.status_code != 204:
+            raise RuntimeError("ProductionLogoutFailed")
+    if client.get("/api/auth/me").status_code != 401:
+        raise RuntimeError("ProductionSessionNotRevoked")
+    return {"productionLoginVerified": True, "authenticatedReadVerified": True,
+            "productionLogoutVerified": True, "unauthenticated401Verified": True}
+
+
+def production_smoke(source):
+    import httpx
+
+    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "")
+    password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
+    if not email or not password:
+        raise RuntimeError("ProductionSmokeCredentialsRequired")
+    origin = "https://s4p-erp-api.onrender.com"
+    with source.connect() as connection:
+        connection.execute(text("SET TRANSACTION READ ONLY"))
+        if revision(connection) != TARGET:
+            raise RuntimeError("ProductionSchemaNotAtApprovedHead")
+        forbidden = connection.scalar(text("""
+            SELECT count(*) FROM role_permissions rp JOIN roles r ON r.id=rp.role_id
+            JOIN permissions p ON p.id=rp.permission_id
+            WHERE r.name='Auditor' AND p.resource='contract.payment_schedule' AND p.action='manage'
+        """))
+        if forbidden:
+            raise RuntimeError("AuditorWriteGrantStillPresent")
+    with httpx.Client(base_url=origin, headers={"Origin": origin}, timeout=30, follow_redirects=False) as client:
+        version = client.get("/api/version")
+        if version.status_code != 200 or version.json().get("gitSha") != os.environ["S4P_APPROVED_MAIN_SHA"]:
+            raise RuntimeError("ProductionSHAMismatch")
+        for path in ("/api/readyz", "/api/backupz"):
+            response = client.get(path)
+            if response.status_code != 200 or response.json().get("status") != "ok":
+                raise RuntimeError("ProductionHealthCheckFailed")
+        login = client.get("/login")
+        if login.status_code != 200:
+            raise RuntimeError("ProductionLoginHTMLFailed")
+        assets = re.findall(r'(?:src|href)="(/assets/[^"?]+\.(?:js|css))"', login.text)
+        if not any(p.endswith(".css") for p in assets) or not any(p.endswith(".js") for p in assets):
+            raise RuntimeError("ProductionAssetsMissing")
+        for path in assets:
+            if client.get(path).status_code != 200:
+                raise RuntimeError("ProductionAssetDownloadFailed")
+        result = authenticated_read_smoke(client, email, password)
+    publish(status="success", stage="complete", operation="smoke", deployedSHA=os.environ["S4P_APPROVED_MAIN_SHA"],
+            productionAssetsVerified=True, auditorWriteGrantRevoked=True, **result)
+
+
 def recover():
     operation = os.environ.get("S4P_RELEASE_OPERATION", "preflight")
-    if operation not in {"preflight", "migrate", "rollback"}:
+    if operation not in {"preflight", "migrate", "rollback", "smoke"}:
         raise RuntimeError("UnsupportedOperation")
     if operation != "preflight":
         approved_sha = os.environ.get("S4P_APPROVED_MAIN_SHA", "")
@@ -262,6 +325,9 @@ def recover():
         raise RuntimeError("UnexpectedProductionDatabase")
     source = create_engine(source_url, pool_pre_ping=True, connect_args={"sslmode": "require"})
     try:
+        if operation == "smoke":
+            production_smoke(source)
+            return
         with source.connect() as connection:
             connection.execute(text("SET TRANSACTION READ ONLY"))
             source_revision = revision(connection)

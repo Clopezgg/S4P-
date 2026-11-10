@@ -42,3 +42,13 @@ services:
         value: supabase_edge
       - key: EVIDENCE_CONTAINER_NAME
         value: s4p-evidence-private
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: BOOTSTRAP_ADMIN_EMAIL
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: BOOTSTRAP_ADMIN_PASSWORD

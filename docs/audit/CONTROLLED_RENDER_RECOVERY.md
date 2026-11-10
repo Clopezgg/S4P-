@@ -74,3 +74,17 @@ funcional pendiente y conservación histórica del PDF tras reverso (AUD-016).
 Referencias verificadas: https://render.com/docs/blueprint-spec.md,
 https://render.com/docs/private-network.md, https://render.com/docs/free.md y
 https://render.com/docs/rollbacks.md.
+
+## Smoke autenticado después del despliegue
+
+El modo explícito smoke reutiliza referencias internas a las credenciales
+bootstrap existentes; nunca las publica ni usa valores predeterminados.
+Comprueba SHA, esquema, readyz/backupz, HTML/CSS/JS, revocación del grant
+contractual de Auditor, login real, identidad, lectura autorizada y logout
+seguido de 401. Solo realiza un intento de login, sin forzar/restablecer
+contraseñas y sin crear movimientos financieros. Un fallo no se presenta
+como aprobado. El helper de autenticación pasa con API/DB/sesiones reales
+en QA; el resultado productivo debe verificarse después del deploy.
+
+Restore productivo real0f6f110 acreditado en el JSON de evidencia; el código
+del servicio temporal no sirve el ERP ni publica datos recuperados.

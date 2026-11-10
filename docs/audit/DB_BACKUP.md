@@ -1,5 +1,29 @@
 # PostgreSQL, respaldo y recuperación
 
+## Actualización 2026-11-10: restore productivo real acreditado
+
+Se recuperó el backup cifrado productivo real de 2026-11-10T07:06:33Z en un
+cluster PG17 independiente dentro del servicio temporal de recuperación, sin
+exponer claves ni escribir sobre la fuente. Código probado: 0f6f110.
+Resultado SUCCESS: FKs validadas, GL consistente, empresas/usuarios/roles
+presentes, esquema eb8ce8e18b2d. El archivo no contiene comprobantes emitidos
+ni documentos contabilizados; no se finge una validación financiera sobre
+filas inexistentes. El ciclo financiero real con datos QA sigue siendo
+evidencia separada.
+
+Upgrade/downgrade 7b2c1af4849c preserva todas las filas; la API anterior
+6225827 arranca contra la copia restaurada y pasa Alembic/readyz/version/401.
+El cluster temporal se eliminó al terminar. Tiempo de restauración y ensayo:
+50,055s; edad del punto recuperado observada: 23.565s. No son SLA ni RPO/RTO
+corporativos certificados. Evidencia: evidence/render-real-backup-restore-2026-11-10.json.
+
+El usuario autorizó la migración productiva tras esas verificaciones. Aún no
+se ejecutó al registrar esta evidencia: falta CI del HEAD definitivo antes
+del cambio. DB permanente/protección/aprobación de release siguen pendientes.
+Las notas anteriores de credenciales inaccesibles se conservan como historia;
+el mecanismo nuevo usa referencias internas Render, sin leer secretos al chat.
+
+
 Lecturas reales 2026-11-08 UTC:
 
 - Render `dpg-dbh8j41srm7s73f3u1b0-a`: PostgreSQL 16, free, available, sin HA, allowlist vacía, vence **2026-11-27 23:47:28 UTC**.

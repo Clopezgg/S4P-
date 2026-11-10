@@ -99,3 +99,11 @@ def test_worker_failure_never_publishes_exception_credentials(monkeypatch, capsy
     assert "sensitive-dsn-and-credential" not in output
     assert '"errorType": "RuntimeError"' in output
     assert '"status": "failed"' in output
+
+
+def test_authenticated_smoke_uses_real_session_and_revokes_it(client):
+    from tests.conftest import BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD
+
+    result = maintenance.authenticated_read_smoke(client, BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD)
+    assert all(result.values())
+    assert client.get("/api/auth/me").status_code == 401
