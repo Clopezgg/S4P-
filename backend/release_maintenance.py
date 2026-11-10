@@ -85,9 +85,9 @@ def integrity(connection):
     if connection.scalar(text("""
         SELECT count(*) FROM journal_lines l
         JOIN accounting_documents d ON d.id=l.accounting_document_id
-        JOIN accounts a ON a.id=l.account_id WHERE a.company_id <> d.company_id
+        JOIN projects p ON p.id=l.project_id WHERE p.company_id <> d.company_id
     """)):
-        raise RuntimeError("CrossCompanyJournalAccount")
+        raise RuntimeError("CrossCompanyJournalProject")
     if connection.scalar(text("""
         SELECT count(*) FROM voucher_issuances v
         JOIN accounting_documents d ON d.id=v.accounting_document_id
