@@ -1,0 +1,44 @@
+# Separate maintenance service. No adoption or changes to existing services.
+# Cross-service references are resolved by Render; values never enter Git/chat.
+services:
+  - type: web
+    name: s4p-release-recovery
+    runtime: docker
+    plan: free
+    region: virginia
+    branch: main
+    dockerfilePath: ./Dockerfile.recovery
+    dockerContext: .
+    autoDeployTrigger: "off"
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_ENV
+        value: testing
+      - key: SECRET_KEY
+        generateValue: true
+      - key: S4P_RELEASE_OPERATION
+        value: preflight
+      - key: DATABASE_URL
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: DATABASE_URL
+      - key: S4P_BACKUP_AES_KEY_B64
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: S4P_BACKUP_AES_KEY_B64
+      - key: SUPABASE_EDGE_SIGNING_KEY_B64
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: SUPABASE_EDGE_SIGNING_KEY_B64
+      - key: SUPABASE_EDGE_BRIDGE_URL
+        fromService:
+          name: s4p-erp-api
+          type: web
+          envVarKey: SUPABASE_EDGE_BRIDGE_URL
+      - key: EVIDENCE_BACKEND
+        value: supabase_edge
+      - key: EVIDENCE_CONTAINER_NAME
+        value: s4p-evidence-private

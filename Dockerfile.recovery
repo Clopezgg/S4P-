@@ -1,0 +1,14 @@
+FROM python:3.12-slim-trixie
+WORKDIR /app
+# Independent, temporary PG17 cluster. Never runs the ERP against restored data.
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-17 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+ENV PATH="/usr/lib/postgresql/17/bin:${PATH}" PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt \
+    && groupadd --gid 10001 recovery \
+    && useradd --uid 10001 --gid 10001 --create-home recovery
+COPY --chown=10001:10001 backend/ ./
+COPY --chown=10001:10001 scripts/s4p_backup.py /app/s4p_backup.py
+USER 10001:10001
+CMD ["python", "release_maintenance.py"]
