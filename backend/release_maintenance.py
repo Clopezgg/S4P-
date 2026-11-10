@@ -13,9 +13,12 @@ import os
 import secrets
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import threading
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -28,6 +31,7 @@ from alembic import command
 
 PARENT = "eb8ce8e18b2d"
 TARGET = "7b2c1af4849c"
+PREVIOUS_APPLICATION = "62258277cf006d875fbb381197ca7dbbcdf09fbd"
 REPORT = {"status": "running", "stage": "initializing"}
 REPORT_LOCK = threading.Lock()
 
@@ -49,6 +53,12 @@ def revision(connection):
     values = connection.execute(text("SELECT version_num FROM alembic_version")).scalars().all()
     if len(values) != 1 or values[0] not in {PARENT, TARGET}:
         raise RuntimeError("UnexpectedRevision")
+    width = connection.scalar(text(
+        "SELECT character_maximum_length FROM information_schema.columns "
+        "WHERE table_schema='public' AND table_name='customer_invoices' AND column_name='status'"
+    ))
+    if width != (16 if values[0] == PARENT else 32):
+        raise RuntimeError("RevisionAndSchemaDisagree")
     return values[0]
 
 
@@ -72,6 +82,18 @@ def integrity(connection):
         ) broken
     """)):
         raise RuntimeError("UnbalancedLedger")
+    if connection.scalar(text("""
+        SELECT count(*) FROM journal_lines l
+        JOIN accounting_documents d ON d.id=l.accounting_document_id
+        JOIN accounts a ON a.id=l.account_id WHERE a.company_id <> d.company_id
+    """)):
+        raise RuntimeError("CrossCompanyJournalAccount")
+    if connection.scalar(text("""
+        SELECT count(*) FROM voucher_issuances v
+        JOIN accounting_documents d ON d.id=v.accounting_document_id
+        WHERE v.company_id <> d.company_id
+    """)):
+        raise RuntimeError("CrossCompanyVoucher")
     for name in ("users", "roles", "role_permissions"):
         if connection.scalar(text(f'SELECT count(*) FROM "{name}"')) == 0:
             raise RuntimeError("MissingIdentityData")
@@ -156,6 +178,69 @@ def change_source(engine, operation, rehearsal_passed):
     return destination
 
 
+def verify_previous_application(local_url, engine, folder):
+    """Boot the pinned previous S4P source only against the recovered QA DB."""
+    with engine.begin() as connection:
+        if revision(connection) == TARGET:
+            migrate(connection, PARENT)
+    archive = Path(folder) / "previous-source.tar.gz"
+    url = f"https://api.github.com/repos/Clopezgg/S4P-/tarball/{PREVIOUS_APPLICATION}"
+    with urllib.request.urlopen(url, timeout=30) as response, archive.open("wb") as output:
+        total = 0
+        while block := response.read(1024 * 1024):
+            total += len(block)
+            if total > 25 * 1024 * 1024:
+                raise RuntimeError("PreviousSourceArchiveTooLarge")
+            output.write(block)
+    unpacked = Path(folder) / "previous-source"
+    unpacked.mkdir()
+    with tarfile.open(archive) as bundle:
+        bundle.extractall(unpacked, filter="data")
+    roots = list(unpacked.iterdir())
+    if len(roots) != 1 or not (roots[0] / "backend/alembic.ini").is_file():
+        raise RuntimeError("UnexpectedPreviousSourceLayout")
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    env.update(DATABASE_URL=local_url, APP_ENV="testing", GIT_SHA=PREVIOUS_APPLICATION,
+               BOOTSTRAP_ADMIN_EMAIL="", BOOTSTRAP_ADMIN_PASSWORD="",
+               EDIT_ACCESS_REQUIRED="false", S4P_BACKUP_SCHEDULE_ENABLED="0")
+    cwd = roots[0] / "backend"
+    run(["python", "-m", "alembic", "current", "--check-heads"], cwd=cwd, env=env)
+    process = subprocess.Popen(
+        ["python", "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8011"],
+        cwd=cwd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    try:
+        until = time.monotonic() + 60
+        while True:
+            try:
+                with urllib.request.urlopen("http://127.0.0.1:8011/api/readyz", timeout=3) as response:
+                    if response.status == 200 and json.load(response).get("status") == "ok":
+                        break
+            except (OSError, urllib.error.URLError):
+                if process.poll() is not None or time.monotonic() >= until:
+                    raise RuntimeError("PreviousApplicationNotReady") from None
+                time.sleep(0.3)
+        with urllib.request.urlopen("http://127.0.0.1:8011/api/version", timeout=5) as response:
+            if json.load(response).get("gitSha") != PREVIOUS_APPLICATION:
+                raise RuntimeError("PreviousApplicationSHAMismatch")
+        try:
+            urllib.request.urlopen("http://127.0.0.1:8011/api/auth/me", timeout=5)
+        except urllib.error.HTTPError as error:
+            if error.code != 401:
+                raise RuntimeError("PreviousApplicationAuthGuardFailed") from None
+        else:
+            raise RuntimeError("PreviousApplicationAuthGuardFailed")
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
+    return True
+
+
 def recover():
     operation = os.environ.get("S4P_RELEASE_OPERATION", "preflight")
     if operation not in {"preflight", "migrate", "rollback"}:
@@ -195,7 +280,7 @@ def recover():
             password_file.write_text(password)
             password_file.chmod(0o600)
             run(["initdb", "-D", str(cluster), "-U", "recovery", "--pwfile", str(password_file),
-                 "--auth-host=scram-sha-256", "--auth-local=trust", "--no-locale"])
+                 "--auth-host=scram-sha-256", "--auth-local=trust", "--no-locale", "--encoding=UTF8"])
             options = (f"-h 127.0.0.1 -k {folder} -p 55432 -c shared_buffers=16MB "
                        "-c max_connections=10 -c work_mem=1MB")
             run(["pg_ctl", "-D", str(cluster), "-o", options, "-w", "start", "-l", str(Path(folder) / "postgres.log")])
@@ -209,6 +294,7 @@ def recover():
                 run(["createdb", "s4p_restore_release"], env=env)
                 restore_to_test_database(local_url)
                 local = create_engine(local_url)
+                publish(stage="checking_restored_integrity")
                 with local.connect() as connection:
                     connection.execute(text("SET TRANSACTION READ ONLY"))
                     restored_revision = revision(connection)
@@ -217,8 +303,12 @@ def recover():
                     restored_revision == PARENT and source_revision == TARGET
                 ):
                     raise RuntimeError("BackupRevisionMismatch")
+                publish(stage="rehearsing_schema")
                 schema_roundtrip(local)
+                publish(stage="rehearsing_previous_application")
+                verify_previous_application(local_url, local, folder)
                 publish(stage="verified", restoreVerified=True, rollbackRehearsed=True,
+                        rollbackApplicationReady=True, rollbackApplicationSHA=PREVIOUS_APPLICATION,
                         rollbackPreservesAllRows=True, restoreSeconds=round(time.monotonic() - started, 3),
                         restoredRevision=restored_revision, **checks)
                 if operation != "preflight":

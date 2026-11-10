@@ -26,6 +26,18 @@ las tablas públicas salvo el registro Alembic. Los hashes quedan en memoria,
 nunca en logs o Git. Se publica fecha/edad del backup y tiempo de recuperación;
 la edad del backup no garantiza por sí sola un RPO contractual.
 
+Después se descarga el código S4P de la versión previa fijada por SHA6225827,
+se verifica su gate Alembic sobre la revisión restaurada eb8ce8e18b2d y se
+arranca su API únicamente en loopback contra la copia recuperada. Se exigen
+readyz=ok, version con ese SHA y auth/me sin sesión=401; el proceso se termina
+antes de borrar el cluster. No se afirma que esto sea un rollback ejecutado
+en producción ni prueba de disponibilidad de todos los artefactos de Render.
+
+Primer preflight remoto44b7738: producción leyó revisión eb8ce8e18b2d y backup
+real2026-11-10T07:06:33Z; falló después con TypeError, sin escrituras
+productivas. El cluster temporal ahora exige UTF8 explícito. El arranque real
+del código anterior y su gate/readyz/version/401 pasan también en QA local.
+
 `migrate`/`rollback`: requieren selección explícita por configuración del
 servicio temporal, `S4P_APPROVE_SCHEMA_CHANGE=7b2c1af4849c` y
 `S4P_APPROVED_MAIN_SHA` igual al SHA real de Render. Cada operación repite
