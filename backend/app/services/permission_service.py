@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import get_current_user, get_db
 from app.domain.errors import NotAuthorizedError
@@ -632,26 +633,21 @@ def require_permission(resource: str, action: str) -> Callable:
         db: Session = Depends(get_db),
         current: tuple[User, list[str]] = Depends(get_current_user),
     ) -> User:
-        user, _roles = current
-        if not user_has_permission(db, user_id=user.id, resource=resource, action=action):
-            raise NotAuthorizedError(f"No tiene permiso para {action} sobre {resource}")
+        # Parse request bytes asynchronously; synchronous database work must
+        # never wait for the connection pool on the event-loop thread.
+        project_ids = await _request_project_ids(request) if _is_project_aware_resource(resource) else set()
+        entity_values = await _request_entity_values(request) if _is_project_aware_resource(resource) else {}
 
-        if _is_project_aware_resource(resource):
-            project_ids = await _request_project_ids(request)
-            entity_values = await _request_entity_values(request)
-            project_ids.update(
-                _indirect_entity_project_ids(
-                    db, resource=resource, entity_values=entity_values
-                )
-            )
-            for project_id in project_ids:
-                assert_project_access(
-                    db,
-                    user_id=user.id,
-                    resource=resource,
-                    action=action,
-                    project_id=project_id,
-                )
-        return user
+        def authorize() -> User:
+            user, _roles = current
+            if not user_has_permission(db, user_id=user.id, resource=resource, action=action):
+                raise NotAuthorizedError(f"No tiene permiso para {action} sobre {resource}")
+            if _is_project_aware_resource(resource):
+                project_ids.update(_indirect_entity_project_ids(db, resource=resource, entity_values=entity_values))
+                for project_id in project_ids:
+                    assert_project_access(db, user_id=user.id, resource=resource, action=action, project_id=project_id)
+            return user
+
+        return await run_in_threadpool(authorize)
 
     return _dependency

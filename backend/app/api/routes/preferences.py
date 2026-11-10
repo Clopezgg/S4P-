@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
@@ -41,12 +43,13 @@ def update_preferences(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="themeId inválido"
         )
 
-    pref = db.get(UserPreference, user.id)
-    if pref is None:
-        pref = UserPreference(user_id=user.id)
-        db.add(pref)
-    pref.theme_id = payload.theme_id
-    pref.density = payload.density
+    statement = insert(UserPreference).values(
+        user_id=user.id, theme_id=payload.theme_id, density=payload.density,
+    ).on_conflict_do_update(
+        index_elements=[UserPreference.user_id],
+        set_={"theme_id": payload.theme_id, "density": payload.density, "updated_at": func.now()},
+    ).returning(UserPreference)
+    pref = db.execute(statement).scalar_one()
     db.commit()
     db.refresh(pref)
     return UserPreferencesResponse(theme_id=pref.theme_id, density=pref.density)

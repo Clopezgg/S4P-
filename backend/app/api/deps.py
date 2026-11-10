@@ -1,22 +1,27 @@
 import uuid
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 
+from anyio import CancelScope
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, get_database_capacity
 from app.domain.errors import NotAuthenticatedError
 from app.models.user import User
 from app.services import auth_service, rate_limit_service
 
 
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db(request: Request) -> AsyncGenerator[Session, None]:
+    async with get_database_capacity(request):
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            # Disconnects must not interrupt rollback/connection return.
+            with CancelScope(shield=True):
+                await run_in_threadpool(db.close)
 
 
 def _client_ip(request: Request) -> str:

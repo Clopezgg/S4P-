@@ -2,6 +2,7 @@ import os
 import threading
 from contextlib import asynccontextmanager
 
+from anyio import CapacityLimiter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -65,6 +66,10 @@ from app.services.bootstrap_service import bootstrap_admin_if_needed
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    settings = get_settings()
+    _app.state.database_capacity = CapacityLimiter(
+        settings.database_pool_size + settings.database_max_overflow
+    )
     db = SessionLocal()
     try:
         bootstrap_admin_if_needed(db)

@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, get_database_capacity
 from app.core.logging import get_correlation_id
 from app.domain.errors import NotAuthenticatedError
 from app.models.edit_access import EditAccessEvent
@@ -67,6 +68,37 @@ def _requires_protected_edit(method: str, path: str) -> bool:
     return bool(parts and parts[-1].lower() in _PROTECTED_COMMANDS)
 
 
+def _consume_protected_edit(session_token, capability, settings, correlation_id) -> bool:
+    """Keep connection checkout, SQL and cleanup off the ASGI event loop."""
+    with SessionLocal() as db:
+        try:
+            try:
+                current_user, _roles = auth_service.get_current_user(
+                    db, raw_token=session_token
+                )
+            except NotAuthenticatedError:
+                current_user = None
+            allowed = edit_access_service.consume_capability(
+                db,
+                capability,
+                session_token=session_token,
+                settings=settings,
+            )
+            db.add(
+                EditAccessEvent(
+                    user_id=current_user.id if current_user is not None else None,
+                    success=allowed,
+                    outcome="MUTATION_ALLOWED" if allowed else "MUTATION_DENIED",
+                    correlation_id=correlation_id,
+                )
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+    return allowed
+
+
 def register_edit_access_guard(app: FastAPI) -> None:
     """Add finite secondary confirmation to mutations of existing business data."""
 
@@ -89,32 +121,10 @@ def register_edit_access_guard(app: FastAPI) -> None:
             capability = request.headers.get("x-nexora-edit-access")
             session_token = request.cookies.get(settings.session_cookie_name)
             correlation_id = get_correlation_id()
-            with SessionLocal() as db:
-                try:
-                    try:
-                        current_user, _roles = auth_service.get_current_user(
-                            db, raw_token=session_token
-                        )
-                    except NotAuthenticatedError:
-                        current_user = None
-                    allowed = edit_access_service.consume_capability(
-                        db,
-                        capability,
-                        session_token=session_token,
-                        settings=settings,
-                    )
-                    db.add(
-                        EditAccessEvent(
-                            user_id=current_user.id if current_user is not None else None,
-                            success=allowed,
-                            outcome="MUTATION_ALLOWED" if allowed else "MUTATION_DENIED",
-                            correlation_id=correlation_id,
-                        )
-                    )
-                    db.commit()
-                except Exception:
-                    db.rollback()
-                    raise
+            async with get_database_capacity(request):
+                allowed = await run_in_threadpool(
+                    _consume_protected_edit, session_token, capability, settings, correlation_id
+                )
             if not allowed:
                 return JSONResponse(
                     status_code=status.HTTP_428_PRECONDITION_REQUIRED,

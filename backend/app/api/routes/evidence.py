@@ -15,6 +15,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import get_db
 from app.api.deps_correlation import get_correlation_id
@@ -278,6 +279,18 @@ async def upload_evidence(
     user=Depends(require_permission("document.evidence", "create")),
     correlation_id: str = Depends(get_correlation_id),
 ) -> EvidenceResponse:
+    project_id = await run_in_threadpool(
+        _validate_upload_context, db, user, company_id, entity_type, entity_id
+    )
+    content = await evidence_service.read_bounded_upload(file)
+    return await run_in_threadpool(
+        _persist_uploaded_evidence, db=db, user=user, company_id=company_id,
+        project_id=project_id, file=file, content=content, category=category,
+        entity_type=entity_type, entity_id=entity_id, correlation_id=correlation_id,
+    )
+
+
+def _validate_upload_context(db, user, company_id, entity_type, entity_id):
     assert_company_access(
         db, user_id=user.id, resource="document.evidence", action="create", company_id=company_id
     )
@@ -300,7 +313,14 @@ async def upload_evidence(
                 action="create",
                 project_id=project_id,
             )
-    content = await evidence_service.read_bounded_upload(file)
+    return project_id
+
+
+def _persist_uploaded_evidence(
+    *, db, user, company_id, project_id, file, content, category,
+    entity_type, entity_id, correlation_id,
+) -> EvidenceResponse:
+    """Synchronous SQL/storage/compensation share one worker and transaction."""
     declared_mime = file.content_type or "application/octet-stream"
     started = time.monotonic()
     logger.info(
