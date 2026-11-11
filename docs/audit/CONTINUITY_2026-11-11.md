@@ -25,3 +25,7 @@ Render confirma PG16 Free disponible, expiración `2026-11-27T23:47:28.940374Z`,
 La aprobación contractual sigue sin transición demostrada desde DRAFT: la aprobación de la factura no acredita la del contrato. GitHub devuelve 403 al consultar protección de main; rulesets vacío y environment production ausente en la inspección previa. No se atribuyen permisos administrativos que la integración no tiene ni se escriben variables de aceptación para fingir certificación.
 
 El nuevo HEAD necesita sus seis workflows push efectivos y restauración/rehearsal actual antes del despliegue controlado. Estado financiero **NO-GO** mientras falten DB permanente, gobernanza y aceptación humana documentada. Los resultados posteriores de CI/Render deben registrarse con SHA exacto en issue #13 y evidencia; este documento no anticipa un despliegue.
+
+## Recuperación de esquema reciente
+
+El primer preflight ad4dbc4 se detuvo sin mutación productiva: seleccionó el backup del 10 de noviembre anterior al upgrade7b. Se añade captura cifrada explícita del esquema actual antes del drill, usando pg_dump de lectura y el puente privado existente; el intervalo del scheduler permanece igual y los archivos anteriores no se sobrescriben ni eliminan. Prueba unitaria separada valida force/intervalo/inmutabilidad; no constituye evidencia de backup real, que se exige al ejecutar el preflight en Render. Render rechazó además la planificación de DB permanente con `payment_removed`; no hay plan aprobable mientras ese bloqueo del proveedor continúe.

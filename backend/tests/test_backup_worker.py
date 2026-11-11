@@ -91,6 +91,14 @@ def test_signed_remote_backup_creates_verified_immutable_chunks(monkeypatch):
         assert len(part["sha256"]) == 64
     again = backup_worker.create_encrypted_backup()
     assert again == {"skipped": True}
+    # A recovery operator can obtain the current schema without disabling
+    # the normal scheduler interval or overwriting any immutable archive.
+    previous_objects = dict(bridge.objects)
+    monkeypatch.setattr(backup_worker.secrets, "token_hex", lambda n: "d" * (n * 2))
+    forced = backup_worker.create_encrypted_backup(force=True)
+    assert forced["skipped"] is False
+    assert bridge.previous["manifestKey"] != pointer["manifestKey"]
+    assert all(bridge.objects[key] == value for key, value in previous_objects.items())
 
 
 def test_status_rejects_corrupt_timestamp():

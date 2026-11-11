@@ -327,7 +327,7 @@ def recover():
             raise RuntimeError("ExplicitRevisionAndSHAAcceptanceRequired")
     # Read settings only after validating operation; never run app bootstrap.
     from app.core.config import get_settings
-    from app.services.backup_worker import _bridge, _json_call
+    from app.services.backup_worker import _bridge, _json_call, create_encrypted_backup
     from restore_from_supabase import restore_to_test_database
 
     source_url = get_settings().database_url
@@ -344,6 +344,11 @@ def recover():
             connection.execute(text("SET TRANSACTION READ ONLY"))
             source_revision = revision(connection)
             integrity(connection)
+        # The last scheduled backup may predate a separately approved schema
+        # change. Take a fresh encrypted snapshot before this recovery drill;
+        # pg_dump only reads production, immutable archives remain offsite.
+        publish(stage="taking_current_schema_backup")
+        create_encrypted_backup(force=True)
         latest = _json_call(_bridge(), "status")
         created = datetime.fromisoformat(latest["createdAt"].replace("Z", "+00:00"))
         age = (datetime.now(timezone.utc) - created).total_seconds()

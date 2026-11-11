@@ -59,9 +59,11 @@ def backup_due(bridge: SupabaseEdgeEvidenceContainer, *, now: datetime | None = 
     return (now - previous).total_seconds() >= MIN_INTERVAL_SECONDS
 
 
-def create_encrypted_backup() -> dict:
+def create_encrypted_backup(*, force: bool = False) -> dict:
     """Take a PostgreSQL dump, encrypt, upload immutable chunks and publish index.
 
+    force is reserved for an operator recovery drill requiring a snapshot of
+    the current schema; scheduled backups retain their normal interval.
     Never log DSNs, signing secrets, database bytes or encryption keys.
     An incomplete upload has no published index, so it cannot be mistaken for
     a usable snapshot.
@@ -73,7 +75,7 @@ def create_encrypted_backup() -> dict:
     if health.get("private") is not True or health.get("ok") is not True:
         raise RuntimeError("Private backup bucket unavailable")
     now = datetime.now(timezone.utc)
-    if not backup_due(bridge, now=now):
+    if not force and not backup_due(bridge, now=now):
         logger.info("Offsite backup is recent; no new snapshot required")
         return {"skipped": True}
 
