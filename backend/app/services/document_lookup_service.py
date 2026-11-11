@@ -9,10 +9,10 @@ las acciones permitidas por estado.
 import uuid
 from dataclasses import dataclass, field
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.orm import Session
 
-from app.models.accounting import AccountingDocument
+from app.models.accounting import AccountingDocument, JournalLine
 from app.models.ap import SupplierInvoice, SupplierPayment
 from app.models.ar import CustomerInvoice
 from app.models.crm import SalesContract
@@ -90,7 +90,8 @@ def _supplier_name(db: Session, supplier_id) -> str | None:
 
 
 def lookup(
-    db: Session, *, query: str, company_ids: list[uuid.UUID] | None
+    db: Session, *, query: str, company_ids: list[uuid.UUID] | None,
+    project_ids: list[uuid.UUID] | None
 ) -> list[DocumentHit]:
     """`company_ids=None` significa acceso global (admin)."""
     q = query.strip()
@@ -99,14 +100,27 @@ def lookup(
     like = f"%{q}%"
     hits: list[DocumentHit] = []
 
-    def _scope(stmt, column):
-        return stmt if company_ids is None else stmt.where(column.in_(company_ids))
+    def _scope(stmt, column, project_column, *, ledger=False):
+        if company_ids is not None:
+            stmt = stmt.where(column.in_(company_ids))
+        if project_ids is not None:
+            stmt = stmt.where(or_(project_column.is_(None), project_column.in_(project_ids)))
+            if ledger:
+                unauthorized_line = exists(select(JournalLine.id).where(
+                    JournalLine.accounting_document_id == AccountingDocument.id,
+                    JournalLine.project_id.is_not(None), JournalLine.project_id.not_in(project_ids),
+                ))
+                stmt = stmt.where(
+                    or_(AccountingDocument.project_id.is_(None), AccountingDocument.project_id.in_(project_ids)),
+                    ~unauthorized_line,
+                )
+        return stmt
 
     # --- SupplierInvoice --------------------------------------------------
     for inv in db.execute(
         _scope(
             select(SupplierInvoice).where(SupplierInvoice.invoice_number.ilike(like)),
-            SupplierInvoice.company_id,
+            SupplierInvoice.company_id, SupplierInvoice.project_id,
         ).limit(25)
     ).scalars():
         hits.append(
@@ -131,7 +145,7 @@ def lookup(
     for ci in db.execute(
         _scope(
             select(CustomerInvoice).where(CustomerInvoice.invoice_number.ilike(like)),
-            CustomerInvoice.company_id,
+            CustomerInvoice.company_id, CustomerInvoice.project_id,
         ).limit(25)
     ).scalars():
         hits.append(
@@ -151,7 +165,7 @@ def lookup(
 
     # --- PurchaseOrder -----------------------------------------------------
     for po in db.execute(
-        _scope(select(PurchaseOrder).where(PurchaseOrder.po_number.ilike(like)), PurchaseOrder.company_id).limit(25)
+        _scope(select(PurchaseOrder).where(PurchaseOrder.po_number.ilike(like)), PurchaseOrder.company_id, PurchaseOrder.project_id).limit(25)
     ).scalars():
         hits.append(
             DocumentHit(
@@ -173,7 +187,7 @@ def lookup(
     for c in db.execute(
         _scope(
             select(SupplierContract).where(SupplierContract.contract_number.ilike(like)),
-            SupplierContract.company_id,
+            SupplierContract.company_id, SupplierContract.project_id,
         ).limit(25)
     ).scalars():
         hits.append(
@@ -197,7 +211,7 @@ def lookup(
     for sc in db.execute(
         _scope(
             select(SalesContract).where(SalesContract.contract_number.ilike(like)),
-            SalesContract.company_id,
+            SalesContract.company_id, SalesContract.project_id,
         ).limit(25)
     ).scalars():
         hits.append(
@@ -216,17 +230,19 @@ def lookup(
         )
 
     # --- VoucherIssuance ---------------------------------------------------
-    for v in db.execute(
+    for v, project_id in db.execute(
         _scope(
-            select(VoucherIssuance).where(
+            select(VoucherIssuance, AccountingDocument.project_id).join(
+                AccountingDocument, AccountingDocument.id == VoucherIssuance.accounting_document_id
+            ).where(
                 or_(
                     VoucherIssuance.document_number.ilike(like),
                     VoucherIssuance.verification_code.ilike(like),
                 )
             ),
-            VoucherIssuance.company_id,
+            VoucherIssuance.company_id, AccountingDocument.project_id, ledger=True,
         ).limit(25)
-    ).scalars():
+    ):
         hits.append(
             DocumentHit(
                 domain="Comprobantes",
@@ -238,6 +254,7 @@ def lookup(
                 amount=str(v.amount_snapshot),
                 currency_code=v.currency_code_snapshot,
                 party=v.beneficiary_name_snapshot,
+                project_id=str(project_id) if project_id else None,
                 accounting_document_id=str(v.accounting_document_id),
                 exact=q in (v.document_number, v.verification_code),
                 allowed_actions=allowed_actions_for("VOUCHER", v.status),
@@ -248,7 +265,7 @@ def lookup(
     for doc in db.execute(
         _scope(
             select(AccountingDocument).where(AccountingDocument.document_number.ilike(like)),
-            AccountingDocument.company_id,
+            AccountingDocument.company_id, AccountingDocument.project_id, ledger=True,
         ).limit(25)
     ).scalars():
         hits.append(
@@ -270,7 +287,9 @@ def lookup(
     # --- Remittance / bank reference -------------------------------------
     for rem in db.execute(
         _scope(
-            select(Remittance).where(Remittance.reference.ilike(like)), Remittance.company_id
+            select(Remittance).join(
+                AccountingDocument, AccountingDocument.id == Remittance.accounting_document_id
+            ).where(Remittance.reference.ilike(like)), Remittance.company_id, AccountingDocument.project_id, ledger=True
         ).limit(25)
     ).scalars():
         hits.append(
@@ -289,12 +308,15 @@ def lookup(
         )
 
     # --- SupplierPayment / bank transaction reference --------------------
-    for pay in db.execute(
-        select(SupplierPayment).where(SupplierPayment.bank_transaction_reference.ilike(like)).limit(25)
-    ).scalars():
-        inv = db.get(SupplierInvoice, pay.supplier_invoice_id)
-        if inv is None or (company_ids is not None and inv.company_id not in company_ids):
-            continue
+    for pay, inv in db.execute(
+        _scope(
+            select(SupplierPayment, SupplierInvoice).join(
+                SupplierInvoice, SupplierInvoice.id == SupplierPayment.supplier_invoice_id
+            ).join(AccountingDocument, AccountingDocument.id == SupplierPayment.accounting_document_id
+            ).where(SupplierPayment.bank_transaction_reference.ilike(like)),
+            SupplierInvoice.company_id, SupplierInvoice.project_id, ledger=True,
+        ).limit(25)
+    ):
         hits.append(
             DocumentHit(
                 domain="Tesorería",
@@ -304,6 +326,7 @@ def lookup(
                 label=f"Pago a proveedor · ref. {pay.bank_transaction_reference}",
                 amount=str(pay.amount),
                 party=inv.invoice_number,
+                project_id=str(inv.project_id) if inv.project_id else None,
                 accounting_document_id=str(pay.accounting_document_id),
                 exact=pay.bank_transaction_reference == q,
             )

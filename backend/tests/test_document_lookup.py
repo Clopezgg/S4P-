@@ -68,3 +68,50 @@ def test_lookup_exact_match_ranks_first(client, db_session):
 
 def test_lookup_requires_auth(client):
     assert client.get("/api/accounting/documents/lookup?q=x").status_code in (401, 403)
+
+
+def test_lookup_does_not_expose_general_journal_with_unassigned_project_lines(client, db_session):
+    import uuid
+
+    from app.models.permission import UserCompanyAccess, UserProjectAccess
+    from tests.helpers import create_user_with_role, login_as
+
+    login_admin(client)
+    company = create_company(client)
+    projects = []
+    for code in ['VISIBLE', 'PRIVATE']:
+        response = client.post('/api/projects', json={'companyId': company['id'],
+            'name': code, 'code': code, 'currencyCode': 'HNL'})
+        assert response.status_code == 201, response.text
+        projects.append(response.json())
+    expense = create_account(client, company_id=company['id'], code='5100', name='Cost', account_type='EXPENSE')
+    payable = create_account(client, company_id=company['id'], code='2100', name='AP', account_type='LIABILITY')
+    posted = client.post('/api/accounting/journal-entries', json={
+        'companyId': company['id'], 'scope': 'GENERAL', 'currencyCode': 'HNL',
+        'lines': [{'accountId': expense['id'], 'debitAmount': '100', 'projectId': projects[1]['id']},
+                  {'accountId': payable['id'], 'creditAmount': '100', 'projectId': projects[1]['id']}]})
+    assert posted.status_code == 201, posted.text
+    supplier = create_supplier(client, company_id=company['id'])
+    visible_contract = None
+    for index in range(27):
+        response = client.post('/api/procurement/suppliers/contracts', json={
+            'companyId': company['id'], 'supplierId': supplier['id'],
+            'projectId': projects[0 if index == 26 else 1]['id'],
+            'contractNumber': f'LIMIT-{index}', 'value': '10',
+            'currencyCode': 'HNL', 'startDate': '2026-01-01'})
+        assert response.status_code == 201, response.text
+        if index == 26:
+            visible_contract = response.json()
+    user = create_user_with_role(db_session, email='lookup-lines@example.com', role_name='Finance Manager')
+    db_session.add(UserCompanyAccess(user_id=user.id, company_id=uuid.UUID(company['id'])))
+    db_session.add(UserProjectAccess(user_id=user.id, project_id=uuid.UUID(projects[0]['id'])))
+    db_session.commit()
+    login_as(client, email=user.email)
+    document = posted.json()
+    assert client.get(f"/api/accounting/journal-entries/{document['id']}").status_code == 403
+    result = client.get('/api/accounting/documents/lookup', params={'q': document['documentNumber']})
+    assert result.status_code == 200, result.text
+    assert result.json()['results'] == []
+    limited = client.get('/api/accounting/documents/lookup', params={'q': 'LIMIT-'})
+    assert limited.status_code == 200, limited.text
+    assert [row['id'] for row in limited.json()['results']] == [visible_contract['id']]

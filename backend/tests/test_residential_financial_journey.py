@@ -115,7 +115,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
                 'kind': 'BANK', 'currencyCode': 'HNL', 'glAccountId': bank_gl['id']}, code=201)
     funding = {'companyId': company['id'], 'treasuryAccountId': cash['id'],
                'counterAccountId': equity['id'], 'originType': 'CAPITAL_CONTRIBUTION',
-               'sender': 'Isolated QA contribution', 'currencyCode': 'HNL',
+               'sender': 'Isolated QA contribution', 'reference': 'QA-GENERAL-FUND', 'currencyCode': 'HNL',
                'originalAmount': '10000.00', 'remittanceDate': '2026-10-01'}
     remittance = call('POST', '/treasury/remittances', funding, code=201, key='residential-funding')
     assert call('POST', '/treasury/remittances', funding, code=201, key='residential-funding')['id'] == remittance['id']
@@ -165,6 +165,9 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         'password': 'ResidentialQA123!', 'roleName': 'Auditor'}, code=201)
     login(unassigned['email'])
     assert call('GET', f"/projects?company_id={company['id']}") == []
+    assert call('GET', '/accounting/documents/lookup?q=QA-RES')['results'] == []
+    assert any(r['entityType'] == 'REMITTANCE' for r in
+               call('GET', '/accounting/documents/lookup?q=QA-GENERAL-FUND')['results'])
     call('GET', f"/contract-payments/by-contract/{contract['id']}", code=403)
     call('GET', f"/contract-payments/schedules/{schedule['id']}/summary", code=403)
     login(auditor['email'])
@@ -188,6 +191,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     call('GET', f"/projects?company_id={foreign['id']}", code=403)
     payment_payload = {'treasuryAccountId': cash['id'], 'amount': '1000.00',
                        'paymentDate': '2026-10-15', 'paymentMethod': 'CASH',
+                       'bankTransactionReference': 'QA-RES-BANK-REF',
                        'contractAllocations': [{'installmentId': installment_id, 'amountApplied': '1000.00'}]}
     call('POST', f"/ap/supplier-invoices/{invoice['id']}/payments",
          {**payment_payload, 'contractAllocations': []}, code=422)
@@ -212,6 +216,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         token = session.scalar(select(VoucherVerification).where(
             VoucherVerification.accounting_document_id == uuid.UUID(payment['accountingDocumentId'])))
         verification_url = f'/verificar/comprobante/{token.token}'
+        receipt_number, receipt_code = token.document_number, token.verification_code
     assert verification_url.encode() in pdf.content
     original_verification = call('GET', verification_url)
     assert original_verification['verified'] is True
@@ -222,6 +227,13 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     # Real DDL rollback/re-upgrade must retain an already issued snapshot.
     from release_maintenance import schema_roundtrip
     assert schema_roundtrip(engine)
+    login(unassigned['email'])
+    for query in [receipt_number, receipt_code, 'QA-RES-BANK-REF']:
+        assert call('GET', f'/accounting/documents/lookup?q={query}')['results'] == []
+    login(executor['email'])
+    visible = call('GET', '/accounting/documents/lookup?q=QA-RES-BANK-REF')['results']
+    assert any(r['entityType'] == 'SUPPLIER_PAYMENT' and r['id'] == payment['id'] for r in visible)
+    login_admin(client)
 
     statement = call('POST', '/treasury/bank-statements', {'treasuryAccountId': cash['id'],
                       'statementDate': '2026-10-31', 'openingBalance': '10000.00', 'closingBalance': '9000.00'}, code=201)
@@ -232,6 +244,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     assert matched['status'] == 'MATCHED'
     assert call('POST', f"/treasury/bank-statement-lines/{line['id']}/unmatch")['status'] == 'UNMATCHED'
     login(outsider['email'])
+    assert call('GET', '/accounting/documents/lookup?q=QA-RES')['results'] == []
     call('GET', f"/ap/supplier-invoices/{invoice['id']}", code=403)
     call('GET', pdf_path, code=403)
     login(executor['email'])

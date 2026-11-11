@@ -338,7 +338,10 @@ def document_lookup(
         company_ids = None
     else:
         company_ids = list_user_company_ids(db, user_id=user.id)
-    hits = document_lookup_service.lookup(db, query=q, company_ids=company_ids)
+    project_ids = accessible_project_ids(
+        db, user_id=user.id, resource="accounting.journal_entry", action="read"
+    )
+    hits = document_lookup_service.lookup(db, query=q, company_ids=company_ids, project_ids=project_ids)
     return DocumentLookupResponse(
         query=q, results=[DocumentLookupHit(**vars(h)) for h in hits]
     )
