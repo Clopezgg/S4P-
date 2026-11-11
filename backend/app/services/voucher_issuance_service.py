@@ -49,6 +49,7 @@ def get_or_create(
     contract_balance: Decimal | None,
     verification_token: str,
     verification_code: str,
+    contract_context_snapshot: dict | None = None,
 ) -> VoucherIssuance:
     existing = db.execute(
         select(VoucherIssuance).where(
@@ -87,6 +88,7 @@ def get_or_create(
             getattr(project, "state_department", None) if project else None,
             getattr(project, "location_reference", None) if project else None,
         ),
+        contract_context_snapshot=contract_context_snapshot,
         contract_number_snapshot=contract_number,
         contract_period_snapshot=contract_period,
         beneficiary_name_snapshot=beneficiary_name,

@@ -11,7 +11,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Numeric, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -58,6 +58,8 @@ class VoucherIssuance(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     project_address_snapshot: Mapped[str | None] = mapped_column(String(600), nullable=True)
     contract_number_snapshot: Mapped[str | None] = mapped_column(String(64), nullable=True)
     contract_period_snapshot: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+    contract_context_snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # --- Snapshots de beneficiario / pagador / aprobador ---
     beneficiary_name_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)

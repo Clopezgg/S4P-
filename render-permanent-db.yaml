@@ -1,0 +1,13 @@
+# PROPOSAL ONLY: do not apply without explicit approval of the recurring cost.
+# Adopt the existing database by name; reject any plan creating/replacing it.
+# Keep PG version, location, connection identifiers, 1 GB and closed ingress.
+databases:
+  - name: s4p-postgres-staging
+    databaseName: s4p_postgres_staging
+    user: s4p_postgres_staging_user
+    postgresMajorVersion: "16"
+    region: virginia
+    plan: 0.1c-256mb
+    diskSizeGB: 1
+    storageAutoscalingEnabled: false
+    ipAllowList: []

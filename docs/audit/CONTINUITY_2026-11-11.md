@@ -1,0 +1,27 @@
+# Continuidad — 2026-11-11
+
+## Estado acreditado al comenzar
+
+Main local/remoto: `8d02c680a1e46cb646b245e3e9ff263675bfc0dc`, sin cambios concurrentes. Backend Render `srv-dbh8ihec6qcc73em0ho0`: deploy `dep-dbpj1hui0phs73ab6h2g`, LIVE con ese SHA. La ejecución anterior acreditó seis workflows push SUCCESS, restauración de backup productivo cifrado en PostgreSQL independiente, migración aprobada `7b2c1af4849c`, login/logout reales y 12 verificaciones públicas de login en Chromium/Firefox/WebKit. Esas pruebas corresponden a ese SHA, no sustituyen las del nuevo HEAD.
+
+## Reparaciones de comprobantes
+
+**AUD-016 P1:** la primera emisión guarda un snapshot JSONB versionado de historia de cuotas, importes Decimal serializados como texto, corte, categoría, referencia, observaciones y resumen contractual. La reimpresión usa exclusivamente ese snapshot aunque las allocations hayan sido revertidas. También respeta fecha, código de verificación, moneda, importe, método, banco y nombre del proyecto de la emisión original. Los recibos anteriores sin detalle JSON conservan sus totales originales y muestran «Detalle histórico de cuotas no registrado»; no se fabrica una historia con saldos actuales.
+
+**AUD-023 P1:** el QR resolvía un estado contable almacenado y podía seguir mostrando POSTED tras el reverso. Reimprimir también sobrescribía empresa, beneficiario, fecha y código públicos. Ahora el endpoint consulta el estado vigente del documento, sin escribir desde la verificación pública, y toma identidad/importes de VoucherIssuance cuando existe. El token y su metadata original no se reescriben.
+
+## Esquema y reversibilidad
+
+Migración nueva `dae6224cb8be`, padre `7b2c1af4849c`: agrega únicamente `voucher_issuances.contract_context_snapshot JSONB NULL`, sin backfill. Downgrade de expansión conserva la columna y datos históricos: la aplicación anterior ignora el campo adicional. Upgrade es idempotente. El procedimiento controlado se actualiza al nuevo par de revisiones y pin de aplicación previa 8d02. La huella compara todas las filas e incluye snapshots no nulos; normaliza solo el campo nuevo cuando es NULL para comparar con el esquema anterior. No cambia DATABASE_URL, secretos o allowlists. Dockerfile.render conserva `alembic current --check-heads` sin upgrade implícito.
+
+## Pruebas locales reales
+
+PostgreSQL aislado local: **9 PASS** en test_voucher_pdf_format, test_residential_financial_journey, test_company_branding_voucher y test_release_maintenance, 18.38 segundos. El ciclo usa APIs para empresa/proyecto/13 WBS/presupuesto/remesa/proveedor/contrato/factura/aprobación/pago/PDF/GL/conciliación/reverso y comprueba persistencia tras reiniciar la aplicación. Se añadió reimpresión contractual después del reverso, compatibilidad legacy y rollback/re-upgrade con snapshot no nulo. La regresión QR falla contra la implementación original (1 FAILED) y pasa con la reparación. No hubo movimientos financieros QA en producción.
+
+## Gates pendientes y restricciones
+
+Render confirma PG16 Free disponible, expiración `2026-11-27T23:47:28.940374Z`, ingreso externo cerrado. `render-permanent-db.yaml` propone adoptar exclusivamente la instancia existente, plan `0.1c-256mb`, almacenamiento explícito 1 GB, autoscaling deshabilitado, mismos nombres/región/PG16/allowlist. Validó contra el JSON Schema actual; falta revisión del plan Render y aprobación expresa del coste recurrente antes de aplicar. No se ha contratado ni migrado producción por esta propuesta.
+
+La aprobación contractual sigue sin transición demostrada desde DRAFT: la aprobación de la factura no acredita la del contrato. GitHub devuelve 403 al consultar protección de main; rulesets vacío y environment production ausente en la inspección previa. No se atribuyen permisos administrativos que la integración no tiene ni se escriben variables de aceptación para fingir certificación.
+
+El nuevo HEAD necesita sus seis workflows push efectivos y restauración/rehearsal actual antes del despliegue controlado. Estado financiero **NO-GO** mientras falten DB permanente, gobernanza y aceptación humana documentada. Los resultados posteriores de CI/Render deben registrarse con SHA exacto en issue #13 y evidencia; este documento no anticipa un despliegue.

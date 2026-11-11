@@ -19,6 +19,7 @@ from app.api.deps import get_db
 from app.main import app, create_app
 from app.models.accounting import AccountingDocument, JournalLine
 from app.models.audit import AuditLog
+from app.models.voucher_issuance import VoucherIssuance
 from app.models.voucher_verification import VoucherVerification
 from app.services.bootstrap_service import bootstrap_admin_if_needed
 from tests.helpers import login_admin
@@ -212,7 +213,15 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
             VoucherVerification.accounting_document_id == uuid.UUID(payment['accountingDocumentId'])))
         verification_url = f'/verificar/comprobante/{token.token}'
     assert verification_url.encode() in pdf.content
-    assert call('GET', verification_url)['verified'] is True
+    original_verification = call('GET', verification_url)
+    assert original_verification['verified'] is True
+    with Session(engine) as session:
+        issued = session.scalar(select(VoucherIssuance))
+        original_context = issued.contract_context_snapshot
+        assert original_context['history'][0]['paid'] == '1000.00'
+    # Real DDL rollback/re-upgrade must retain an already issued snapshot.
+    from release_maintenance import schema_roundtrip
+    assert schema_roundtrip(engine)
 
     statement = call('POST', '/treasury/bank-statements', {'treasuryAccountId': cash['id'],
                       'statementDate': '2026-10-31', 'openingBalance': '10000.00', 'closingBalance': '9000.00'}, code=201)
@@ -230,6 +239,25 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     reversal = call('POST', reversal_path, {'reason': 'Isolated QA reversal after reconciliation correction'})
     call('POST', reversal_path, {'reason': 'Rejected second reversal'}, code=409)
     assert reversal['invoiceStatus'] == 'APPROVED'
+    # Resolve the live GL status before any PDF reprint.
+    assert call('GET', verification_url)['status'] == 'REVERSED'
+    reprinted = client.get('/api' + pdf_path)
+    assert reprinted.status_code == 200, reprinted.text
+    assert b'QA-RES-CONTRACT' in reprinted.content
+    assert b'Pagos del contrato a la fecha' in reprinted.content
+    assert len(re.findall(rb'/Type\s*/Page\b', reprinted.content)) == 2
+    with Session(engine) as session:
+        issued = session.scalar(select(VoucherIssuance))
+        assert issued.contract_context_snapshot == original_context
+        # Emulate a legacy issuance with no stored installment history.
+        # This deliberate compatibility fixture touches isolated QA only.
+        issued.contract_context_snapshot = None
+        session.commit()
+    legacy = client.get('/api' + pdf_path)
+    assert legacy.status_code == 200, legacy.text
+    assert b'QA-RES-CONTRACT' in legacy.content
+    assert b'no registrado' in legacy.content
+    assert call('GET', verification_url) == {**original_verification, 'status': 'REVERSED'}
     assert balance(cash['id']) == Decimal('10000')
     assert call('GET', f"/contract-payments/by-contract/{contract['id']}")['installments'][0]['paid'] == '0.00'
     with Session(engine) as session:
@@ -242,7 +270,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         assert {'project.setup.complete', 'ap.supplier_invoice.create', 'workflow.approval.decide',
                 'ap.supplier_payment.create', 'ap.supplier_payment.reverse',
                 'treasury.bank_reconciliation.unmatch'}.issubset(actions)
-        assert session.scalar(text('SELECT version_num FROM alembic_version')) == '7b2c1af4849c'
+        assert session.scalar(text('SELECT version_num FROM alembic_version')) == 'dae6224cb8be'
     restarted = create_app()
     restarted.dependency_overrides[get_db] = target_db
     with TestClient(restarted) as new_client:

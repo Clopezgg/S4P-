@@ -12,6 +12,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 from html import escape
+from types import SimpleNamespace
 
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
@@ -276,6 +277,55 @@ def _resolve_contract_context(db: Session, document: AccountingDocument) -> dict
     }
 
 
+def _freeze_contract_context(context: dict | None) -> dict | None:
+    if context is None:
+        return None
+    fields = ("contract_number", "contract_category", "period_label", "currency",
+              "observations", "bank_transaction_reference", "installment_seq", "installment_total")
+    result = {key: context.get(key) for key in fields}
+    result.update(version=1, cutoff=list(context["cutoff"]),
+                  paid_before=str(context["paid_before"]), payment_amount=str(context["payment_amount"]))
+    result["history"] = [dict(period_year=row.period_year, period_month=row.period_month,
+                              period_label=row.period_label, scheduled_amount=str(row.scheduled_amount),
+                              paid=str(row.paid), remaining=str(row.remaining), status=row.status)
+                         for row in context["history"]]
+    result["summary"] = {key: str(getattr(context["summary"], key))
+                         for key in ("contract_value", "paid_accumulated", "contract_balance")}
+    return result
+
+
+def _issued_contract_context(issuance) -> dict | None:
+    snapshot = issuance.contract_context_snapshot
+    if snapshot is not None:
+        if snapshot.get("version") != 1:
+            raise ValueError("Unsupported contractual voucher snapshot version")
+        result = dict(snapshot)
+        result["cutoff"] = tuple(snapshot["cutoff"])
+        result["paid_before"] = Decimal(snapshot["paid_before"])
+        result["payment_amount"] = Decimal(snapshot["payment_amount"])
+        result["summary"] = SimpleNamespace(**{key: Decimal(value) for key, value in snapshot["summary"].items()})
+        result["history"] = [SimpleNamespace(**{**row, **{key: Decimal(row[key])
+                              for key in ("scheduled_amount", "paid", "remaining")}})
+                             for row in snapshot["history"]]
+        return result
+    if issuance.contract_number_snapshot is None:
+        return None
+    # Legacy receipts did not retain installment rows. Do not fabricate an
+    # original history from today's schedule, especially after a reversal.
+    return dict(contract_number=issuance.contract_number_snapshot,
+                period_label=issuance.contract_period_snapshot or "—",
+                currency=issuance.currency_code_snapshot, history=[], cutoff=(),
+                installment_seq=None, installment_total=None,
+                observations=issuance.payment_observations_snapshot,
+                bank_transaction_reference=issuance.bank_transaction_reference_snapshot,
+                paid_before=issuance.paid_before_snapshot,
+                payment_amount=issuance.amount_snapshot,
+                summary=SimpleNamespace(contract_value=issuance.contract_value_snapshot,
+                                        paid_accumulated=issuance.paid_accumulated_snapshot,
+                                        contract_balance=issuance.contract_balance_snapshot),
+                legacy_history_missing=True)
+
+
 def _plain_paragraph(value: str, style: ParagraphStyle) -> Paragraph:
     """ERP fields are text, never ReportLab XML or external image references."""
     return Paragraph(escape(str(value), quote=False).replace("\n", "<br/>"), style)
@@ -489,9 +539,18 @@ def generate_voucher_pdf(
         paid_before=contract_ctx["paid_before"] if contract_ctx else None,
         paid_accumulated=contract_ctx["summary"].paid_accumulated if contract_ctx else None,
         contract_balance=contract_ctx["summary"].contract_balance if contract_ctx else None,
+        contract_context_snapshot=_freeze_contract_context(contract_ctx),
         verification_token=token,
         verification_code=verification_code,
     )
+    contract_ctx = _issued_contract_context(issuance)
+    issued_on = issuance.issued_on
+    verification_code = issuance.verification_code
+    total = issuance.amount_snapshot
+    currency = issuance.currency_code_snapshot
+    payment_method = issuance.payment_method_snapshot
+    bank_label = issuance.bank_name_snapshot
+    bank_reference = issuance.bank_account_mask_snapshot
     company_name = issuance.company_name_snapshot
     payer = issuance.payer_name_snapshot
     approved_by = issuance.approver_name_snapshot
@@ -580,7 +639,7 @@ def generate_voucher_pdf(
     scope_label = project.name if project else ("Operación general" if document.scope in {"CENTRAL", "GENERAL"} else document.scope)
     info_rows: list[tuple[str, str]] = [
         ("Concepto", document.description or "—"),
-        ("Ámbito", scope_label if project is None else f"Proyecto · {project.name}"),
+        ("Ámbito", scope_label if project is None else f"Proyecto · {issuance.project_name_snapshot}"),
         ("Método de pago", payment_method),
     ]
     if bank_label:
@@ -596,7 +655,8 @@ def generate_voucher_pdf(
             next_index += 1
         info_rows.insert(next_index, ("Período contractual", contract_ctx["period_label"]))
         next_index += 1
-        info_rows.insert(next_index, ("Cuota", f"{contract_ctx['installment_seq']} de {contract_ctx['installment_total']}"))
+        if contract_ctx["installment_seq"] is not None:
+            info_rows.insert(next_index, ("Cuota", f"{contract_ctx['installment_seq']} de {contract_ctx['installment_total']}"))
         if contract_ctx.get("bank_transaction_reference"):
             info_rows.append(("Referencia bancaria", contract_ctx["bank_transaction_reference"]))
         if contract_ctx.get("observations"):
@@ -621,6 +681,8 @@ def generate_voucher_pdf(
         cc = contract_ctx
         ccur = cc["currency"]
         story.extend(_section("Pagos del contrato a la fecha", styles))
+        if cc.get("legacy_history_missing"):
+            story.append(_plain_paragraph("Detalle histórico de cuotas no registrado", styles["small"]))
         rows = [["Período", "Programado", "Pagado", "Saldo", "Estado"]]
         for s in cc["history"]:
             is_current = (s.period_year, s.period_month) == cc["cutoff"]

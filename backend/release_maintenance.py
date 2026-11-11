@@ -30,9 +30,9 @@ from sqlalchemy.engine import make_url
 
 from alembic import command
 
-PARENT = "eb8ce8e18b2d"
-TARGET = "7b2c1af4849c"
-PREVIOUS_APPLICATION = "62258277cf006d875fbb381197ca7dbbcdf09fbd"
+PARENT = "7b2c1af4849c"
+TARGET = "dae6224cb8be"
+PREVIOUS_APPLICATION = "8d02c680a1e46cb646b245e3e9ff263675bfc0dc"
 REPORT = {"status": "running", "stage": "initializing"}
 REPORT_LOCK = threading.Lock()
 
@@ -58,8 +58,14 @@ def revision(connection):
         "SELECT character_maximum_length FROM information_schema.columns "
         "WHERE table_schema='public' AND table_name='customer_invoices' AND column_name='status'"
     ))
-    if width != (16 if values[0] == PARENT else 32):
+    if width != 32:
         raise RuntimeError("RevisionAndSchemaDisagree")
+    column_type = connection.scalar(text(
+        "SELECT data_type FROM information_schema.columns WHERE table_schema='public' "
+        "AND table_name='voucher_issuances' AND column_name='contract_context_snapshot'"
+    ))
+    if column_type not in {None, "jsonb"} or (values[0] == TARGET and column_type != "jsonb"):
+        raise RuntimeError("RevisionAndSnapshotSchemaDisagree")
     return values[0]
 
 
@@ -118,8 +124,14 @@ def fingerprint(connection):
     for name in names:
         quoted = connection.dialect.identifier_preparer.quote_identifier(name)
         digest.update(name.encode() + b"\0")
+        expression = "to_jsonb(t)"
+        if name == "voucher_issuances":
+            # Adding an absent nullable column does not change business rows.
+            # Non-null historical snapshots remain included in the digest.
+            expression = ("CASE WHEN to_jsonb(t)->'contract_context_snapshot' = 'null'::jsonb "
+                          "THEN to_jsonb(t) - 'contract_context_snapshot' ELSE to_jsonb(t) END")
         for row in connection.execute(text(
-            f"SELECT to_jsonb(t)::text FROM public.{quoted} t ORDER BY to_jsonb(t)::text"
+            f"SELECT ({expression})::text FROM public.{quoted} t ORDER BY ({expression})::text"
         )).scalars():
             data = row.encode()
             digest.update(len(data).to_bytes(8, "big") + data)
@@ -143,7 +155,7 @@ def schema_roundtrip(engine):
         original = revision(connection)
         before = fingerprint(connection)
         if original == TARGET:
-            # Narrowing may correctly reject real long statuses. Never truncate.
+            # Expand-only downgrade retains all historical snapshot values.
             migrate(connection, PARENT)
         migrate(connection, TARGET)
         if fingerprint(connection) != before:

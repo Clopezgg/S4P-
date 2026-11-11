@@ -50,6 +50,21 @@ def test_official_cash_voucher_has_two_letter_pages_and_verifiable_gl_link(clien
     assert client.get(url).status_code == 200
     assert len(list(db_session.scalars(select(VoucherIssuance).where(VoucherIssuance.accounting_document_id == document_id)))) == 1
 
+    original = client.get(f"/api/verificar/comprobante/{token.token}").json()
+    changed = client.patch(
+        f"/api/master-data/companies/{company['id']}",
+        json={"name": "Renamed company", "voucherApproverName": "Replacement approver"},
+    )
+    assert changed.status_code == 200, changed.text
+    reprint = client.get(
+        f"/api/treasury/vouchers/{document_id}?beneficiary=Replacement&paymentMethod=Efectivo"
+    )
+    assert reprint.status_code == 200, reprint.text
+    assert client.get(f"/api/verificar/comprobante/{token.token}").json() == original
+    db_session.refresh(token)
+    assert token.company_name == original["company"]
+    assert token.beneficiary == original["beneficiary"]
+
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get(url).status_code == 401
     verification = client.get(f"/api/verificar/comprobante/{token.token}")

@@ -14,6 +14,8 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.accounting import AccountingDocument
+from app.models.voucher_issuance import VoucherIssuance
 from app.models.voucher_verification import VoucherVerification
 
 
@@ -53,37 +55,32 @@ def get_or_create_token(
         )
         db.add(row)
         db.flush()
-    else:
-        # Mantener el snapshot al día si el comprobante se regenera (p. ej.
-        # cambió el aprobador configurado). El token no cambia.
-        row.document_number = document_number
-        row.company_name = company_name
-        row.beneficiary = beneficiary
-        row.approved_by = approved_by
-        row.issued_on = issued_on
-        row.amount = amount
-        row.currency_code = currency_code
-        row.document_status = document_status
-        row.verification_code = verification_code
-        db.flush()
+    # Reprinting never rewrites the original public identity. Accounting
+    # status is resolved live by verify(), without requiring a new PDF.
 
     return row.token
 
 
 def verify(db: Session, *, token: str) -> dict | None:
-    row = db.execute(
-        select(VoucherVerification).where(VoucherVerification.token == token)
-    ).scalar_one_or_none()
-    if row is None:
+    result = db.execute(
+        select(VoucherVerification, AccountingDocument.status, VoucherIssuance)
+        .join(AccountingDocument, AccountingDocument.id == VoucherVerification.accounting_document_id)
+        .outerjoin(VoucherIssuance, VoucherIssuance.accounting_document_id == AccountingDocument.id)
+        .where(VoucherVerification.token == token)
+    ).one_or_none()
+    if result is None:
         return None
+    row, document_status, issuance = result
+    # Issuance is authoritative even when an older application version
+    # overwrote the token metadata on reprint.
     return {
         "verified": True,
-        "documentNumber": row.document_number,
-        "company": row.company_name,
-        "beneficiary": row.beneficiary,
-        "issuedOn": row.issued_on.isoformat(),
-        "amount": str(row.amount),
-        "currency": row.currency_code,
-        "status": row.document_status,
-        "verificationCode": row.verification_code,
+        "documentNumber": issuance.document_number if issuance else row.document_number,
+        "company": issuance.company_name_snapshot if issuance else row.company_name,
+        "beneficiary": issuance.beneficiary_name_snapshot if issuance else row.beneficiary,
+        "issuedOn": (issuance.issued_on if issuance else row.issued_on).isoformat(),
+        "amount": str(issuance.amount_snapshot if issuance else row.amount),
+        "currency": issuance.currency_code_snapshot if issuance else row.currency_code,
+        "status": document_status,
+        "verificationCode": issuance.verification_code if issuance else row.verification_code,
     }
