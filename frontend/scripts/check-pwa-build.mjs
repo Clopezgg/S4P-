@@ -14,3 +14,16 @@ assert.equal(href, '/manifest.webmanifest', 'Use the shared first-party S4P mani
 const manifest = JSON.parse(await readFile(new URL('manifest.webmanifest', dist), 'utf8'))
 assert.equal(manifest.display, 'standalone', 'Mobile installation must remain standalone')
 console.log('S4P production PWA: one manifest, existing file, standalone mode')
+
+// The ERP is online-only. Dependency upgrades must preserve install metadata
+// while keeping authenticated pages, application bundles and API data off cache.
+const worker = await readFile(new URL('sw.js', dist), 'utf8')
+const precache = worker.match(/\.precacheAndRoute\(\[([\s\S]*?)\]/)?.[1]
+assert.ok(precache, 'Service worker must expose its generated precache list')
+const urls = [...precache.matchAll(/\burl:\s*['"]([^'"]+)['"]/g)].map((match) => match[1])
+for (const name of ['manifest.webmanifest', 'favicon.svg', 'pwa-icon.svg']) {
+  assert.ok(urls.includes(name), `Installation metadata missing from precache: ${name}`)
+}
+assert.ok(urls.every((url) => !/^https?:/i.test(url) && /\.(?:svg|png|webmanifest)$/.test(url)),
+  'Only first-party installation metadata/icons may be precached; never HTML, JS, CSS or API responses')
+console.log('S4P service worker: installation metadata preserved; ERP bundles and API data excluded')
