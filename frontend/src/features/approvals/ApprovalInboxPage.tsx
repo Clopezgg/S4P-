@@ -104,14 +104,14 @@ export function ApprovalInboxPage() {
 
   const columns: TableColumn<ApprovalRequestEntry>[] = [
     { key: 'module', header: 'Módulo', render: (row) => row.module },
-    { key: 'entityType', header: 'Tipo de entidad', render: (row) => row.entityType },
+    { key: 'entityType', header: 'Tipo de entidad', render: (row) => row.entityLabel ?? row.entityType },
     {
       key: 'priority',
       header: 'Prioridad',
       render: (row) => <Badge tone={PRIORITY_TONE[row.priority]}>{PRIORITY_LABEL[row.priority]}</Badge>,
     },
-    { key: 'amount', header: 'Monto', numeric: true, render: (row) => (row.amount == null || !currency ? '—' : formatMoney(row.amount, currency)) },
-    { key: 'requestedBy', header: 'Solicitado por', render: (row) => row.requestedBy },
+    { key: 'amount', header: 'Monto', numeric: true, render: (row) => (row.amount == null || !(row.currencyCode ?? currency) ? '—' : formatMoney(row.amount, (row.currencyCode ?? currency)!)) },
+    { key: 'requestedBy', header: 'Solicitado por', render: (row) => row.requestedByName ?? row.requestedBy },
     { key: 'createdAt', header: 'Fecha', render: (row) => new Date(row.createdAt).toLocaleString('es-HN') },
     {
       key: 'actions',

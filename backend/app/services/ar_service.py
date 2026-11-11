@@ -90,7 +90,7 @@ def approve_customer_invoice(
     db: Session, *, invoice_id: uuid.UUID, commit: bool = True
 ) -> CustomerInvoice:
     invoice = db.execute(
-        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update()
+        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"CustomerInvoice {invoice_id} no existe")
@@ -149,7 +149,7 @@ def collect_customer_receipt(
     commit: bool = True,
 ) -> CustomerReceipt:
     invoice = db.execute(
-        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update()
+        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"CustomerInvoice {invoice_id} no existe")
@@ -256,7 +256,7 @@ def apply_invoice_reversal(db: Session, *, invoice_id: uuid.UUID, document_type_
     if document_type_code != "CIN":
         return
     invoice = db.execute(
-        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update()
+        select(CustomerInvoice).where(CustomerInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"CustomerInvoice {invoice_id} no existe")

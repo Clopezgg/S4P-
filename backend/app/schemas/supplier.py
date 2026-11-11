@@ -157,3 +157,7 @@ class SupplierContractResponse(CamelModel):
     payment_terms: str | None
     payment_terms_type: str
     status: str
+
+
+class SupplierContractSubmitRequest(CamelModel):
+    assigned_to: uuid.UUID

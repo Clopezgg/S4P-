@@ -19,6 +19,7 @@ from app.services.contract_payment_service import (
     build_monthly_installments,
 )
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -43,7 +44,7 @@ def _contract(
         },
     )
     assert r.status_code == 201, r.text
-    return r.json()
+    return approve_supplier_contract(client, r.json())
 
 
 def _monthly_plan(db, contract_id, *, count=10, monthly="50000.00", total="500000.00"):

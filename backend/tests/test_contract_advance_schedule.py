@@ -14,6 +14,7 @@ from app.models.company import Company
 from app.services import contract_payment_service as cps
 from app.services.contract_payment_service import build_contract_plan
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -70,7 +71,7 @@ def _contract_10101960(client, company_id, supplier_id):
     )
     assert r.status_code == 201, r.text
     assert r.json()["advanceAmount"] == "50000.00"
-    return r.json()
+    return approve_supplier_contract(client, r.json())
 
 
 def _create_schedule(client, contract_id):

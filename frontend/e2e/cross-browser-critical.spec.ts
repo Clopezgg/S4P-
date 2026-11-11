@@ -301,3 +301,82 @@ test('logout aborts pending real dashboard reads before leaving S4P', async ({ p
 })
 
 })
+
+test('supplier contract submission and independent approval persist through real UI', async ({ page }) => {
+  await login(page)
+  const company = await ensureCompany(page)
+  const suffix = `${test.info().project.name}-${Date.now()}`
+  async function create(path: string, data: unknown) {
+    const capability = await unlockEdit(page.request)
+    const response = await page.request.post(`/api${path}`, {
+      headers: { 'X-Nexora-Edit-Access': capability }, data,
+    })
+    expect(response.ok(), await response.text()).toBeTruthy()
+    return response.json()
+  }
+  async function unlockUi() {
+    await page.getByRole('button', { name: 'Edición protegida' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Desbloquear edición' })
+    await dialog.getByLabel('Token de seguridad').fill(process.env.E2E_EDIT_ACCESS_TOKEN!)
+    await dialog.getByRole('button', { name: 'Desbloquear', exact: true }).click()
+    await expect(dialog).toBeHidden()
+  }
+  const supplier = await create('/procurement/suppliers', {
+    companyId: company.id, legalName: `Contract approval ${suffix}`,
+  })
+  const contract = await create('/procurement/suppliers/contracts', {
+    companyId: company.id, supplierId: supplier.id, contractNumber: `QA-APPROVAL-${suffix}`,
+    value: '100.00', currencyCode: company.functionalCurrencyCode, startDate: '2026-01-01',
+  })
+  const approverEmail = `contract-${suffix}@example.com`
+  const approverPassword = 'ContractQA123!'
+  const approver = await create('/master-data/users', {
+    companyId: company.id, email: approverEmail, fullName: `Contract approver ${suffix}`,
+    password: approverPassword, roleName: 'Finance Manager',
+  })
+  await page.evaluate((id) => localStorage.setItem('nexora.activeCompanyId', id), company.id)
+  await page.goto('/abastecimiento/contratos')
+  await unlockUi()
+  const row = page.getByRole('row').filter({ hasText: contract.contractNumber })
+  await row.getByRole('button', { name: 'Enviar a aprobación' }).click()
+  const dialog = page.getByRole('dialog', { name: `Enviar contrato ${contract.contractNumber} a aprobación` })
+  for (const width of [360, 390, 430, 768]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expect(dialog).toBeVisible()
+    const fits = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)
+    expect(fits, `contract approval form @${width}`).toBeTruthy()
+  }
+  await dialog.getByLabel('Usuario aprobador').selectOption(approver.id)
+  const [submitted] = await Promise.all([
+    page.waitForResponse((response) => response.url().includes(`/contracts/${contract.id}/submit-for-approval`)),
+    dialog.getByRole('button', { name: 'Enviar a aprobación' }).click(),
+  ])
+  expect(submitted.status()).toBe(200)
+  await expect(row.getByText('En aprobación', { exact: true })).toBeVisible()
+  expect((await submitted.json()).status).toBe('REVIEW')
+  expect((await page.request.post('/api/auth/logout')).status()).toBe(204)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/login')
+  await page.getByLabel('Correo electrónico').fill(approverEmail)
+  await page.getByLabel('Contraseña').fill(approverPassword)
+  await page.getByRole('button', { name: /iniciar sesión/i }).click()
+  await expect(page).toHaveURL(/\/inicio/, { timeout: 15_000 })
+  await page.evaluate((id) => localStorage.setItem('nexora.activeCompanyId', id), company.id)
+  await page.goto('/inicio/aprobaciones')
+  await unlockUi()
+  const approvalRow = page.getByRole('row').filter({ hasText: contract.contractNumber })
+  const [decided] = await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/decide') && response.request().method() === 'POST'),
+    approvalRow.getByRole('button', { name: 'Aprobar', exact: true }).click(),
+  ])
+  expect(decided.status()).toBe(200)
+  expect((await decided.json()).decidedBy).toBe(approver.id)
+  expect((await page.request.post('/api/auth/logout')).status()).toBe(204)
+  await login(page)
+  await page.evaluate((id) => localStorage.setItem('nexora.activeCompanyId', id), company.id)
+  await page.goto('/abastecimiento/contratos')
+  await expect(page.getByRole('row').filter({ hasText: contract.contractNumber }).getByText('Activo', { exact: true })).toBeVisible()
+  const saved = await page.request.get(`/api/procurement/suppliers/contracts?company_id=${company.id}`)
+  expect(saved.ok()).toBeTruthy()
+  expect((await saved.json()).find((item: { id: string }) => item.id === contract.id).status).toBe('ACTIVE')
+})

@@ -46,7 +46,7 @@ export const SUPPLIER_PARTY_ROLE_LABELS: Record<string, string> = {
 }
 
 export const SUPPLIER_CONTRACT_STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Borrador', ACTIVE: 'Activo', COMPLETED: 'Completado', TERMINATED: 'Terminado anticipadamente',
+  DRAFT: 'Borrador', REVIEW: 'En aprobación', REJECTED: 'Rechazado', ACTIVE: 'Activo', COMPLETED: 'Completado', TERMINATED: 'Terminado anticipadamente',
 }
 
 export const CONTRACT_INSTALLMENT_STATUS_LABELS: Record<string, string> = {

@@ -25,10 +25,14 @@ import {
 } from '../../types/procurement'
 import { formatMoney } from '../../utils/currency'
 import { supplierContractStatusLabel, supplierPartyRoleLabel } from '../../utils/statusLabels'
+import { useAuth } from '../auth/auth-context'
+import { ContractApprovalModal } from './ContractApprovalModal'
 import { ContractPaymentPlanModal } from './ContractPaymentPlanModal'
 import { ExecutionContractForm } from './ExecutionContractForm'
 
 export function SupplierContractsPage() {
+  const { user } = useAuth()
+  const [approvalContract, setApprovalContract] = useState<SupplierContract | null>(null)
   const { activeCompanyId, activeCompany, isLoading: loadingCompanies } = useActiveCompany()
   const [modalOpen, setModalOpen] = useState(false)
   const [planContract, setPlanContract] = useState<SupplierContract | null>(null)
@@ -144,9 +148,14 @@ export function SupplierContractsPage() {
       key: 'plan',
       header: 'Acciones',
       render: (row) => (
-        <Button variant="secondary" onClick={() => setPlanContract(row)}>
-          Plan y obligaciones
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => setPlanContract(row)}>
+            Plan y obligaciones
+          </Button>
+          {['DRAFT', 'REJECTED'].includes(row.status) && user?.permissions?.includes('procurement.contract:create') ? (
+            <Button variant="secondary" onClick={() => setApprovalContract(row)}>Enviar a aprobación</Button>
+          ) : null}
+        </>
       ),
     },
   ]
@@ -249,6 +258,7 @@ export function SupplierContractsPage() {
           onCreated={() => setModalOpen(false)}
         />
       </Modal>
+      {approvalContract ? <ContractApprovalModal contract={approvalContract} onClose={() => setApprovalContract(null)} /> : null}
       {planContract ? (
         <ContractPaymentPlanModal
           contract={planContract}

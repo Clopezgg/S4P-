@@ -126,6 +126,7 @@ def create_app() -> FastAPI:
         ap_service,
         approval_service,
         submittal_service,
+        supplier_contract_approval_service,
     )
     from app.services.reversal_hooks import register_default_reversal_hooks
 
@@ -136,6 +137,9 @@ def create_app() -> FastAPI:
         lambda db, entity_id, decision, decided_by: ap_service.apply_approval_decision(
             db, invoice_id=entity_id, decision=decision
         ),
+    )
+    approval_service.register_decision_adapter(
+        "procurement.contract", supplier_contract_approval_service.apply_decision,
     )
     approval_service.register_decision_adapter(
         "construction.submittal",

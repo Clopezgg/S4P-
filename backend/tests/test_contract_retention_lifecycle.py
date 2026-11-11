@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -72,7 +73,7 @@ def test_retention_withheld_release_payment_and_reversal_lifecycle(client):
         },
     )
     assert contract_response.status_code == 201, contract_response.text
-    contract = contract_response.json()
+    contract = approve_supplier_contract(client, contract_response.json())
     schedule_response = client.post(
         "/api/contract-payments/schedules",
         json={

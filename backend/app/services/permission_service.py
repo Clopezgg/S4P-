@@ -83,6 +83,7 @@ PROJECT_AWARE_RESOURCE_PREFIXES = (
     "crm.",
     "reports.",
     "search.",
+    "workflow.",
 )
 
 

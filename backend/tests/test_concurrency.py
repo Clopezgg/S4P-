@@ -11,6 +11,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from decimal import Decimal
+from threading import Barrier
 
 from sqlalchemy import text
 
@@ -23,8 +24,11 @@ from app.domain.errors import (
     InvalidProcurementStateError,
     OverpaymentError,
 )
+from app.models.ap import SupplierInvoice
+from app.models.ar import CustomerInvoice, CustomerReceipt
 from app.services import (
     ap_service,
+    ar_service,
     idempotency_service,
     inventory_service,
     numbering_service,
@@ -239,9 +243,15 @@ def test_concurrent_full_payments_on_the_same_invoice_never_double_pay(client, d
     invoice_id = uuid.UUID(invoice["id"])
     treasury_account_id = uuid.UUID(bank["id"])
 
+    barrier = Barrier(5)
+
     def _pay() -> str:
         db = SessionLocal()
         try:
+            # Permission/route resolution can load the invoice before locking.
+            cached = db.get(SupplierInvoice, invoice_id)
+            assert cached.status == "APPROVED"
+            barrier.wait(timeout=10)
             ap_service.pay_supplier_invoice(
                 db, invoice_id=invoice_id, treasury_account_id=treasury_account_id,
                 amount=Decimal("1000.00"), payment_date=date(2026, 1, 10),
@@ -522,3 +532,35 @@ def test_concurrent_rate_limit_checks_for_the_same_bucket_never_error_or_underco
         text("SELECT count FROM rate_limit_buckets WHERE bucket_key = :key"), {"key": key}
     ).scalar_one()
     assert final_count == 10, f"expected all 10 concurrent attempts counted, got {final_count} (lost update)"
+
+
+def test_cached_invoices_do_not_allow_concurrent_duplicate_customer_receipts(client, db_session):
+    from tests.test_financial_audit_atomicity import _invoice
+
+    login_admin(client)
+    path, bank = _invoice(client, 'ar', approve=True)
+    invoice_id = uuid.UUID(path.rsplit('/', 1)[-1])
+    db_session.commit()
+    barrier = Barrier(5)
+
+    def collect():
+        with SessionLocal() as session:
+            cached = session.get(CustomerInvoice, invoice_id)
+            assert cached.status == 'APPROVED'
+            barrier.wait(timeout=10)
+            try:
+                ar_service.collect_customer_receipt(session, invoice_id=invoice_id,
+                    treasury_account_id=uuid.UUID(bank['id']), amount=Decimal('100'), receipt_date=date(2026, 1, 20))
+                return 'collected'
+            except (OverpaymentError, InvalidInvoiceStateError):
+                session.rollback()
+                return 'rejected'
+
+    with ThreadPoolExecutor(max_workers=5) as workers:
+        outcomes = list(workers.map(lambda _: collect(), range(5)))
+    assert outcomes.count('collected') == 1, outcomes
+    assert outcomes.count('rejected') == 4, outcomes
+    db_session.expire_all()
+    actual = db_session.get(CustomerInvoice, invoice_id)
+    assert actual.amount_collected == Decimal('100') and actual.status == 'COLLECTED'
+    assert db_session.query(CustomerReceipt).filter_by(customer_invoice_id=invoice_id).count() == 1

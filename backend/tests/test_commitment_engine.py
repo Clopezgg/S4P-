@@ -2,8 +2,8 @@
 
 from decimal import Decimal
 
-from app.models.supplier import SupplierContract
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -21,9 +21,7 @@ def _active_contract(client, db_session, company_id, supplier_id, project_id, *,
             "contractNumber": number, "value": value, "currencyCode": "HNL", "startDate": "2026-08-01",
         },
     ).json()
-    row = db_session.get(SupplierContract, contract["id"])
-    row.status = "ACTIVE"
-    db_session.commit()
+    contract = approve_supplier_contract(client, contract)
     return contract
 
 

@@ -10,6 +10,9 @@ class ApprovalRequestResponse(CamelModel):
     policy_id: uuid.UUID | None
     entity_type: str
     entity_id: uuid.UUID
+    entity_label: str | None = None
+    currency_code: str | None = None
+    requested_by_name: str | None = None
     company_id: uuid.UUID
     project_id: uuid.UUID | None
     module: str

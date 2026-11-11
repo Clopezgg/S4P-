@@ -64,8 +64,10 @@ def migrated_residential_api(client):
             subprocess.run(['dropdb', '--if-exists', DB_NAME], env=env, check=True)
 
 
-def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated_residential_api, tmp_path):
+def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated_residential_api, tmp_path, request):
     client, engine, target_db = migrated_residential_api
+    original_client = client
+    actors = {}
 
     def call(method, path, payload=None, *, code=200, key=None):
         headers = {'Idempotency-Key': key} if key else {}
@@ -78,10 +80,29 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         return Decimal(next(r['balance'] for r in rows if r['id'] == account_id))
 
     def login(email):
-        call('POST', '/auth/logout', code=204)
-        call('POST', '/auth/login', {'email': email, 'password': 'ResidentialQA123!'})
+        nonlocal client
+        if email not in actors:
+            actor = TestClient(app)
+            signed = actor.post('/api/auth/login', json={'email': email, 'password': 'ResidentialQA123!'})
+            assert signed.status_code == 200, signed.text
+            actors[email] = actor
+        client = actors[email]
+        assert call('GET', '/auth/me')['email'] == email
 
-    login_admin(client)
+    def admin_login():
+        nonlocal client
+        if 'admin' not in actors:
+            login_admin(original_client)
+            actors['admin'] = original_client
+        client = actors['admin']
+
+    def close_actors():
+        for actor in actors.values():
+            if actor is not original_client:
+                actor.close()
+
+    request.addfinalizer(close_actors)
+    admin_login()
     company = call('POST', '/master-data/companies',
                    {'name': 'S4P residential cycle QA', 'functionalCurrencyCode': 'HNL'}, code=201)
     foreign = call('POST', '/master-data/companies',
@@ -123,26 +144,6 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
 
     supplier = call('POST', '/procurement/suppliers',
                     {'companyId': company['id'], 'legalName': 'Residential QA contractor'}, code=201)
-    contract = call('POST', '/procurement/suppliers/contracts', {
-        'companyId': company['id'], 'supplierId': supplier['id'], 'projectId': project_id,
-        'contractNumber': 'QA-RES-CONTRACT', 'value': '1000.00', 'currencyCode': 'HNL',
-        'startDate': '2026-10-01', 'retentionPercentage': '0',
-    }, code=201)
-    schedule = call('POST', '/contract-payments/schedules', {
-        'supplierContractId': contract['id'], 'scheduleType': 'CUSTOM',
-        'installments': [{'periodYear': 2026, 'periodMonth': 10, 'dueDate': '2026-10-15',
-                          'scheduledAmount': '1000.00'}],
-    }, code=201)
-    installment_id = schedule['installments'][0]['installmentId']
-    invoice_payload = {
-        'companyId': company['id'], 'supplierId': supplier['id'], 'invoiceNumber': 'QA-RES-INVOICE',
-        'scope': 'PROJECT', 'projectId': project_id, 'expenseAccountId': expense['id'],
-        'payableAccountId': payable['id'], 'currencyCode': 'HNL', 'amount': '1000.00',
-        'invoiceDate': '2026-10-10', 'dueDate': '2026-10-15',
-        'supplierContractId': contract['id'], 'contractInstallmentId': installment_id,
-    }
-    invoice = call('POST', '/ap/supplier-invoices', invoice_payload, code=201)
-    call('POST', '/ap/supplier-invoices', invoice_payload, code=422)
     approver = executor = outsider = None
     for label, owner in [('approver', company), ('executor', company), ('outsider', foreign)]:
         person = call('POST', '/master-data/users', {'companyId': owner['id'],
@@ -163,6 +164,59 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     auditor = call('POST', '/master-data/users', {'companyId': company['id'],
         'email': 'residential-auditor@example.com', 'fullName': 'QA auditor',
         'password': 'ResidentialQA123!', 'roleName': 'Auditor'}, code=201)
+    contract = call('POST', '/procurement/suppliers/contracts', {
+        'companyId': company['id'], 'supplierId': supplier['id'], 'projectId': project_id,
+        'contractNumber': 'QA-RES-CONTRACT', 'value': '1000.00', 'currencyCode': 'HNL',
+        'startDate': '2026-10-01', 'retentionPercentage': '0',
+    }, code=201)
+    schedule = call('POST', '/contract-payments/schedules', {
+        'supplierContractId': contract['id'], 'scheduleType': 'CUSTOM',
+        'installments': [{'periodYear': 2026, 'periodMonth': 10, 'dueDate': '2026-10-15',
+                          'scheduledAmount': '1000.00'}],
+    }, code=201)
+    installment_id = schedule['installments'][0]['installmentId']
+    invoice_payload = {
+        'companyId': company['id'], 'supplierId': supplier['id'], 'invoiceNumber': 'QA-RES-INVOICE',
+        'scope': 'PROJECT', 'projectId': project_id, 'expenseAccountId': expense['id'],
+        'payableAccountId': payable['id'], 'currencyCode': 'HNL', 'amount': '1000.00',
+        'invoiceDate': '2026-10-10', 'dueDate': '2026-10-15',
+        'supplierContractId': contract['id'], 'contractInstallmentId': installment_id,
+    }
+    contract_submit = f"/procurement/suppliers/contracts/{contract['id']}/submit-for-approval"
+    call('POST', contract_submit, {'assignedTo': call('GET', '/auth/me')['id']}, code=422)
+    call('POST', contract_submit, {'assignedTo': outsider['id']}, code=403)
+    call('POST', contract_submit, {'assignedTo': unassigned['id']}, code=403)
+    assert call('POST', contract_submit, {'assignedTo': approver['id']})['status'] == 'REVIEW'
+    call('POST', contract_submit, {'assignedTo': approver['id']}, code=409)
+    call('POST', '/ap/supplier-invoices', invoice_payload, code=409)
+    login(approver['email'])
+    requests = call('GET', f"/approvals?companyId={company['id']}")
+    contract_approval = next(row['id'] for row in requests if row['entityId'] == contract['id'])
+    admin_login()
+    call('DELETE', f"/access-management/users/{approver['id']}/projects/{project_id}")
+    login(approver['email'])
+    assert call('GET', f"/approvals?companyId={company['id']}") == []
+    call('POST', f'/approvals/{contract_approval}/decide', {'decision': 'APPROVED'}, code=403)
+    admin_login()
+    call('PUT', f"/access-management/users/{approver['id']}/projects/{project_id}")
+    login(approver['email'])
+    call('POST', f'/approvals/{contract_approval}/decide', {'decision': 'REJECTED'})
+    admin_login()
+    call('POST', '/ap/supplier-invoices', invoice_payload, code=409)
+    assert call('POST', contract_submit, {'assignedTo': approver['id']})['status'] == 'REVIEW'
+    login(approver['email'])
+    requests = call('GET', f"/approvals?companyId={company['id']}")
+    contract_approval = next(row['id'] for row in requests if row['entityId'] == contract['id'])
+    login(executor['email'])
+    call('POST', f'/approvals/{contract_approval}/decide', {'decision': 'APPROVED'}, code=403)
+    login(approver['email'])
+    call('POST', f'/approvals/{contract_approval}/decide', {'decision': 'APPROVED'})
+    call('POST', f'/approvals/{contract_approval}/decide', {'decision': 'APPROVED'}, code=409)
+    admin_login()
+    assert next(row['status'] for row in call('GET', f"/procurement/suppliers/contracts?company_id={company['id']}")
+                if row['id'] == contract['id']) == 'ACTIVE'
+    invoice = call('POST', '/ap/supplier-invoices', invoice_payload, code=201)
+    call('POST', '/ap/supplier-invoices', invoice_payload, code=422)
     login(unassigned['email'])
     assert call('GET', f"/projects?company_id={company['id']}") == []
     assert call('GET', '/accounting/documents/lookup?q=QA-RES')['results'] == []
@@ -178,7 +232,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
                           'scheduledAmount': '1000.00'}]}, code=403)
     call('POST', f"/contract-payments/schedules/{schedule['id']}/retention-releases",
          {'amount': '1.00', 'dueDate': '2026-11-15', 'reason': 'QA negative'}, code=403)
-    login_admin(client)
+    admin_login()
     call('POST', f"/ap/supplier-invoices/{invoice['id']}/submit-for-approval", {'assignedTo': approver['id']})
     with engine.connect() as conn:
         approval_id = str(conn.scalar(text('SELECT id FROM approval_requests WHERE entity_id=CAST(:id AS uuid)'), {'id': invoice['id']}))
@@ -202,7 +256,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     assert call('GET', f"/ap/supplier-invoices/{invoice['id']}")['status'] == 'PAID'
     assert call('GET', f"/contract-payments/by-contract/{contract['id']}")['installments'][0]['paid'] == '1000.00'
 
-    login_admin(client)
+    admin_login()
     call('PATCH', f"/master-data/companies/{company['id']}", {'voucherApproverName': 'QA approved signature name'})
     pdf_path = f"/treasury/vouchers/{payment['accountingDocumentId']}?beneficiary=Residential%20QA&paymentMethod=Efectivo"
     pdf = client.get('/api' + pdf_path)
@@ -233,7 +287,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
     login(executor['email'])
     visible = call('GET', '/accounting/documents/lookup?q=QA-RES-BANK-REF')['results']
     assert any(r['entityType'] == 'SUPPLIER_PAYMENT' and r['id'] == payment['id'] for r in visible)
-    login_admin(client)
+    admin_login()
 
     statement = call('POST', '/treasury/bank-statements', {'treasuryAccountId': cash['id'],
                       'statementDate': '2026-10-31', 'openingBalance': '10000.00', 'closingBalance': '9000.00'}, code=201)
@@ -280,10 +334,10 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
             lines = list(session.scalars(select(JournalLine).where(JournalLine.accounting_document_id == doc.id)))
             assert sum((v.debit_amount for v in lines), Decimal(0)) == sum((v.credit_amount for v in lines), Decimal(0)) > 0
         actions = set(session.scalars(select(AuditLog.action)))
-        assert {'project.setup.complete', 'ap.supplier_invoice.create', 'workflow.approval.decide',
+        assert {'project.setup.complete', 'ap.supplier_invoice.create', 'workflow.approval.decide', 'procurement.contract.decide',
                 'ap.supplier_payment.create', 'ap.supplier_payment.reverse',
                 'treasury.bank_reconciliation.unmatch'}.issubset(actions)
-        assert session.scalar(text('SELECT version_num FROM alembic_version')) == 'dae6224cb8be'
+        assert session.scalar(text('SELECT version_num FROM alembic_version')) == '32c92271c634'
     restarted = create_app()
     restarted.dependency_overrides[get_db] = target_db
     with TestClient(restarted) as new_client:

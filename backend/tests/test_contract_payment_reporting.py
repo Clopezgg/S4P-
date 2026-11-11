@@ -13,6 +13,7 @@ from sqlalchemy import select
 from app.models.ap import SupplierInvoice, SupplierPayment
 from app.services import contract_payment_service as cps
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -30,7 +31,7 @@ def _contract(client, *, company_id, supplier_id, value="500000.00", number="CTR
         },
     )
     assert r.status_code == 201, r.text
-    return r.json()
+    return approve_supplier_contract(client, r.json())
 
 
 def _monthly_plan(db, contract_id):

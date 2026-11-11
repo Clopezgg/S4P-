@@ -33,7 +33,7 @@ const CONTRACT = {
   contractCategory: 'LABOR',
 }
 
-function stubFetch(overrides: { contracts?: unknown[]; onCreate?: () => void }) {
+function stubFetch(overrides: { contracts?: unknown[]; onCreate?: () => void; onSubmit?: (payload: unknown) => void }) {
   let contracts = overrides.contracts ?? [CONTRACT]
   vi.stubGlobal(
     'fetch',
@@ -44,11 +44,22 @@ function stubFetch(overrides: { contracts?: unknown[]; onCreate?: () => void }) 
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () => ({ id: 'u1', email: 'admin@nexora.group', fullName: 'Admin', roles: ['Administrator'] }),
+          json: async () => ({ id: 'u1', email: 'admin@nexora.group', fullName: 'Admin', roles: ['Administrator'], permissions: ['procurement.contract:create'] }),
         } as Response)
       }
       if (url.includes('/master-data/companies')) {
         return Promise.resolve({ ok: true, status: 200, json: async () => [COMPANY] } as Response)
+      }
+      if (url.includes('/master-data/users')) {
+        return Promise.resolve({ ok: true, status: 200, json: async () => [
+          { id: 'u1', fullName: 'Admin', email: 'admin@nexora.group' },
+          { id: 'u2', fullName: 'Finance approver', email: 'approver@example.com' },
+        ] } as Response)
+      }
+      if (url.includes('/submit-for-approval') && method === 'POST') {
+        overrides.onSubmit?.(JSON.parse(String(init?.body)))
+        contracts = [ { ...CONTRACT, status: 'REVIEW' } ]
+        return Promise.resolve({ ok: true, status: 200, json: async () => contracts[0] } as Response)
       }
       if (url.includes('/procurement/suppliers/contracts') && method === 'POST') {
         overrides.onCreate?.()
@@ -108,4 +119,19 @@ describe('SupplierContractsPage', () => {
 
     expect(onCreate).toHaveBeenCalled()
   })
+})
+
+
+it('submits the selected approver and hides self-assignment', async () => {
+  const onSubmit = vi.fn()
+  stubFetch({ onSubmit })
+  const user = userEvent.setup()
+  render(renderApp('/abastecimiento/contratos'))
+  await user.click(await screen.findByRole('button', { name: 'Enviar a aprobación' }))
+  const dialog = screen.getByRole('dialog', { name: /Enviar contrato SC-001 a aprobación/ })
+  expect(within(dialog).queryByRole('option', { name: /Admin/ })).not.toBeInTheDocument()
+  await user.selectOptions(within(dialog).getByLabelText('Usuario aprobador'), 'u2')
+  await user.click(within(dialog).getByRole('button', { name: 'Enviar a aprobación' }))
+  expect(await screen.findByText('En aprobación')).toBeInTheDocument()
+  expect(onSubmit).toHaveBeenCalledWith({ assignedTo: 'u2' })
 })

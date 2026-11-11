@@ -47,7 +47,7 @@ async function ensureCompany(page: Page) {
   return { companyId: company.id, capability }
 }
 
-test('P0 — Cuota vencida: Pagar/Liquidar en Plan de pagos', async ({ page }) => {
+test('P0 — Cuota vencida: Pagar/Liquidar en Plan de pagos', async ({ page, request }) => {
   let companyId = ''
   let capability = ''
   let contractId = ''
@@ -94,6 +94,34 @@ test('P0 — Cuota vencida: Pagar/Liquidar en Plan de pagos', async ({ page }) =
     })
     expect(contract.ok(), await contract.text()).toBeTruthy()
     contractId = (await contract.json()).id
+
+    // Financial execution now requires a genuine independent contract approval.
+    // The request fixture has its own cookie jar; the browser remains admin.
+    const email = `overdue-approver-${Date.now()}@example.com`
+    const password = 'Passw0rd!23'
+    const person = await page.request.post('/api/master-data/users', {
+      headers: { 'X-Nexora-Edit-Access': capability },
+      data: { companyId, email, fullName: 'Overdue contract approver', password, roleName: 'Finance Manager' },
+    })
+    expect(person.ok(), await person.text()).toBeTruthy()
+    const assignedTo = (await person.json()).id
+    const submitted = await page.request.post(`/api/procurement/suppliers/contracts/${contractId}/submit-for-approval`, {
+      headers: { 'X-Nexora-Edit-Access': capability }, data: { assignedTo },
+    })
+    expect(submitted.ok(), await submitted.text()).toBeTruthy()
+    expect((await request.post('/api/auth/login', { data: { email, password } })).status()).toBe(200)
+    const inbox = await request.get(`/api/approvals?companyId=${companyId}`)
+    expect(inbox.ok(), await inbox.text()).toBeTruthy()
+    const pending = (await inbox.json()).find((entry: { entityId: string }) => entry.entityId === contractId)
+    expect(pending).toBeTruthy()
+    const unlocked = await request.post('/api/edit-access/verify', { data: { token: process.env.E2E_EDIT_ACCESS_TOKEN } })
+    expect(unlocked.ok()).toBeTruthy()
+    const reviewerCapability = (await unlocked.json()).capability
+    const decided = await request.post(`/api/approvals/${pending.id}/decide`, {
+      headers: { 'X-Nexora-Edit-Access': reviewerCapability }, data: { decision: 'APPROVED' },
+    })
+    expect(decided.ok(), await decided.text()).toBeTruthy()
+    expect((await request.post('/api/auth/logout')).status()).toBe(204)
 
     // Crear plan de pagos canónico (anticipo + N mensualidades)
     const schedule = await page.request.post('/api/contract-payments/schedules', {

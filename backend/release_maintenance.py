@@ -31,7 +31,7 @@ from sqlalchemy.engine import make_url
 from alembic import command
 
 PARENT = "7b2c1af4849c"
-TARGET = "dae6224cb8be"
+TARGET = "32c92271c634"
 PREVIOUS_APPLICATION = "8d02c680a1e46cb646b245e3e9ff263675bfc0dc"
 REPORT = {"status": "running", "stage": "initializing"}
 REPORT_LOCK = threading.Lock()
@@ -66,6 +66,12 @@ def revision(connection):
     ))
     if column_type not in {None, "jsonb"} or (values[0] == TARGET and column_type != "jsonb"):
         raise RuntimeError("RevisionAndSnapshotSchemaDisagree")
+    contract_check = connection.scalar(text(
+        "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+        "WHERE conrelid='supplier_contracts'::regclass AND conname='ck_supplier_contracts_status_valid'"
+    ))
+    if values[0] == TARGET and not all(state in (contract_check or "") for state in ("REVIEW", "REJECTED")):
+        raise RuntimeError("RevisionAndContractSchemaDisagree")
     return values[0]
 
 

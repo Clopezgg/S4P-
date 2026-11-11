@@ -116,7 +116,7 @@ class SupplierContract(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             name="ck_supplier_contracts_advance_amount",
         ),
         CheckConstraint(
-            "status IN ('DRAFT','ACTIVE','COMPLETED','TERMINATED')",
+            "status IN ('DRAFT','REVIEW','REJECTED','ACTIVE','COMPLETED','TERMINATED')",
             name="ck_supplier_contracts_status_valid",
         ),
     )

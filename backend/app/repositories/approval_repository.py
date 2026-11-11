@@ -18,7 +18,7 @@ def create(db: Session, **kwargs) -> ApprovalRequest:
 
 def get_for_update(db: Session, *, request_id: uuid.UUID) -> ApprovalRequest:
     row = db.execute(
-        select(ApprovalRequest).where(ApprovalRequest.id == request_id).with_for_update()
+        select(ApprovalRequest).where(ApprovalRequest.id == request_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if row is None:
         raise NotFoundError("Solicitud de aprobación no encontrada")

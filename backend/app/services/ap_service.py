@@ -22,7 +22,11 @@ from app.models.asset import FixedAsset
 from app.models.evidence import Evidence
 from app.models.supplier import Supplier
 from app.models.treasury import TreasuryAccount
-from app.services import approval_service, posting_service
+from app.services import (
+    approval_service,
+    posting_service,
+    supplier_contract_approval_service,
+)
 from app.services.financial_validation_service import (
     assert_account_belongs_to_company,
     assert_cost_center_belongs_to_company,
@@ -85,6 +89,7 @@ def create_supplier_invoice(
         db, cost_center_id=cost_center_id, company_id=company_id
     )
     assert_supplier_belongs_to_company(db, supplier_id=supplier_id, company_id=company_id)
+    supplier_contract_approval_service.assert_not_under_review_or_rejected(db, supplier_contract_id)
     if supplier_contract_id is not None:
         from app.models.supplier import SupplierContract
 
@@ -154,6 +159,7 @@ def create_supplier_invoice(
                 raise InvalidFinancialReferenceError(
                     "El contrato de la factura no coincide con el de su orden de compra"
                 )
+    supplier_contract_approval_service.assert_not_under_review_or_rejected(db, supplier_contract_id)
     invoice = SupplierInvoice(
         company_id=company_id,
         supplier_id=supplier_id,
@@ -195,7 +201,7 @@ def submit_supplier_invoice_for_approval(
 ) -> SupplierInvoice:
     """DRAFT -> REVIEW mediante Approval Inbox y SoD."""
     invoice = db.execute(
-        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update()
+        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"SupplierInvoice {invoice_id} no existe")
@@ -230,10 +236,11 @@ def approve_supplier_invoice(
     db: Session, *, invoice_id: uuid.UUID, commit: bool = True
 ) -> SupplierInvoice:
     invoice = db.execute(
-        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update()
+        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"SupplierInvoice {invoice_id} no existe")
+    supplier_contract_approval_service.assert_financial_approval(db, invoice.supplier_contract_id)
     if invoice.status not in ("DRAFT", "REVIEW"):
         raise InvalidInvoiceStateError(
             f"Solo se puede aprobar una factura DRAFT o REVIEW (estado actual: {invoice.status})"
@@ -366,7 +373,7 @@ def pay_supplier_invoice(
     método explícito.
     """
     invoice = db.execute(
-        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update()
+        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"SupplierInvoice {invoice_id} no existe")
@@ -383,7 +390,7 @@ def pay_supplier_invoice(
                 ThreeWayMatchResult.supplier_invoice_id == invoice.id,
                 ThreeWayMatchResult.match_kind == "FINANCIAL",
             )
-            .with_for_update()
+            .with_for_update().execution_options(populate_existing=True)
         ).scalar_one_or_none()
         if match is None:
             raise InvalidFinancialReferenceError(
@@ -423,6 +430,7 @@ def pay_supplier_invoice(
         evidence_ids=payment_evidence_ids,
     )
 
+    supplier_contract_approval_service.assert_financial_approval(db, invoice.supplier_contract_id)
     if contract_allocations and invoice.supplier_contract_id is None:
         raise InvalidFinancialReferenceError(
             "No se pueden enviar asignaciones contractuales para una factura sin contrato."
@@ -566,7 +574,7 @@ def set_payment_plan(
     commit: bool = True,
 ) -> list[SupplierInvoiceCashForecastItem]:
     invoice = db.execute(
-        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update()
+        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"SupplierInvoice {invoice_id} no existe")
@@ -654,7 +662,7 @@ def apply_accrual_reversal(db: Session, *, invoice_id: uuid.UUID, document_type_
     if document_type_code != "SIN":
         return
     invoice = db.execute(
-        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update()
+        select(SupplierInvoice).where(SupplierInvoice.id == invoice_id).with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise ValueError(f"SupplierInvoice {invoice_id} no existe")

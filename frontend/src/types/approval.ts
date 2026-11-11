@@ -6,6 +6,9 @@ export interface ApprovalRequestEntry {
   policyId: string | null
   entityType: string
   entityId: string
+  entityLabel?: string | null
+  currencyCode?: string | null
+  requestedByName?: string | null
   companyId: string
   projectId: string | null
   module: string

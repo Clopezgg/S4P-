@@ -9,6 +9,7 @@ from decimal import Decimal
 from app.services import contract_payment_service as cps
 from app.services.contract_payment_service import build_monthly_installments
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -41,7 +42,7 @@ def _contract(client, company_id, supplier_id, project_id, *, value, number):
         },
     )
     assert r.status_code == 201, r.text
-    return r.json()
+    return approve_supplier_contract(client, r.json())
 
 
 def test_execution_contract_value_is_independent_from_po_commitment(client, db_session):

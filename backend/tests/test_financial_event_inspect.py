@@ -8,7 +8,13 @@ heurística marca un posible doble conteo GeneralExpense + SupplierInvoice.
 from decimal import Decimal
 
 from scripts.financial_event_inspect import Filters, inspect
-from tests.helpers import create_account, create_company, create_supplier, login_admin
+from tests.helpers import (
+    approve_supplier_contract,
+    create_account,
+    create_company,
+    create_supplier,
+    login_admin,
+)
 
 
 def _contract_10101960(client, company_id, supplier_id):
@@ -22,7 +28,7 @@ def _contract_10101960(client, company_id, supplier_id):
         },
     )
     assert r.status_code == 201, r.text
-    return r.json()
+    return approve_supplier_contract(client, r.json())
 
 
 def _create_schedule(client, contract_id):

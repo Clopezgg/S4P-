@@ -62,6 +62,10 @@ export const procurementService = {
 
   listContracts: (companyId: string) =>
     apiFetch<SupplierContract[]>(`/procurement/suppliers/contracts?company_id=${companyId}`),
+  submitContractForApproval: (id: string, assignedTo: string) =>
+    apiFetch<SupplierContract>(`/procurement/suppliers/contracts/${id}/submit-for-approval`, {
+      method: 'POST', body: JSON.stringify({ assignedTo }),
+    }),
   createContract: (payload: {
     companyId: string
     supplierId: string

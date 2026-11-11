@@ -109,3 +109,42 @@ def create_treasury_account(
     )
     assert response.status_code == 201, response.text
     return response.json()
+
+
+def approve_supplier_contract(client, contract: dict) -> dict:
+    """Real two-principal approval fixture; never changes status through SQL."""
+    import uuid
+
+    import httpx
+
+    saved_cookies = httpx.Cookies(client.cookies)
+    approver_email = f"contract-approver-{uuid.uuid4().hex}@example.com"
+    password = "Passw0rd!23"
+    response = client.post('/api/master-data/users', json={
+        'companyId': contract['companyId'], 'email': approver_email,
+        'fullName': 'Contract QA approver', 'password': password, 'roleName': 'Administrator'})
+    assert response.status_code == 201, response.text
+    approver = response.json()
+    submitted = client.post(f"/api/procurement/suppliers/contracts/{contract['id']}/submit-for-approval",
+                            json={'assignedTo': approver['id']})
+    assert submitted.status_code == 200, submitted.text
+    logged_in = False
+    try:
+        login_as(client, email=approver_email, password=password)
+        logged_in = True
+        response = client.get('/api/approvals', params={'companyId': contract['companyId']})
+        assert response.status_code == 200, response.text
+        request = next(row for row in response.json() if row['entityId'] == contract['id'])
+        decided = client.post(f"/api/approvals/{request['id']}/decide", json={'decision': 'APPROVED'})
+        assert decided.status_code == 200, decided.text
+        assert decided.json()['decidedBy'] == approver['id']
+    finally:
+        if logged_in:
+            assert client.post('/api/auth/logout').status_code == 204
+        client.cookies.clear()
+        client.cookies.update(saved_cookies)
+    saved = client.get('/api/procurement/suppliers/contracts', params={'company_id': contract['companyId']})
+    assert saved.status_code == 200, saved.text
+    actual = next(row for row in saved.json() if row['id'] == contract['id'])
+    assert actual['status'] == 'ACTIVE'
+    return actual

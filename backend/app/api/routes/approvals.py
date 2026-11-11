@@ -7,10 +7,16 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.api.deps_correlation import get_correlation_id
+from app.models.supplier import Supplier, SupplierContract
+from app.models.user import User
 from app.repositories import approval_repository
 from app.schemas.approval import ApprovalRequestResponse
 from app.services import approval_service, audit_service
-from app.services.permission_service import assert_company_access, require_permission
+from app.services.permission_service import (
+    accessible_project_ids,
+    assert_company_access,
+    require_permission,
+)
 
 """Approval Inbox API (Track G / Platform, NXR-REQ-0088). Generic across
 domains -- ver docs/superpowers/specs/2026-08-25-track-g-workflow-audit-design.md.
@@ -31,6 +37,19 @@ class ApprovalDecisionRequest(BaseModel):
     comment: str | None = None
 
 
+def _approval_response(db, row):
+    response = ApprovalRequestResponse.model_validate(row, from_attributes=True)
+    requester = db.get(User, row.requested_by)
+    response.requested_by_name = requester.full_name if requester else None
+    if row.entity_type == "procurement.contract":
+        contract = db.get(SupplierContract, row.entity_id)
+        if contract is not None and contract.company_id == row.company_id:
+            supplier = db.get(Supplier, contract.supplier_id)
+            response.entity_label = f"Contrato {contract.contract_number}" + (f" · {supplier.legal_name}" if supplier else "")
+            response.currency_code = contract.currency_code
+    return response
+
+
 @router.get("", response_model=list[ApprovalRequestResponse])
 def list_my_approvals(
     company_id: uuid.UUID = Query(alias="companyId"),
@@ -44,7 +63,10 @@ def list_my_approvals(
     rows = approval_repository.list_assigned_to(
         db, user_id=user.id, company_id=company_id, module=module
     )
-    return [ApprovalRequestResponse.model_validate(r, from_attributes=True) for r in rows]
+    allowed = accessible_project_ids(db, user_id=user.id, resource="workflow.approval", action="read")
+    if allowed is not None:
+        rows = [row for row in rows if row.project_id is None or row.project_id in allowed]
+    return [_approval_response(db, r) for r in rows]
 
 
 @router.post("/{request_id}/decide", response_model=ApprovalRequestResponse)
@@ -85,7 +107,7 @@ def decide_approval(
             correlation_id=correlation_id,
         )
         db.commit()
-        return ApprovalRequestResponse.model_validate(updated, from_attributes=True)
+        return _approval_response(db, updated)
     except Exception:
         db.rollback()
         raise

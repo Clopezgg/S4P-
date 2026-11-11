@@ -947,11 +947,13 @@ def installment_summaries(
                 regular_number=regular_number_by_id.get(r.id),
                 regular_count=regular_count if kind == "REGULAR" else None,
                 payable_now=(
-                    paid_for_this < installment_net_due and _status_for(r, paid_for_this, as_of=as_of) not in {"CANCELLED", "UPCOMING"}
+                    contract is not None and contract.status == "ACTIVE" and paid_for_this < installment_net_due and _status_for(r, paid_for_this, as_of=as_of) not in {"CANCELLED", "UPCOMING"}
                     and is_installment_payable(r, business_date=as_of)
                 ),
                 payment_blocked_reason=(
-                    "La cuota ya está pagada."
+                    "El contrato requiere aprobación antes de pagar."
+                    if contract is None or contract.status != "ACTIVE"
+                    else "La cuota ya está pagada."
                     if paid_for_this >= installment_net_due
                     else "La cuota está cancelada."
                     if r.status == "CANCELLED"

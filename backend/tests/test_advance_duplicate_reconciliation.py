@@ -14,6 +14,7 @@ from app.models.company import Company
 from app.services import advance_reconciliation_service as ars
 from app.services import contract_payment_service as cps
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -59,6 +60,7 @@ def _setup(client, db_session):
         "contractNumber": "10101960", "value": "1500000.00", "currencyCode": "HNL",
         "startDate": "2026-08-01", "advanceAmount": "50000.00", "advanceDueDate": "2026-08-22", "retentionPercentage": "0",
     }).json()
+    contract = approve_supplier_contract(client, contract)
     schedule = client.post("/api/contract-payments/schedules", json={
         "supplierContractId": contract["id"], "scheduleType": "MONTHLY",
         "regularMonths": 7, "dueDay": 1, "firstPeriod": "2026-09-01",

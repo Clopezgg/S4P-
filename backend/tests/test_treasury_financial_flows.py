@@ -1,4 +1,5 @@
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_treasury_account,
@@ -152,11 +153,7 @@ def _active_contract_with_schedule(client, db_session, company_id, *, amount="20
             "regularMonths": 7, "dueDay": 1, "firstPeriod": "2026-09-01",
         },
     )
-    from app.models.supplier import SupplierContract
-
-    row = db_session.get(SupplierContract, contract["id"])
-    row.status = "ACTIVE"
-    db_session.commit()
+    contract = approve_supplier_contract(client, contract)
     return project, contract
 
 

@@ -10,6 +10,7 @@ from app.repositories import supplier_repository
 from app.schemas.supplier import (
     SupplierContractCreateRequest,
     SupplierContractResponse,
+    SupplierContractSubmitRequest,
     SupplierCreateRequest,
     SupplierResponse,
     SupplierStatusChangeRequest,
@@ -311,6 +312,26 @@ def create_contract(
             },
             correlation_id=correlation_id,
         )
+        db.commit()
+        db.refresh(contract)
+        return SupplierContractResponse.model_validate(contract, from_attributes=True)
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post("/contracts/{contract_id}/submit-for-approval", response_model=SupplierContractResponse)
+def submit_contract_for_approval(
+    contract_id: uuid.UUID,
+    payload: SupplierContractSubmitRequest,
+    db: Session = Depends(get_db),
+    user=Depends(require_permission("procurement.contract", "create")),
+):
+    from app.services import supplier_contract_approval_service
+
+    try:
+        contract = supplier_contract_approval_service.submit(
+            db, contract_id=contract_id, requested_by=user.id, assigned_to=payload.assigned_to)
         db.commit()
         db.refresh(contract)
         return SupplierContractResponse.model_validate(contract, from_attributes=True)

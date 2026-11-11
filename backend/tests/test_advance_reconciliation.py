@@ -16,6 +16,7 @@ from decimal import Decimal
 from app.models.company import Company
 from app.services import contract_payment_service as cps
 from tests.helpers import (
+    approve_supplier_contract,
     create_account,
     create_company,
     create_supplier,
@@ -89,6 +90,11 @@ def test_advance_full_chain_and_reversal_reconcile(client, db_session):
             "advanceDueDate": "2026-08-22", "retentionPercentage": "0",
         },
     ).json()
+    before_approval = client.get(f"/api/projects/{project['id']}/budgets/summary").json()
+    assert Decimal(before_approval['available']) == Decimal('2000000.00')
+    contract = approve_supplier_contract(client, contract)
+    after_approval = client.get(f"/api/projects/{project['id']}/budgets/summary").json()
+    assert Decimal(after_approval['available']) == Decimal('500000.00')
     schedule = client.post(
         "/api/contract-payments/schedules",
         json={
@@ -139,7 +145,8 @@ def test_advance_full_chain_and_reversal_reconcile(client, db_session):
     budget = client.get(f"/api/projects/{project['id']}/budgets/summary").json()
     assert Decimal(budget["accrued"]) == Decimal("0.00")       # el anticipo NO es costo
     assert Decimal(budget["advances"]) == Decimal("50000.00")  # se reporta como anticipo
-    assert Decimal(budget["available"]) == Decimal("2000000.00")
+    # Approval commits 1.5m; the advance remains an asset, not accrued cost.
+    assert Decimal(budget["available"]) == Decimal("500000.00")
 
     fin = client.get(f"/api/projects/{project['id']}/financial-summary").json()
     assert Decimal(fin["actualCost"]) == Decimal("0.00")  # débito ASSET, no EXPENSE
