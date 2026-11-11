@@ -16,7 +16,6 @@ from tests.test_financial_audit_atomicity import _invoice
 BACKEND = Path(__file__).resolve().parents[1]
 DB_NAME = 'nexora_ar_status_migration_s4p'
 PREVIOUS = 'eb8ce8e18b2d'
-REVISION = '7b2c1af4849c'
 
 
 def test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_downgrade(client):
@@ -51,6 +50,11 @@ def test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_down
             session.rollback()
             upgraded = migrate('upgrade', 'head')
             assert upgraded.returncode == 0, upgraded.stderr
+            heads = migrate('heads')
+            assert heads.returncode == 0, heads.stderr
+            head_lines = heads.stdout.strip().splitlines()
+            assert len(head_lines) == 1, heads.stdout
+            expected_head = head_lines[0].split()[0]
             partial = client.post(path + '/receipts', json={
                 'treasuryAccountId': bank['id'], 'amount': '25.00', 'receiptDate': '2026-01-20',
             })
@@ -70,7 +74,7 @@ def test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_down
             assert 'Cannot narrow invoice status' in rejected.stderr
             assert persisted() == ('PARTIALLY_COLLECTED', 25)
             with engine.connect() as connection:
-                assert connection.scalar(text('SELECT version_num FROM alembic_version')) == REVISION
+                assert connection.scalar(text('SELECT version_num FROM alembic_version')) == expected_head
                 assert connection.scalar(text(
                     "SELECT character_maximum_length FROM information_schema.columns "
                     "WHERE table_schema='public' AND table_name='customer_invoices' AND column_name='status'"
