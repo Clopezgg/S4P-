@@ -87,7 +87,8 @@ def reverse_supplier_payment(
     if not normalized_reason:
         raise InvalidFinancialReferenceError("El motivo del reversal es obligatorio")
     payment = db.execute(
-        select(SupplierPayment).where(SupplierPayment.id == payment_id).with_for_update()
+        select(SupplierPayment).where(SupplierPayment.id == payment_id)
+        .with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if payment is None:
         raise InvalidFinancialReferenceError("El pago de proveedor no existe")
@@ -97,6 +98,7 @@ def reverse_supplier_payment(
         select(SupplierInvoice)
         .where(SupplierInvoice.id == payment.supplier_invoice_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise InvalidFinancialReferenceError("La factura de proveedor del pago no existe")
@@ -104,6 +106,7 @@ def reverse_supplier_payment(
         select(AccountingDocument)
         .where(AccountingDocument.id == payment.accounting_document_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if original is None:
         raise InvalidFinancialReferenceError("El documento contable del pago no existe")
@@ -167,7 +170,8 @@ def reverse_customer_receipt(
     if not normalized_reason:
         raise InvalidFinancialReferenceError("El motivo del reversal es obligatorio")
     receipt = db.execute(
-        select(CustomerReceipt).where(CustomerReceipt.id == receipt_id).with_for_update()
+        select(CustomerReceipt).where(CustomerReceipt.id == receipt_id)
+        .with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if receipt is None:
         raise InvalidFinancialReferenceError("El cobro de cliente no existe")
@@ -177,6 +181,7 @@ def reverse_customer_receipt(
         select(CustomerInvoice)
         .where(CustomerInvoice.id == receipt.customer_invoice_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if invoice is None:
         raise InvalidFinancialReferenceError("La factura de cliente del cobro no existe")
@@ -184,6 +189,7 @@ def reverse_customer_receipt(
         select(AccountingDocument)
         .where(AccountingDocument.id == receipt.accounting_document_id)
         .with_for_update()
+        .execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if original is None:
         raise InvalidFinancialReferenceError("El documento contable del cobro no existe")

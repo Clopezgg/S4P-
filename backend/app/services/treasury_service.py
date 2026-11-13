@@ -511,7 +511,8 @@ def approve_cash_closing(
     ajuste GENERAL contra `difference_account_id` (obligatorio en ese
     caso). Sin diferencia, no hay posting -- solo aprobación."""
     closing = db.execute(
-        select(CashClosing).where(CashClosing.id == cash_closing_id).with_for_update()
+        select(CashClosing).where(CashClosing.id == cash_closing_id)
+        .with_for_update().execution_options(populate_existing=True)
     ).scalar_one_or_none()
     if closing is None:
         raise ValueError(f"CashClosing {cash_closing_id} no existe")
