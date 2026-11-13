@@ -66,7 +66,10 @@ def _setup_response(db: Session, run: ProjectSetupRun) -> ProjectSetupRunRespons
 
 
 def _setup_payload(payload: ProjectSetupRequest) -> dict:
-    return payload.model_dump(mode="json", exclude={"activate"})
+    excluded = {"activate": True}
+    if payload.project.parent_project_id is None:
+        excluded["project"] = {"parent_project_id"}
+    return payload.model_dump(mode="json", exclude=excluded)
 
 
 @router.post("/setup-runs", response_model=ProjectSetupRunResponse, status_code=201)
@@ -79,6 +82,8 @@ def create_setup_run(
 ) -> ProjectSetupRunResponse:
     """Persist an initial project command; it creates no Project rows yet."""
     assert_company_access(db, user_id=user.id, resource="project", action="create", company_id=payload.project.company_id)
+    if payload.project.parent_project_id:
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=payload.project.parent_project_id)
     body = _setup_payload(payload)
     existing = project_setup_service.get_by_key(db, company_id=payload.project.company_id, key=idempotency_key)
     if existing is not None:
@@ -138,6 +143,9 @@ def execute_setup_run(
     assert_company_access(db, user_id=user.id, resource="project", action="create", company_id=run.company_id)
     if run.requested_by != user.id:
         raise HTTPException(status_code=403, detail="Solo quien inició esta configuración puede reanudarla")
+    parent_id = run.payload.get("project", {}).get("parent_project_id") or run.payload.get("project", {}).get("parentProjectId")
+    if parent_id:
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=uuid.UUID(parent_id))
     # The route and the service must make the COMPLETED/idempotency decision
     # from the same locked row. An unlocked DRAFT read can be stale while an
     # overlapping executor commits and would otherwise double-write AuditLog.
@@ -266,10 +274,13 @@ def create_project(
     assert_company_access(
         db, user_id=user.id, resource="project", action="create", company_id=payload.company_id
     )
+    if payload.parent_project_id:
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=payload.parent_project_id)
     project = project_repository.create_project(
         db,
         company_id=payload.company_id,
         name=payload.name,
+        parent_project_id=payload.parent_project_id,
         code=payload.code,
         customer_id=payload.customer_id,
         customer_ref=payload.customer_ref,
@@ -301,7 +312,7 @@ def create_project(
         company_id=project.company_id,
         project_id=project.id,
         before=None,
-        after={"name": project.name, "code": project.code},
+        after={"name": project.name, "code": project.code, "parentProjectId": str(project.parent_project_id) if project.parent_project_id else None},
         correlation_id=correlation_id,
     )
     db.commit()

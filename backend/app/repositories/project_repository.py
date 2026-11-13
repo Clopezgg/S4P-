@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.domain.errors import InvalidFinancialReferenceError
+from app.models.company import Company
 from app.models.cost_center import CostCenter
 from app.models.crm import Customer
 from app.models.project import Project
@@ -58,11 +59,39 @@ def list_projects_for_company(db: Session, company_id: uuid.UUID) -> list[Projec
     return list(db.execute(stmt).scalars())
 
 
+def validate_parent(db: Session, *, company_id: uuid.UUID, project_id: uuid.UUID | None,
+                    parent_project_id: uuid.UUID | None, currency_code: str | None) -> None:
+    if parent_project_id is None and project_id is None:
+        return
+    # Serialize hierarchy edits within a company: simultaneous opposite links
+    # must not both validate against an old root and create a cycle.
+    company = db.execute(select(Company).where(Company.id == company_id).with_for_update()).scalar_one()
+    effective_currency = currency_code or company.functional_currency_code
+    if parent_project_id is not None:
+        parent = db.execute(select(Project).where(Project.id == parent_project_id)
+                            .execution_options(populate_existing=True)).scalar_one_or_none()
+        if parent is None or parent.company_id != company_id:
+            raise InvalidFinancialReferenceError("La obra principal debe pertenecer a la misma empresa")
+        if parent.id == project_id or parent.parent_project_id is not None:
+            raise InvalidFinancialReferenceError("Selecciona una obra principal; no se admiten ciclos ni trabajos anidados")
+        if parent.status in {"ARCHIVED", "CANCELLED", "CLOSED"}:
+            raise InvalidFinancialReferenceError("La obra principal no está disponible para vincular trabajos")
+        if (parent.currency_code or company.functional_currency_code) != effective_currency:
+            raise InvalidFinancialReferenceError("La obra principal y sus trabajos deben usar la misma moneda")
+    if project_id:
+        children = list(db.scalars(select(Project).where(Project.parent_project_id == project_id)))
+        if children and parent_project_id is not None:
+            raise InvalidFinancialReferenceError("Una obra con trabajos vinculados no puede convertirse en otro trabajo")
+        if any((child.currency_code or company.functional_currency_code) != effective_currency for child in children):
+            raise InvalidFinancialReferenceError("La obra y sus trabajos deben conservar la misma moneda")
+
+
 def create_project(
     db: Session,
     *,
     company_id: uuid.UUID,
     name: str,
+    parent_project_id: uuid.UUID | None = None,
     code: str | None = None,
     customer_id: uuid.UUID | None = None,
     customer_ref: str | None = None,
@@ -96,9 +125,11 @@ def create_project(
         raise InvalidFinancialReferenceError(
             "La fecha final prevista no puede ser anterior a la fecha de inicio"
         )
+    validate_parent(db, company_id=company_id, project_id=None, parent_project_id=parent_project_id, currency_code=currency_code)
     resolved_manager_user_id = _resolve_manager_user(db, manager_user_id)
     project = Project(
         company_id=company_id,
+        parent_project_id=parent_project_id,
         name=name.strip(),
         code=code.strip() if code else None,
         customer_id=customer_id,
@@ -124,7 +155,14 @@ def create_project(
 
 
 def update_project(db: Session, *, project: Project, values: dict) -> Project:
+    if "parent_project_id" in values or "currency_code" in values:
+        db.execute(select(Company).where(Company.id == project.company_id).with_for_update()).scalar_one()
+        db.refresh(project)
+        validate_parent(db, company_id=project.company_id, project_id=project.id,
+                        parent_project_id=values.get("parent_project_id", project.parent_project_id),
+                        currency_code=values.get("currency_code", project.currency_code))
     editable = {
+        "parent_project_id",
         "name",
         "code",
         "customer_id",

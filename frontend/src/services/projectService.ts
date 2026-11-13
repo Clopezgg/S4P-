@@ -6,6 +6,7 @@ import type {
   Company,
   Forecast,
   Project,
+  ProjectSpending,
   ProjectFinancialSummary,
   ProjectLifecycle,
   ProjectTask,
@@ -25,6 +26,7 @@ export const companyService = {
 
 export interface ProjectInput {
   companyId: string
+  parentProjectId?: string | null
   name: string
   code?: string
   customerId?: string | null
@@ -103,6 +105,7 @@ export const projectService = {
   update: (projectId: string, input: Partial<Omit<ProjectInput, 'companyId'>>) => apiFetch<Project>(`/projects/${projectId}`, { method: 'PATCH', body: JSON.stringify(input) }),
   transitionStatus: (projectId: string, status: ProjectStatus, reason?: string) => apiFetch<Project>(`/projects/${projectId}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }),
   getFinancialSummary: (projectId: string) => apiFetch<ProjectFinancialSummary>(`/projects/${projectId}/financial-summary`),
+  getSpending: (projectId: string, signal?: AbortSignal, offset = 0) => apiFetch<ProjectSpending>(`/projects/${projectId}/spending?offset=${offset}&limit=25`, { signal }),
 
   listWbs: (projectId: string) => apiFetch<WBSNode[]>(`/projects/${projectId}/wbs`),
   listWbsFinancials: (projectId: string) => apiFetch<WBSFinancialSummary[]>(`/projects/${projectId}/wbs/financial-summary`),

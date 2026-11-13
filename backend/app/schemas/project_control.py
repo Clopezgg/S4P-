@@ -15,6 +15,7 @@ WBS_STATUS_VALUES = Literal["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCE
 
 class ProjectCreateRequest(CamelModel):
     company_id: uuid.UUID
+    parent_project_id: uuid.UUID | None = None
     name: str = Field(min_length=1, max_length=255)
     code: str | None = Field(default=None, max_length=32)
     customer_id: uuid.UUID | None = None
@@ -41,6 +42,7 @@ class ProjectCreateRequest(CamelModel):
 
 
 class ProjectUpdateRequest(CamelModel):
+    parent_project_id: uuid.UUID | None = None
     name: str | None = Field(default=None, min_length=1, max_length=255)
     code: str | None = Field(default=None, max_length=32)
     customer_id: uuid.UUID | None = None
@@ -90,6 +92,7 @@ class ProjectLifecycleResponse(CamelModel):
 
 class ProjectResponse(CamelModel):
     id: uuid.UUID
+    parent_project_id: uuid.UUID | None = None
     company_id: uuid.UUID
     name: str
     code: str | None
@@ -350,3 +353,31 @@ class ProgressRecordResponse(CamelModel):
     description: str | None
     responsible: str | None
     evidence_id: uuid.UUID | None
+
+
+class ProjectWorkSummary(CamelModel):
+    id: uuid.UUID
+    name: str
+    parent_project_id: uuid.UUID | None
+    total_expenses: Decimal
+
+
+class ProjectExpenseRow(CamelModel):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    document_number: str
+    effective_date: date
+    description: str | None
+    amount: Decimal
+    status: str
+
+
+class ProjectSpendingResponse(CamelModel):
+    project_id: uuid.UUID
+    currency_code: str
+    total_expenses: Decimal
+    total_remittances: Decimal | None
+    scope_limited: bool
+    expense_count: int
+    projects: list[ProjectWorkSummary]
+    expenses: list[ProjectExpenseRow]

@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { dashboardService } from '../../services/dashboardService'
-import { projectService } from '../../services/projectService'
 import { formatMoney } from '../../utils/currency'
 import { ApiError } from '../../services/httpClient'
 import { useAuth } from '../auth/auth-context'
@@ -13,17 +12,10 @@ import { MiTrabajoHoy } from './MiTrabajoHoy'
 import { HomeForecastCard } from './HomeForecastCard'
 import { HomeBankAccountsCard } from './HomeBankAccountsCard'
 import { Card, EmptyState, ErrorState, Icon, LoadingState, StatCard } from '../../design-system'
+import { ProjectWorkHome } from './ProjectWorkHome'
 import './HomePage.css'
 
 const FinancialCharts = lazy(() => import('./FinancialCharts'))
-
-function money(value: string | null, currency: string) {
-  return value === null ? '—' : formatMoney(value, currency)
-}
-
-function percent(value: string | null) {
-  return value === null ? '—' : `${Number(value).toFixed(1)}%`
-}
 
 export function HomePage() {
   const { user } = useAuth()
@@ -38,63 +30,10 @@ export function HomePage() {
     queryFn: ({ signal }) => dashboardService.getSummary(activeCompanyId, signal),
     enabled: config.showTreasurySummary && Boolean(activeCompanyId) && !context.activeProjectId,
   })
-  const projectQuery = useQuery({
-    queryKey: ['project', context.activeProjectId],
-    queryFn: () => projectService.get(context.activeProjectId as string),
-    enabled: Boolean(context.activeProjectId),
-  })
-  const projectSummaryQuery = useQuery({
-    queryKey: ['project', context.activeProjectId, 'financial-summary'],
-    queryFn: () => projectService.getFinancialSummary(context.activeProjectId as string),
-    enabled: Boolean(context.activeProjectId),
-  })
-
   const error = companySummaryQuery.error
   const sessionExpired = error instanceof ApiError && error.status === 401
 
-  if (context.activeProjectId) {
-    if (projectQuery.isLoading || projectSummaryQuery.isLoading) return <LoadingState label="Cargando resumen del proyecto…" />
-    if (projectQuery.isError || projectSummaryQuery.isError || !projectQuery.data || !projectSummaryQuery.data) {
-      return <ErrorState description="No se pudo cargar el resumen del proyecto seleccionado." onRetry={() => { projectQuery.refetch(); projectSummaryQuery.refetch() }} />
-    }
-    const project = projectQuery.data
-    const summary = projectSummaryQuery.data
-    const currency = summary.currencyCode
-    return (
-      <div className="nx-home">
-        <header className="nx-home__header">
-          <div>
-            <p className="nx-home__eyebrow">Vista de proyecto</p>
-            <h1 className="nx-dashboard__title">Proyecto: {project.name}</h1>
-            <p className="nx-home__subtitle">Métricas exclusivas de este proyecto; no se mezclan con la vista financiera de la empresa.</p>
-          </div>
-        </header>
-
-        <section className="nx-home__grid" aria-label="Resumen comercial del proyecto">
-          <StatCard label="Valor contractual" value={money(summary.contractValue, currency)} />
-          <StatCard label="Presupuesto de costos" value={money(summary.currentBudget, currency)} />
-          <StatCard label="Costo real" value={money(summary.actualCost, currency)} />
-          <StatCard label="Avance físico" value={percent(summary.progressPercent)} />
-        </section>
-        <section className="nx-home__grid" aria-label="Rentabilidad del proyecto">
-          <StatCard label="Utilidad esperada" value={money(summary.expectedProfit, currency)} />
-          <StatCard label="Margen esperado" value={percent(summary.expectedMarginPercent)} />
-          <StatCard label="Facturado" value={money(summary.invoiced, currency)} />
-          <StatCard label="Cobrado" value={money(summary.collected, currency)} />
-        </section>
-        <section className="nx-home__grid" aria-label="Control de costos del proyecto">
-          <StatCard label="Comprometido" value={money(summary.committed, currency)} />
-          <StatCard label="Devengado" value={money(summary.accrued, currency)} />
-          <StatCard label="Pagado" value={money(summary.paid, currency)} />
-          <StatCard label="Disponible de presupuesto" value={money(summary.available, currency)} />
-        </section>
-        <Card title="Detalle del proyecto">
-          <p>El valor contractual proviene de Comercial/Contratos; el presupuesto es exclusivamente presupuesto de costos.</p>
-          <Link to={`/proyectos/${project.id}`}>Abrir cockpit financiero completo</Link>
-        </Card>
-      </div>
-    )
-  }
+  if (context.activeProjectId) return <ProjectWorkHome key={context.activeProjectId} projectId={context.activeProjectId} />
 
   return (
     <div className="nx-home">

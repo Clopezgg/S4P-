@@ -2,7 +2,14 @@ import uuid
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, String
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    ForeignKeyConstraint,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,6 +40,9 @@ PROJECT_STATUSES = (
 class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "projects"
     __table_args__ = (
+        UniqueConstraint("id", "company_id", name="uq_projects_id_company"),
+        ForeignKeyConstraint(["parent_project_id", "company_id"], ["projects.id", "projects.company_id"], name="fk_projects_parent_company", ondelete="RESTRICT"),
+        CheckConstraint("parent_project_id IS NULL OR parent_project_id <> id", name="ck_projects_not_own_parent"),
         CheckConstraint(
             "status IN ('PLANNING','ACTIVE','ON_HOLD','COMPLETED','CLOSED','CANCELLED','ARCHIVED')",
             name="ck_projects_status_valid",
@@ -43,6 +53,7 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
     )
     code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    parent_project_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     customer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True

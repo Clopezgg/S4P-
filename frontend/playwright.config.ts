@@ -66,12 +66,12 @@ export default defineConfig({
     },
     {
       name: 'firefox',
-      testMatch: /cross-browser-critical\.spec\.ts/,
+      testMatch: /(cross-browser-critical|project-work-spending)\.spec\.ts/,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
-      testMatch: /cross-browser-critical\.spec\.ts/,
+      testMatch: /(cross-browser-critical|project-work-spending)\.spec\.ts/,
       use: { ...devices['Desktop Safari'] },
     },
   ],

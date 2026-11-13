@@ -13,6 +13,7 @@ export interface TreasuryAccount {
 
 export interface Remittance {
   id: string
+  attributedProjectId?: string | null
   companyId: string
   treasuryAccountId: string
   sender: string

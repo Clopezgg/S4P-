@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Sheet, Icon, type IconName } from '../design-system'
 import { useAuth } from '../features/auth/auth-context'
+import { useActiveContext } from '../features/context/useActiveContext'
 
 interface QuickCreateProps {
   open: boolean
@@ -29,8 +30,13 @@ const ACTIONS: QuickAction[] = [
 export function QuickCreate({ open, onClose }: QuickCreateProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { context } = useActiveContext()
   const grants = new Set(user?.permissions ?? [])
-  const actions = ACTIONS.filter((action) => action.requiredAny.some((permission) => grants.has(permission)))
+  const actions = ACTIONS.filter((action) => {
+    if (action.label === 'Registrar gasto' || action.label === 'Registrar remesa') return action.requiredAny.every(permission => grants.has(permission)) && grants.has('accounting.account:read')
+    if (action.label === 'Nuevo proyecto') return grants.has('project:create')
+    return action.requiredAny.some((permission) => grants.has(permission))
+  })
 
   return (
     <Sheet open={open} title="Crear" onClose={onClose}>
@@ -45,13 +51,14 @@ export function QuickCreate({ open, onClose }: QuickCreateProps) {
                 className="nx-quick-create__action"
                 onClick={() => {
                   onClose()
-                  navigate(action.to)
+                  const kind = action.label === 'Registrar gasto' ? 'expense' : action.label === 'Registrar remesa' ? 'remittance' : null
+                  navigate(kind && context.activeProjectId ? `/inicio?entry=${kind}&project=${encodeURIComponent(context.activeProjectId)}` : action.to)
                 }}
               >
                 <span className="nx-quick-create__icon" aria-hidden="true">
                   <Icon name={action.icon} />
                 </span>
-                {action.label}
+                {action.label}{context.activeProjectId && ['Registrar gasto', 'Registrar remesa'].includes(action.label) ? ` · ${context.activeProjectName ?? 'proyecto seleccionado'}` : ''}
               </button>
             </li>
           ))}

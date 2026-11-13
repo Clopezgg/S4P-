@@ -1,10 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.api.deps_correlation import get_correlation_id
+from app.domain.errors import NotAuthorizedError
 from app.models.cost_center import CostCenter
 from app.models.crm import Customer
 from app.models.project import Project
@@ -13,6 +14,7 @@ from app.schemas.project_control import (
     ProjectFinancialSummaryResponse,
     ProjectLifecycleResponse,
     ProjectResponse,
+    ProjectSpendingResponse,
     ProjectStatusTransitionRequest,
     ProjectUpdateRequest,
 )
@@ -22,6 +24,7 @@ from app.services import (
     project_lifecycle_service,
 )
 from app.services.permission_service import (
+    accessible_project_ids,
     assert_company_access,
     assert_project_access,
     require_permission,
@@ -30,6 +33,26 @@ from app.services.permission_service import (
 from app.services.project_close_blockers import check_close_blockers
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+@router.get("/{project_id}/spending", response_model=ProjectSpendingResponse)
+def project_spending(project_id: uuid.UUID, db: Session = Depends(get_db),
+                     offset: int = Query(default=0, ge=0), limit: int = Query(default=25, ge=1, le=100),
+                     user=Depends(require_permission("project", "read"))) -> ProjectSpendingResponse:
+    project = _get_project_or_404(db, project_id)
+    assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=project.id)
+    include_remittances = True
+    try:
+        assert_company_access(db, user_id=user.id, resource="treasury.remittance", action="read", company_id=project.company_id)
+    except NotAuthorizedError:
+        include_remittances = False
+    result = project_financial_service.get_spending(
+        db, project_id=project_id,
+        allowed_project_ids=accessible_project_ids(db, user_id=user.id, resource="project", action="read"),
+        include_remittances=include_remittances,
+        offset=offset, limit=limit,
+    )
+    return ProjectSpendingResponse(**result)
 
 
 def _get_project_or_404(db: Session, project_id: uuid.UUID) -> Project:
@@ -75,9 +98,12 @@ def update_project(
         db, user_id=user.id, resource="project", action="update", company_id=project.company_id
     )
     values = payload.model_dump(exclude_unset=True)
+    if values.get("parent_project_id"):
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=values["parent_project_id"])
     _validate_project_references(db, project=project, values=values)
 
     before = {
+        "parentProjectId": str(project.parent_project_id) if project.parent_project_id else None,
         "name": project.name,
         "code": project.code,
         "customerId": str(project.customer_id) if project.customer_id else None,
@@ -96,6 +122,7 @@ def update_project(
         project_id=project.id,
         before=before,
         after={
+            "parentProjectId": str(project.parent_project_id) if project.parent_project_id else None,
             "name": project.name,
             "code": project.code,
             "customerId": str(project.customer_id) if project.customer_id else None,

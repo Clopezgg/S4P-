@@ -11,6 +11,8 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session
@@ -337,7 +339,7 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         assert {'project.setup.complete', 'ap.supplier_invoice.create', 'workflow.approval.decide', 'procurement.contract.decide',
                 'ap.supplier_payment.create', 'ap.supplier_payment.reverse',
                 'treasury.bank_reconciliation.unmatch'}.issubset(actions)
-        assert session.scalar(text('SELECT version_num FROM alembic_version')) == '32c92271c634'
+        assert session.scalar(text('SELECT version_num FROM alembic_version')) == ScriptDirectory.from_config(Config(str(BACKEND / 'alembic.ini'))).get_current_head()
     restarted = create_app()
     restarted.dependency_overrides[get_db] = target_db
     with TestClient(restarted) as new_client:

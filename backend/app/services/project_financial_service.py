@@ -11,7 +11,7 @@ from app.models.accounting import (
     JournalLine,
 )
 from app.models.ar import CustomerInvoice
-from app.models.chart_of_accounts import Account
+from app.models.chart_of_accounts import Account, ChartOfAccount
 from app.models.company import Company
 from app.models.contract_payment import (
     ContractPaymentAllocation,
@@ -240,3 +240,58 @@ def get_summary(db: Session, *, project_id: uuid.UUID) -> ProjectFinancialSummar
         eac=forecast.eac,
         vac=forecast.vac,
     )
+
+
+def get_spending(db: Session, *, project_id: uuid.UUID,
+                 allowed_project_ids: list[uuid.UUID] | None, include_remittances: bool,
+                 offset: int = 0, limit: int = 25) -> dict:
+    """Selected work and its explicitly linked jobs. Never company-wide cash."""
+    from app.models.project import Project
+    from app.models.treasury import Remittance
+
+    project = db.get(Project, project_id)
+    if project is None:
+        raise ValueError("Proyecto no encontrado")
+    company = db.get(Company, project.company_id)
+    projects_query = select(Project).where(
+        Project.company_id == project.company_id,
+        (Project.id == project_id) | (Project.parent_project_id == project_id),
+    )
+    if allowed_project_ids is not None:
+        projects_query = projects_query.where(Project.id.in_(allowed_project_ids))
+    projects = list(db.scalars(projects_query.order_by(Project.created_at)))
+    ids = [p.id for p in projects]
+    costs = (
+        select(AccountingDocument.id.label("id"), AccountingDocument.project_id.label("project_id"),
+               AccountingDocument.document_number.label("document_number"),
+               AccountingDocument.effective_date.label("effective_date"),
+               AccountingDocument.description.label("description"), AccountingDocument.status.label("status"),
+               func.sum(JournalLine.debit_amount - JournalLine.credit_amount).label("amount"))
+        .join(JournalLine, JournalLine.accounting_document_id == AccountingDocument.id)
+        .join(Account, Account.id == JournalLine.account_id)
+        .join(ChartOfAccount, ChartOfAccount.id == Account.chart_of_account_id)
+        .where(AccountingDocument.company_id == project.company_id,
+               AccountingDocument.project_id.in_(ids), AccountingDocument.scope == "PROJECT",
+               JournalLine.project_id == AccountingDocument.project_id,
+               AccountingDocument.status.in_(LEDGER_EFFECTIVE_STATUSES),
+               ChartOfAccount.company_id == project.company_id, Account.account_type == "EXPENSE")
+        .group_by(AccountingDocument.id).subquery()
+    )
+    total, count = db.execute(select(func.coalesce(func.sum(costs.c.amount), 0), func.count()).select_from(costs)).one()
+    per_project = dict(db.execute(select(costs.c.project_id, func.sum(costs.c.amount)).group_by(costs.c.project_id)).all())
+    expenses = list(db.execute(select(costs).order_by(costs.c.effective_date.desc(), costs.c.id).offset(offset).limit(limit)).mappings())
+    currency = project.currency_code or company.functional_currency_code
+    remittances = None
+    if include_remittances:
+        remittances = db.scalar(select(func.coalesce(func.sum(Remittance.original_amount), 0))
+                               .join(AccountingDocument, AccountingDocument.id == Remittance.accounting_document_id)
+                               .where(Remittance.company_id == project.company_id,
+                                      Remittance.attributed_project_id.in_(ids),
+                                      Remittance.currency_code == currency,
+                                      AccountingDocument.status == "POSTED"))
+    return {"project_id": project_id, "currency_code": currency,
+            "total_expenses": total, "total_remittances": remittances,
+            "scope_limited": allowed_project_ids is not None,
+            "expense_count": count, "expenses": expenses,
+            "projects": [{"id": p.id, "name": p.name, "parent_project_id": p.parent_project_id,
+                          "total_expenses": per_project.get(p.id, Decimal("0"))} for p in projects]}

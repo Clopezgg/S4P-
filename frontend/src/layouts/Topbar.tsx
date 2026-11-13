@@ -46,11 +46,11 @@ export function Topbar({ onOpenNav }: TopbarProps) {
     [projectsQuery.data],
   )
   useEffect(() => {
-    if (!projectsQuery.isSuccess || !context.activeProjectId) return
+    if (!projectsQuery.isSuccess || projectsQuery.isFetching || !context.activeProjectId) return
     if (!projects.some((project) => project.id === context.activeProjectId)) {
       setActiveProject(null)
     }
-  }, [context.activeProjectId, projects, projectsQuery.isSuccess, setActiveProject])
+  }, [context.activeProjectId, projects, projectsQuery.isSuccess, projectsQuery.isFetching, setActiveProject])
 
   const currentPeriod = fiscalQuery.data?.period ?? null
   const fiscalYear = fiscalQuery.data?.fiscalYear ?? null
@@ -106,7 +106,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
             <option value="">Vista empresa · sin proyecto</option>
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
-                {project.code ? `${project.code} · ` : ''}{project.name}
+                {project.parentProjectId ? `${projects.find(parent => parent.id === project.parentProjectId)?.name ?? 'Trabajo'} / ` : ''}{project.code ? `${project.code} · ` : ''}{project.name}
               </option>
             ))}
           </Select>

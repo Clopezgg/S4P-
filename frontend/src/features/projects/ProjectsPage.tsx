@@ -38,6 +38,7 @@ export function ProjectsPage() {
   const [residentialPreset, setResidentialPreset] = useState(false)
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
   const [quickProjectName, setQuickProjectName] = useState('')
+  const [quickParentId, setQuickParentId] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showArchived, setShowArchived] = useState(false)
   const [filterText, setFilterText] = useState('')
@@ -85,6 +86,7 @@ export function ProjectsPage() {
     mutationFn: () => projectService.create({
       companyId: activeCompanyId as string,
       name: quickProjectName.trim(),
+      parentProjectId: quickParentId || null,
       currencyCode: activeCompany?.functionalCurrencyCode as string | undefined,
     }),
     onSuccess: (project) => {
@@ -92,7 +94,7 @@ export function ProjectsPage() {
       setQuickCreateOpen(false)
       setQuickProjectName('')
       setActiveProject(project.id)
-      navigate(`/proyectos/${project.id}`)
+      navigate('/inicio')
     },
   })
 
@@ -138,17 +140,17 @@ export function ProjectsPage() {
       <header className="nx-page__header">
         <div>
           <h1 className="nx-dashboard__title">Proyectos</h1>
-          <p className="nx-field__hint">Empresa activa: {activeCompany.name}. Cree un proyecto residencial con sus 13 fases o inicie otro tipo de obra. Los fondos, contratos y costos se registran solo cuando existen realmente.</p>
+          <p className="nx-field__hint">Empresa activa: {activeCompany.name}. Crea una obra o un trabajo vinculado para registrar sus gastos y remesas.</p>
         </div>
         <div className="nx-page__actions">
-          <Button onClick={() => { setResidentialPreset(true); setWizardOpen(true); setQuickCreateOpen(false) }}>
+          <Button onClick={() => { setQuickCreateOpen((open) => !open); setWizardOpen(false) }}>
+            {quickCreateOpen ? 'Cerrar formulario' : 'Nuevo proyecto'}
+          </Button>
+          <Button variant="secondary" onClick={() => { setResidentialPreset(true); setWizardOpen(true); setQuickCreateOpen(false) }}>
             Nueva residencia · 13 fases
           </Button>
-          <Button variant="secondary" onClick={() => { setQuickCreateOpen((open) => !open); setWizardOpen(false) }}>
-            {quickCreateOpen ? 'Cerrar alta rápida' : 'Crear proyecto básico'}
-          </Button>
           <Button variant="secondary" onClick={() => { setResidentialPreset(false); setWizardOpen((open) => !open); setQuickCreateOpen(false) }}>
-            {wizardOpen ? 'Cerrar asistente' : 'Nuevo proyecto'}
+            {wizardOpen ? 'Cerrar asistente' : 'Configuración avanzada'}
           </Button>
         </div>
       </header>
@@ -166,9 +168,14 @@ export function ProjectsPage() {
               maxLength={255}
               onChange={(event) => setQuickProjectName(event.target.value)}
             />
+            <Select label="Obra principal" value={quickParentId} onChange={event => setQuickParentId(event.target.value)}>
+              <option value="">Independiente · por ejemplo Casa residencial u Otros</option>
+              {projects.filter(project => !project.parentProjectId).map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+            </Select>
+            <p className="nx-field__hint">Para Verjas, Cerco, Techo o Acabados de una casa, selecciona esa obra. Otros permanece independiente y no se suma.</p>
             {quickCreate.isError ? <p role="alert" className="nx-field__error">{(quickCreate.error as Error).message}</p> : null}
             <Button type="submit" disabled={!quickProjectName.trim() || quickCreate.isPending} loading={quickCreate.isPending}>
-              Guardar proyecto básico
+              Crear proyecto
             </Button>
           </form>
         </Card>

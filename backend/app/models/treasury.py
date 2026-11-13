@@ -7,6 +7,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Numeric,
     String,
     UniqueConstraint,
@@ -165,6 +166,7 @@ class Remittance(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "remittances"
     __table_args__ = (
+        ForeignKeyConstraint(["attributed_project_id", "company_id"], ["projects.id", "projects.company_id"], name="fk_remittances_project_company", ondelete="RESTRICT"),
         CheckConstraint(
             "original_amount > 0 AND fx_rate > 0 AND base_amount > 0",
             name="ck_remittances_amounts_positive",
@@ -176,6 +178,10 @@ class Remittance(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     treasury_account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("treasury_accounts.id", ondelete="RESTRICT"), nullable=False
+    )
+    # Documentary purpose only; cash and the accounting scope remain CENTRAL.
+    attributed_project_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
     )
     counter_account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="RESTRICT"), nullable=False

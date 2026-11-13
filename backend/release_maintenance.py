@@ -30,9 +30,9 @@ from sqlalchemy.engine import make_url
 
 from alembic import command
 
-PARENT = "7b2c1af4849c"
-TARGET = "32c92271c634"
-PREVIOUS_APPLICATION = "8d02c680a1e46cb646b245e3e9ff263675bfc0dc"
+PARENT = "32c92271c634"
+TARGET = "9083ca4ebf44"
+PREVIOUS_APPLICATION = "62426b786c2deb4921d17597001a0879d8e2bb60"
 REPORT = {"status": "running", "stage": "initializing"}
 REPORT_LOCK = threading.Lock()
 
@@ -72,6 +72,13 @@ def revision(connection):
     ))
     if values[0] == TARGET and not all(state in (contract_check or "") for state in ("REVIEW", "REJECTED")):
         raise RuntimeError("RevisionAndContractSchemaDisagree")
+    if values[0] == TARGET:
+        for table, column in (("projects", "parent_project_id"), ("remittances", "attributed_project_id")):
+            if connection.scalar(text(
+                "SELECT data_type FROM information_schema.columns WHERE table_schema='public' "
+                "AND table_name=:table AND column_name=:column"
+            ), {"table": table, "column": column}) != "uuid":
+                raise RuntimeError("RevisionAndProjectLinksDisagree")
     return values[0]
 
 
@@ -131,11 +138,13 @@ def fingerprint(connection):
         quoted = connection.dialect.identifier_preparer.quote_identifier(name)
         digest.update(name.encode() + b"\0")
         expression = "to_jsonb(t)"
-        if name == "voucher_issuances":
+        nullable_addition = {"voucher_issuances": "contract_context_snapshot",
+                             "projects": "parent_project_id", "remittances": "attributed_project_id"}.get(name)
+        if nullable_addition:
             # Adding an absent nullable column does not change business rows.
             # Non-null historical snapshots remain included in the digest.
-            expression = ("CASE WHEN to_jsonb(t)->'contract_context_snapshot' = 'null'::jsonb "
-                          "THEN to_jsonb(t) - 'contract_context_snapshot' ELSE to_jsonb(t) END")
+            expression = (f"CASE WHEN to_jsonb(t)->'{nullable_addition}' = 'null'::jsonb "
+                          f"THEN to_jsonb(t) - '{nullable_addition}' ELSE to_jsonb(t) END")
         for row in connection.execute(text(
             f"SELECT ({expression})::text FROM public.{quoted} t ORDER BY ({expression})::text"
         )).scalars():

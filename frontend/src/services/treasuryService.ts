@@ -18,6 +18,7 @@ export interface CreateTreasuryAccountPayload {
 
 export interface CreateRemittancePayload {
   companyId: string
+  attributedProjectId?: string | null
   treasuryAccountId: string
   counterAccountId: string
   originType: 'CAPITAL_CONTRIBUTION' | 'FINANCING' | 'OTHER_INCOME'

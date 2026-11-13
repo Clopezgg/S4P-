@@ -165,12 +165,20 @@ def register_remittance(
     reference: str | None,
     remittance_date: date,
     notes: str | None,
+    attributed_project_id: uuid.UUID | None = None,
     commit: bool = True,
 ) -> Remittance:
     """Siempre scope=CENTRAL, project_id=None (orden maestra §27) -- lo
     aplica post_manual, que ya rechaza cualquier otra combinación."""
     if original_amount <= 0 or fx_rate <= 0:
         raise InvalidFinancialReferenceError("La remesa requiere montos y tasa positivos")
+    attributed_project = assert_project_belongs_to_company(db, project_id=attributed_project_id, company_id=company_id)
+    if attributed_project:
+        from app.models.company import Company
+
+        company = db.get(Company, company_id)
+        if currency_code != (attributed_project.currency_code or company.functional_currency_code):
+            raise InvalidFinancialReferenceError("La remesa identificada para la obra debe usar su moneda")
     treasury_account = db.get(TreasuryAccount, treasury_account_id)
     if treasury_account is None:
         raise ValueError(f"TreasuryAccount {treasury_account_id} no existe")
@@ -242,6 +250,7 @@ def register_remittance(
     )
 
     remittance = Remittance(
+        attributed_project_id=attributed_project_id,
         company_id=company_id,
         treasury_account_id=treasury_account_id,
         counter_account_id=counter_account_id,

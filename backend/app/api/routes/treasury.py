@@ -2,7 +2,7 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user_id, get_db
@@ -52,6 +52,7 @@ from app.services import (
 from app.services.permission_service import (
     accessible_project_ids,
     assert_company_access,
+    assert_project_access,
     require_permission,
 )
 
@@ -153,6 +154,7 @@ def list_accounts(
 @router.get("/remittances", response_model=list[RemittanceResponse])
 def list_remittances(
     company_id: uuid.UUID = Query(alias="companyId"),
+    attributed_project_id: uuid.UUID | None = Query(default=None, alias="attributedProjectId"),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=25, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -161,9 +163,15 @@ def list_remittances(
     assert_company_access(
         db, user_id=user.id, resource="treasury.remittance", action="read", company_id=company_id
     )
+    query = db.query(Remittance).filter(Remittance.company_id == company_id)
+    allowed = accessible_project_ids(db, user_id=user.id, resource="project", action="read")
+    if allowed is not None:
+        query = query.filter(or_(Remittance.attributed_project_id.is_(None), Remittance.attributed_project_id.in_(allowed)))
+    if attributed_project_id:
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=attributed_project_id)
+        query = query.filter(Remittance.attributed_project_id == attributed_project_id)
     rows = (
-        db.query(Remittance)
-        .filter(Remittance.company_id == company_id)
+        query
         .order_by(Remittance.remittance_date.desc(), Remittance.created_at.desc())
         .offset(offset)
         .limit(limit)
@@ -183,7 +191,10 @@ def create_remittance(
     assert_company_access(
         db, user_id=user.id, resource="treasury.remittance", action="create", company_id=payload.company_id
     )
-    request_payload = payload.model_dump(mode="json")
+    if payload.attributed_project_id:
+        assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=payload.attributed_project_id)
+    # Preserve fingerprints of pre-attribution requests already stored in DB.
+    request_payload = payload.model_dump(mode="json", exclude={"attributed_project_id"} if payload.attributed_project_id is None else set())
 
     outcome = None
     if idempotency_key:
@@ -209,6 +220,7 @@ def create_remittance(
             reference=payload.reference,
             remittance_date=payload.remittance_date,
             notes=payload.notes,
+            attributed_project_id=payload.attributed_project_id,
             commit=False,
         )
         audit_service.record(
@@ -218,11 +230,13 @@ def create_remittance(
             entity_type="treasury.remittance",
             entity_id=remittance.id,
             company_id=remittance.company_id,
+            project_id=remittance.attributed_project_id,
             before=None,
             after={
                 "baseAmount": str(remittance.base_amount),
                 "sender": remittance.sender,
                 "originType": payload.origin_type,
+                "attributedProjectId": str(remittance.attributed_project_id) if remittance.attributed_project_id else None,
             },
             correlation_id=correlation_id,
         )

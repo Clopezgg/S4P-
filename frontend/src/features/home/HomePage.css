@@ -4,6 +4,24 @@
   gap: 14px;
 }
 
+.nx-work-actions, .nx-work-create {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nx-work-create { margin-top: 16px; align-items: flex-end; }
+.nx-work-create > :first-child { flex: 1 1 240px; min-width: 0; }
+.nx-work-actions a { padding: 10px; }
+.nx-home__grid.nx-work-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) {
+  .nx-home__grid.nx-work-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .nx-home__grid.nx-work-summary { grid-template-columns: minmax(0, 1fr); }
+}
+
 .nx-home__header {
   align-items: flex-end;
   display: flex;

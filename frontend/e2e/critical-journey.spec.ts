@@ -81,7 +81,7 @@ test('Critical Journey: login through GL/reports/audit, one continuous real reco
 
     await page.goto('/proyectos')
     // Alta guiada (ORDEN MAESTRA §11): asistente de pasos, no formulario plano.
-    await page.getByRole('button', { name: 'Nuevo proyecto' }).click()
+    await page.getByRole('button', { name: 'Configuración avanzada' }).click()
     await page.getByLabel('Nombre del proyecto').fill('Torre Critical Journey')
     await page.getByLabel('Código (opcional)').fill('CJ-001')
     await page.getByRole('button', { name: 'Continuar' }).click() // -> Ubicación

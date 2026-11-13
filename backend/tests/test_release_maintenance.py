@@ -58,6 +58,30 @@ def test_real_rehearsal_and_controlled_migration_preserve_all_rows(recovery_data
     assert snapshot(engine) == before
 
 
+def test_additive_project_migration_keeps_existing_rows_and_new_links_on_rollback(recovery_database):
+    engine = recovery_database
+    company, root, child = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    with engine.begin() as connection:
+        connection.execute(text("INSERT INTO companies(id,name) VALUES (:id,'Migration QA')"), {"id": company})
+        for project_id, name in ((root, "Casa"), (child, "Techo")):
+            connection.execute(text("INSERT INTO projects(id,company_id,name,status) VALUES (:id,:company,:name,'PLANNING')"),
+                               {"id": project_id, "company": company, "name": name})
+    before = snapshot(engine)
+    assert maintenance.schema_roundtrip(engine)
+    assert snapshot(engine) == before
+    maintenance.change_source(engine, "migrate", rehearsal_passed=True)
+    with engine.begin() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM projects WHERE parent_project_id IS NOT NULL")) == 0
+        connection.execute(text("UPDATE projects SET parent_project_id=:root WHERE id=:child"), {"root": root, "child": child})
+    linked = snapshot(engine)[1]
+    maintenance.change_source(engine, "rollback", rehearsal_passed=True)
+    assert snapshot(engine)[1] == linked
+    with engine.connect() as connection:
+        assert connection.scalar(text("SELECT parent_project_id FROM projects WHERE id=:id"), {"id": child}) == root
+    maintenance.change_source(engine, "migrate", rehearsal_passed=True)
+    assert snapshot(engine)[1] == linked
+
+
 def test_verification_failure_rolls_back_actual_ddl_and_revision(recovery_database, monkeypatch):
     engine = recovery_database
     before = snapshot(engine)

@@ -32,6 +32,7 @@ class TreasuryAccountResponse(CamelModel):
 
 
 class RemittanceCreateRequest(CamelModel):
+    attributed_project_id: uuid.UUID | None = None
     company_id: uuid.UUID
     treasury_account_id: uuid.UUID
     counter_account_id: uuid.UUID
@@ -48,6 +49,7 @@ class RemittanceCreateRequest(CamelModel):
 
 
 class RemittanceResponse(CamelModel):
+    attributed_project_id: uuid.UUID | None = None
     id: uuid.UUID
     company_id: uuid.UUID
     treasury_account_id: uuid.UUID

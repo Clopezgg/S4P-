@@ -37,6 +37,7 @@ export type WBSStatus = 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCE
 
 export interface Project {
   id: string
+  parentProjectId?: string | null
   companyId: string
   name: string
   code: string | null
@@ -61,6 +62,17 @@ export interface Project {
   stateDepartment: string | null
   country: string | null
   locationReference: string | null
+}
+
+export interface ProjectSpending {
+  projectId: string
+  currencyCode: string
+  totalExpenses: string
+  totalRemittances: string | null
+  scopeLimited: boolean
+  expenseCount: number
+  projects: { id: string; name: string; parentProjectId: string | null; totalExpenses: string }[]
+  expenses: { id: string; projectId: string; documentNumber: string; effectiveDate: string; description: string | null; amount: string; status: string }[]
 }
 
 export interface ProjectFinancialSummary {

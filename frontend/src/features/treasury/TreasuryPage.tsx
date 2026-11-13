@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Badge,
@@ -26,6 +26,7 @@ import {
   type CreateTransferPayload,
 } from '../../services/treasuryService'
 import type { Account } from '../../types/masterData'
+import type { Project } from '../../types/project'
 import type { Remittance, TreasuryAccount } from '../../types/treasury'
 import { formatMoney } from '../../utils/currency'
 import { useAuth } from '../auth/auth-context'
@@ -36,6 +37,26 @@ import './TreasuryPage.css'
 
 type ModalKind = 'account' | 'remittance' | 'expense' | 'transfer' | null
 const REMITTANCE_PAGE_SIZE = 25
+
+export function ProjectTreasuryEntry({ project, kind, onClose }: {
+  project: Project; kind: 'expense' | 'remittance'; onClose: () => void
+}) {
+  const { activeCompanyId, activeCompany } = useActiveCompany()
+  const matchesCompany = project.companyId === activeCompanyId
+  const accounts = useQuery({ queryKey: ['master-data', 'accounts', activeCompanyId],
+    queryFn: () => masterDataService.listAccounts(activeCompanyId as string), enabled: matchesCompany })
+  const treasury = useQuery({ queryKey: ['treasury', 'accounts', activeCompanyId],
+    queryFn: () => treasuryService.listAccounts(activeCompanyId as string), enabled: matchesCompany })
+  if (!matchesCompany) return <Modal open title="Revisa la empresa" onClose={onClose}><p>Vuelve a seleccionar un proyecto de la empresa activa.</p></Modal>
+  if (accounts.isLoading || treasury.isLoading) return <Modal open title="Preparando registro" onClose={onClose}><LoadingState label="Cargando cuentas…" /></Modal>
+  if (accounts.isError || treasury.isError) return <Modal open title="No se pudieron cargar las cuentas" onClose={onClose}><ErrorState description="Revisa tu acceso a las cuentas de Tesorería y al catálogo contable." onRetry={() => { accounts.refetch(); treasury.refetch() }} /></Modal>
+  const glAccounts = accounts.data ?? []
+  const compatibleAccounts = (treasury.data ?? []).filter(account => account.currencyCode === (project.currencyCode || activeCompany?.functionalCurrencyCode))
+  return kind === 'expense' ? <GeneralExpenseModal companyId={project.companyId} initialProject={project}
+    treasuryAccounts={compatibleAccounts} expenseAccounts={glAccounts.filter(a => a.isPostable && a.accountType === 'EXPENSE')} onClose={onClose} /> :
+    <RemittanceModal companyId={project.companyId} initialProject={project} functionalCurrencyCode={activeCompany?.functionalCurrencyCode ?? ''}
+      treasuryAccounts={compatibleAccounts} counterAccounts={glAccounts.filter(a => a.isPostable && ['EQUITY', 'LIABILITY', 'REVENUE'].includes(a.accountType))} onClose={onClose} />
+}
 const CREATE_TREASURY_ACCOUNT_ROLES = new Set(['Administrator', 'Finance Manager'])
 const TREASURY_KIND_LABELS: Record<TreasuryAccount['kind'], string> = {
   BANK: 'Banco',
@@ -485,12 +506,14 @@ function TreasuryAccountModal({
 }
 
 function RemittanceModal({
+  initialProject,
   companyId,
   functionalCurrencyCode,
   treasuryAccounts,
   counterAccounts,
   onClose,
 }: {
+  initialProject?: Project
   companyId: string
   functionalCurrencyCode: string
   treasuryAccounts: TreasuryAccount[]
@@ -545,6 +568,8 @@ function RemittanceModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['treasury', 'accounts'] })
       queryClient.invalidateQueries({ queryKey: ['treasury', 'remittances'] })
+      queryClient.invalidateQueries({ queryKey: ['project'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       onClose()
     },
   })
@@ -569,6 +594,7 @@ function RemittanceModal({
           mutation.mutate({
             payload: {
               companyId,
+              attributedProjectId: initialProject?.id ?? null,
               treasuryAccountId: effectiveTreasuryAccountId,
               counterAccountId: effectiveCounterAccountId,
               originType,
@@ -587,7 +613,7 @@ function RemittanceModal({
         }}
       >
         <p className="nx-field__hint">
-          Las remesas son entradas de Tesorería CENTRAL y nunca piden proyecto. Cobros de clientes se registran en Cuentas por cobrar y movimientos entre bancos en Transferencia entre cuentas.
+          {initialProject ? `Remesa identificada para ${initialProject.name}. El dinero se recibe en la caja o banco de Tesorería.` : 'Las remesas son entradas de Tesorería. Cobros de clientes se registran en Cuentas por cobrar y movimientos entre bancos en Transferencia entre cuentas.'}
         </p>
         <Select
           name="treasuryAccountId"
@@ -743,19 +769,21 @@ function RemittanceModal({
 }
 
 function GeneralExpenseModal({
+  initialProject,
   companyId,
   treasuryAccounts,
   expenseAccounts,
   onClose,
 }: {
+  initialProject?: Project
   companyId: string
   treasuryAccounts: TreasuryAccount[]
   expenseAccounts: { id: string; name: string }[]
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
-  const [scope, setScope] = useState<'GENERAL' | 'PROJECT'>('GENERAL')
-  const [projectId, setProjectId] = useState('')
+  const [scope, setScope] = useState<'GENERAL' | 'PROJECT'>(initialProject ? 'PROJECT' : 'GENERAL')
+  const [projectId, setProjectId] = useState(initialProject?.id ?? '')
   const [treasuryAccountId, setTreasuryAccountId] = useState(treasuryAccounts[0]?.id ?? '')
   const [expenseAccountId, setExpenseAccountId] = useState(expenseAccounts[0]?.id ?? '')
   const [category, setCategory] = useState('administracion')
@@ -791,6 +819,8 @@ function GeneralExpenseModal({
     }) => treasuryService.createGeneralExpense(payload, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['treasury', 'accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['project'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       onClose()
     },
     onError: (error: unknown) => {
@@ -803,7 +833,8 @@ function GeneralExpenseModal({
   if (expenseAccounts.length === 0 || treasuryAccounts.length === 0) {
     return (
       <Modal open title="Registrar salida / gasto" onClose={onClose}>
-        <EmptyState title="Falta una cuenta de Tesorería o una cuenta registrable de gasto." />
+        <EmptyState title="Falta una caja/banco o una cuenta de gasto" description="Primero configura una cuenta pagadora en la moneda del proyecto y una cuenta de gasto. Después podrás registrar el movimiento aquí." />
+        <Link to="/finanzas/tesoreria">Configurar cuentas en Tesorería</Link>
       </Modal>
     )
   }
@@ -837,7 +868,7 @@ function GeneralExpenseModal({
           })
         }}
       >
-        <Select
+        {initialProject ? <p className="nx-field__hint">Gasto para: <strong>{initialProject.name}</strong></p> : <Select
           name="expenseScope"
           label="Alcance del gasto"
           value={scope}
@@ -851,8 +882,8 @@ function GeneralExpenseModal({
         >
           <option value="GENERAL">General — Sin proyecto</option>
           <option value="PROJECT">Proyecto — Atribuible a una obra</option>
-        </Select>
-        {scope === 'PROJECT' ? (
+        </Select>}
+        {scope === 'PROJECT' && !initialProject ? (
           <Select
             name="projectId"
             label="Proyecto"
