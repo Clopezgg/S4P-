@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   release-proof:
     name: Compare deployed SHA to approved main and check private backups
@@ -10,6 +11,13 @@ jobs:
     timeout-minutes: 8
     environment: production
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Require current protected main, independent reviewer and six effective push workflows
+        env:
+          GH_TOKEN: ${{ secrets.S4P_RELEASE_GOVERNANCE_TOKEN || github.token }}
+        run: python3 backend/scripts/release_provenance.py --expected-sha "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY"
       - name: Require independently signed corporate acceptance
         env:
           S4P_DB_CUTOVER_CERTIFIED: ${{ vars.S4P_DB_CUTOVER_CERTIFIED }}
@@ -61,3 +69,7 @@ jobs:
               raise AssertionError("Unauthenticated access unexpectedly accepted")
           print("PASS: exact SHA, production runtime, DB, private evidence, recent backup and auth guard")
           PY
+      - name: Recheck main and governance after live probes
+        env:
+          GH_TOKEN: ${{ secrets.S4P_RELEASE_GOVERNANCE_TOKEN || github.token }}
+        run: python3 backend/scripts/release_provenance.py --expected-sha "$GITHUB_SHA" --repository "$GITHUB_REPOSITORY"
