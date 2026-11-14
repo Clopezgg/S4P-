@@ -31,7 +31,11 @@ jobs:
           VITE_API_BASE_URL: /api
   backend:
     name: Backend transaction regressions
-    runs-on: ubuntu-latest
+    # Match the PostgreSQL 16 server with the runner's PostgreSQL 16
+    # pg_dump/pg_restore client. ubuntu-latest switched to Ubuntu 26.04
+    # (PG18 client) and its dump emits transaction_timeout, which PG16
+    # cannot execute; this is a toolchain mismatch, not a data failure.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
