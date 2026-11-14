@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.main import app
 from app.services.bootstrap_service import bootstrap_admin_if_needed
-from tests.helpers import login_admin
+from tests.helpers import create_company, login_admin
 from tests.test_financial_audit_atomicity import _invoice
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -45,7 +45,7 @@ def test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_down
 
             app.dependency_overrides[get_db] = target_db
             login_admin(client)
-            path, bank = _invoice(client, 'ar', approve=True)
+            legacy_company = create_company(client, name='Migration continuity QA')
             # End the response serializer's read transaction before ALTER TABLE.
             session.rollback()
             upgraded = migrate('upgrade', 'head')
@@ -55,6 +55,14 @@ def test_prior_schema_upgrade_preserves_partial_collection_and_blocks_lossy_down
             head_lines = heads.stdout.strip().splitlines()
             assert len(head_lines) == 1, heads.stdout
             expected_head = head_lines[0].split()[0]
+            with engine.connect() as connection:
+                assert connection.scalar(text(
+                    'SELECT COUNT(*) FROM companies WHERE id=CAST(:id AS uuid)'
+                ), {'id': legacy_company['id']}) == 1
+            # The old schema contains real company data. Create the financial
+            # transaction only after the migration has added the nullable
+            # remittance attribution column used by the current ORM.
+            path, bank = _invoice(client, 'ar', approve=True)
             partial = client.post(path + '/receipts', json={
                 'treasuryAccountId': bank['id'], 'amount': '25.00', 'receiptDate': '2026-01-20',
             })

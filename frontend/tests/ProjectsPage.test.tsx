@@ -86,9 +86,9 @@ describe('ProjectsPage', () => {
 
     render(renderApp('/proyectos'))
     const user = userEvent.setup()
-    await user.click(await screen.findByRole('button', { name: 'Crear proyecto básico' }))
+    await user.click(await screen.findByRole('button', { name: 'Nuevo proyecto' }))
     await user.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto inicial')
-    await user.click(screen.getByRole('button', { name: 'Guardar proyecto básico' }))
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
     await waitFor(() => expect(submitted).toMatchObject({
       companyId: 'c1', name: 'Proyecto inicial', currencyCode: 'HNL',
@@ -142,7 +142,7 @@ describe('ProjectsPage', () => {
     )
 
     render(renderApp('/proyectos'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo proyecto' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Configuración avanzada' }))
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Puente Río Grande')
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     // Paso 2 — ubicación real.
@@ -171,7 +171,7 @@ describe('ProjectsPage', () => {
     })
 
     render(renderApp('/proyectos'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo proyecto' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Configuración avanzada' }))
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'WBS incompleta')
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))

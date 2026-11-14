@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { renderApp } from './testUtils'
 
-function stubFetch() {
+function stubFetch(extraPermissions: string[] = []) {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockImplementation((input: RequestInfo | URL) => {
@@ -23,6 +23,7 @@ function stubFetch() {
               'treasury.voucher:read',
               'project:read',
               'workflow.approval:read',
+              ...extraPermissions,
             ],
           }),
         } as Response)
@@ -56,7 +57,7 @@ describe('Mobile bottom navigation', () => {
   })
 
   it('exposes a central FAB that opens Quick Create with permission-gated actions', async () => {
-    stubFetch()
+    stubFetch(['project:create'])
     const user = userEvent.setup()
     render(renderApp('/inicio'))
 
@@ -66,5 +67,18 @@ describe('Mobile bottom navigation', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Crear' })
     expect(within(sheet).getByRole('button', { name: /nuevo comprobante/i })).toBeInTheDocument()
     expect(within(sheet).getByRole('button', { name: /nuevo proyecto/i })).toBeInTheDocument()
+  })
+
+  it('hides project creation from users with only project:read', async () => {
+    stubFetch()
+    const user = userEvent.setup()
+    render(renderApp('/inicio'))
+
+    const nav = await screen.findByRole('navigation', { name: /navegación principal \(móvil\)/i })
+    await user.click(within(nav).getByRole('button', { name: 'Crear' }))
+
+    const sheet = await screen.findByRole('dialog', { name: 'Crear' })
+    expect(within(sheet).queryByRole('button', { name: /nuevo proyecto/i })).not.toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: /nuevo comprobante/i })).toBeInTheDocument()
   })
 })
