@@ -9,7 +9,6 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import Field
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -22,7 +21,9 @@ from app.schemas.base import CamelModel
 from app.services import contract_payment_service as cps
 from app.services import obligation_schedule_service as schedules
 from app.services.permission_service import (
-    accessible_project_ids, assert_company_access, user_has_permission,
+    accessible_project_ids,
+    assert_company_access,
+    user_has_permission,
 )
 
 router = APIRouter(prefix="/commitments", tags=["commitments"])
