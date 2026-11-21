@@ -40,12 +40,17 @@ def test_private_plan_payment_tracking_without_gl_posting(client):
     assert any(line["dueDate"] == "2027-02-28" for line in rows)
 
     payment = {
-        "occurrenceDueDate": "2026-12-30", "paymentDate": "2026-12-01",
+        "occurrenceDueDate": "2026-12-30", "paymentDate": "2026-11-01",
         "amount": "400.00", "reference": "RECIBO-UNICO-TEST",
     }
     paid = client.post(f"/api/obligation-plans/{plan['id']}/settlements", json=payment)
     assert paid.status_code == 201, paid.text
     assert paid.json()["accountingStatus"] == "UNPOSTED_MANUAL"
+
+    future = client.post(f"/api/obligation-plans/{plan['id']}/settlements", json={
+        **payment, "reference": "FUTURO-TEST", "paymentDate": "2030-01-01",
+    })
+    assert future.status_code == 422
 
     again = client.post(f"/api/obligation-plans/{plan['id']}/settlements", json=payment)
     assert again.status_code == 409
