@@ -85,7 +85,7 @@ export function CommitmentsCenterPage() {
               <strong>{overdueCount}</strong>
             </article>
             <article className="s4p-commitments__metric">
-              <span>Por pagar · separado por moneda</span>
+              <span>Total referencial · por moneda</span>
               {Object.entries(query.data.pendingByCurrency).length ? (
                 Object.entries(query.data.pendingByCurrency).map(([currency, amount]) => (
                   <strong key={currency}>{formatMoney(amount, currency)}</strong>
@@ -101,6 +101,26 @@ export function CommitmentsCenterPage() {
               ) : <strong>Sin vencimientos</strong>}
             </article>
           </div>
+
+          <section className="s4p-commitments__panel" aria-label="Separación de fondos por ámbito">
+            <h2>Compromisos por ámbito</h2>
+            <p>Los totales globales son informativos: los compromisos personales, empresariales y de terceros no pertenecen a un fondo común.</p>
+            <div className="s4p-commitments__metrics">
+              {[
+                ['PERSONAL', 'Personal'],
+                ['BUSINESS', 'Empresa'],
+                ['THIRD_PARTY', 'Fondos de terceros'],
+              ].map(([scope, label]) => (
+                <article className="s4p-commitments__metric" key={scope}>
+                  <span>{label}</span>
+                  {Object.entries(query.data.pendingByScope[scope] ?? {}).length ? (
+                    Object.entries(query.data.pendingByScope[scope] ?? {}).map(([currency, total]) =>
+                      <strong key={currency}>{formatMoney(total, currency)}</strong>)
+                  ) : <strong>Sin obligaciones</strong>}
+                </article>
+              ))}
+            </div>
+          </section>
 
           <section className="s4p-commitments__panel" aria-label="Lista de compromisos">
             <div className="s4p-commitments__toolbar">
