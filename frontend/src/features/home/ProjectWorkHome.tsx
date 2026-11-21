@@ -6,6 +6,7 @@ import { projectService } from '../../services/projectService'
 import { apiFetch } from '../../services/httpClient'
 import { useMutationError } from '../../hooks/useMutationError'
 import { formatMoney } from '../../utils/currency'
+import { serializeCsv } from '../../utils/csvExport'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { useAuth } from '../auth/auth-context'
 import { useActiveContext } from '../context/useActiveContext'
@@ -77,6 +78,24 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
       && (!expenseStatus || row.status === expenseStatus)
   })
   const selectedExpense = data.expenses.find(row => row.id === selectedExpenseId)
+  function exportVisibleExpenses() {
+    const rows = [
+      ['Fecha', 'Obra / trabajo', 'Documento', 'Concepto', 'Importe', 'Moneda', 'Estado'],
+      ...filteredExpenses.map(row => [
+        row.effectiveDate, projectNames.get(row.projectId) ?? '', row.documentNumber,
+        row.description ?? '', row.amount, data.currencyCode,
+        row.status === 'REVERSED' ? 'Revertido' : 'Contabilizado',
+      ]),
+    ]
+    const url = URL.createObjectURL(new Blob([serializeCsv(rows)], { type: 'text/csv;charset=utf-8' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'S4P-gastos-obra-' + projectId + '-pagina-' + (offset / 25 + 1) + '.csv'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
   return <div className="nx-home">
     <header className="nx-home__header"><div>
       <p className="nx-home__eyebrow">{p.parentProjectId ? 'Trabajo de la obra' : 'Obra / proyecto'}</p>
@@ -88,6 +107,8 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
       {grants.has('treasury.general_expense:create') && needsAccounts ? <Button disabled={p.status !== 'ACTIVE'} onClick={() => setEntry('expense')}>Registrar gasto</Button> : null}
       {grants.has('treasury.remittance:create') && needsAccounts ? <Button variant="secondary" onClick={() => setEntry('remittance')}>Registrar remesa</Button> : null}
       <a href="#gastos-de-la-obra">Todos los gastos</a>
+      {grants.has('project:update') ? <Link to={'/proyectos/' + projectId}>Editar obra</Link> : null}
+      {grants.has('contract.payment_schedule:read') ? <Link to="/finanzas/libro-contractual">Contratos y pagos</Link> : null}
     </div>
     {p.status !== 'ACTIVE' ? <p className="nx-field__hint">Para registrar gastos, el proyecto debe estar activo.</p> : null}
     {grants.has('treasury.general_expense:create') && !needsAccounts ? <p role="alert">Tu usuario necesita acceso de lectura a las cuentas pagadoras y al catálogo de cuentas para registrar gastos.</p> : null}
@@ -129,6 +150,7 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
           </Select>
         </div>
         <p className="nx-field__hint">Los filtros afectan los movimientos cargados en esta página. Los totales superiores siempre corresponden a toda la obra.</p>
+        {filteredExpenses.length > 0 ? <Button variant="secondary" onClick={exportVisibleExpenses}>Exportar movimientos visibles (CSV para Excel)</Button> : null}
       </div>
       {filteredExpenses.length ? <Table rows={filteredExpenses} getRowKey={row => row.id} columns={[
         { key: 'date', header: 'Fecha', render: row => row.effectiveDate },

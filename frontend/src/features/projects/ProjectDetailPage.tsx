@@ -459,6 +459,7 @@ export function ProjectDetailPage() {
           reales y conservar evidencia auditable.
         </p>
         <div className="nx-treasury__actions">
+          <Link to="/operacion/movimientos" onClick={() => setActiveProject(project.id)}>Gastos, remesas y anulaciones de la obra</Link>
           <Link to="/finanzas/tesoreria" onClick={() => setActiveProject(project.id)}>Registrar aportes y remesas</Link>
           <Link to="/abastecimiento/proveedores" onClick={() => setActiveProject(project.id)}>Proveedores y contratistas</Link>
           <Link to="/abastecimiento/contratos" onClick={() => setActiveProject(project.id)}>Contratos de ejecución</Link>
