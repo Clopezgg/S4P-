@@ -6,6 +6,7 @@ import { commitmentsService, type CommitmentLine } from '../../services/commitme
 import { friendlyApiMessage } from '../../services/httpClient'
 import { ObligationPlansPanel } from './ObligationPlansPanel'
 import { ManualSettlementForm } from './ManualSettlementForm'
+import { WorkNeedsPanel } from './WorkNeedsPanel'
 import { formatMoney } from '../../utils/currency'
 import './CommitmentsCenterPage.css'
 
@@ -201,6 +202,7 @@ export function CommitmentsCenterPage() {
       )}
 
       {activeCompanyId && <ObligationPlansPanel companyId={activeCompanyId} />}
+      {activeCompanyId && <WorkNeedsPanel companyId={activeCompanyId} />}
 
       <section className="s4p-commitments__panel">
         <h2>Administrar otras necesidades</h2>
