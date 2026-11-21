@@ -87,11 +87,26 @@ def overview(
             SupplierInvoice.company_id == company_id,
             SupplierInvoice.status.in_(("APPROVED", "SCHEDULED", "PARTIALLY_PAID")),
             SupplierInvoice.due_date <= until,
-            # A linked contractual invoice is represented by the installment below.
-            SupplierInvoice.supplier_contract_id.is_(None),
-            SupplierInvoice.contract_installment_id.is_(None),
+            # Only invoices with a corresponding visible schedule are de-duplicated below.
         )).scalars().all()
+        scheduled_contract_ids: set[uuid.UUID] = set()
+        if user_has_permission(
+            db, user_id=user.id, resource="contract.payment_schedule", action="read",
+        ):
+            contract_scope = accessible_project_ids(
+                db, user_id=user.id, resource="contract.payment_schedule", action="read",
+            )
+            visible_schedules = db.execute(select(ContractPaymentSchedule).where(
+                ContractPaymentSchedule.company_id == company_id,
+                ContractPaymentSchedule.status != "CANCELLED",
+            )).scalars().all()
+            scheduled_contract_ids = {
+                item.supplier_contract_id for item in visible_schedules
+                if contract_scope is None or item.project_id is None or item.project_id in contract_scope
+            }
         for invoice in invoices:
+            if invoice.supplier_contract_id in scheduled_contract_ids:
+                continue
             if permitted is not None and invoice.project_id is not None and invoice.project_id not in permitted:
                 continue
             total = invoice.amount + invoice.tax_amount
