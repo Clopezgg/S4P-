@@ -57,8 +57,8 @@ from app.api.routes import (
     treasury,
     treasury_advanced,
     voucher_verification,
-    workforce,
     work_needs,
+    workforce,
 )
 from app.api.security_headers import register_security_headers
 from app.core.config import get_settings
