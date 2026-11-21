@@ -4,6 +4,7 @@ import { Badge, Button, Card, EmptyState, LoadingState, Select, Table, type Tabl
 import { apService, type PaymentProposalItem, type SupplierInvoice } from '../../services/apArService'
 import { treasuryService } from '../../services/treasuryService'
 import { formatMoney } from '../../utils/currency'
+import { daysUntilBusinessDate } from '../../utils/dueDateUtils'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { AccountsPayablePage } from './AccountsPayablePage'
 import { PaymentPlanModal } from './PaymentPlanModal'
@@ -42,6 +43,10 @@ export function AccountsPayableWorkspace() {
     { key: 'invoice', header: 'Factura', render: (row) => row.invoiceNumber },
     { key: 'supplier', header: 'Proveedor', render: (row) => row.supplierName ?? '—' },
     { key: 'due', header: 'Vence', render: (row) => row.dueDate },
+    { key: 'countdown', header: 'Plazo', render: (row) => {
+      const days = daysUntilBusinessDate(row.dueDate)
+      return days === null ? '—' : days < 0 ? 'Vencida hace ' + (-days) + ' días' : days === 0 ? 'Vence hoy' : 'En ' + days + ' días'
+    } },
     { key: 'remaining', header: 'A pagar', render: (row) => formatMoney(row.remaining, currencyCode) },
     { key: 'actions', header: 'Acciones', render: row => {
       const invoice = invoices.find(item => item.id === row.invoiceId)

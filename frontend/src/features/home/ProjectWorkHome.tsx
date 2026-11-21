@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, EmptyState, ErrorState, Input, LoadingState, Select, StatCard, Table } from '../../design-system'
 import { projectService } from '../../services/projectService'
+import { apiFetch } from '../../services/httpClient'
+import { useMutationError } from '../../hooks/useMutationError'
 import { formatMoney } from '../../utils/currency'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { useAuth } from '../auth/auth-context'
@@ -11,6 +13,7 @@ import { ProjectTreasuryEntry } from '../treasury/TreasuryPage'
 
 export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const { user } = useAuth()
+  const handleMutationError = useMutationError()
   const { activeCompanyId } = useActiveCompany()
   const { setActiveProject } = useActiveContext()
   const queryClient = useQueryClient()
@@ -26,6 +29,8 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const [expenseWork, setExpenseWork] = useState('')
   const [expenseStatus, setExpenseStatus] = useState('')
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
+  const [reverseDocumentId, setReverseDocumentId] = useState<string | null>(null)
+  const [reversalReason, setReversalReason] = useState('')
   const [parentId, setParentId] = useState<string | null>(null)
   const grants = new Set(user?.permissions ?? [])
   const project = useQuery({ queryKey: ['project', projectId], queryFn: () => projectService.get(projectId) })
@@ -40,6 +45,20 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
     onSuccess: (created) => { refresh(); setWorkName(''); setActiveProject(created.id) },
   })
   const linkParent = useMutation({ mutationFn: () => projectService.update(projectId, { parentProjectId: parentId === null ? (project.data?.parentProjectId ?? null) : (parentId || null) }), onSuccess: refresh })
+  const reverseExpense = useMutation({
+    mutationFn: ({ documentId, reason }: { documentId: string; reason: string }) =>
+      apiFetch('/accounting/journal-entries/' + encodeURIComponent(documentId) + '/reverse', {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+    onSuccess: () => {
+      setReverseDocumentId(null)
+      setSelectedExpenseId(null)
+      setReversalReason('')
+      refresh()
+    },
+    onError: error => handleMutationError(error, 'Anular movimiento contable'),
+  })
   if (project.isLoading || spending.isLoading) return <LoadingState label="Cargando gastos de la obra…" />
   if (!project.data || !spending.data || project.isError || spending.isError) return <ErrorState description="No se pudieron cargar los gastos del proyecto." onRetry={() => { project.refetch(); spending.refetch() }} />
   if (project.data.companyId !== activeCompanyId) return <EmptyState title="Selecciona un proyecto de la empresa activa" />
@@ -128,8 +147,23 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
         <p className="nx-field__hint">Los gastos contabilizados no pueden borrarse directamente. Las correcciones deben realizarse mediante una reversión autorizada, conservando el historial.</p>
         <div className="nx-work-actions">
           {grants.has('accounting.journal_entry:read') ? <Link to="/finanzas/inspector">Abrir inspector de transacciones</Link> : null}
-          <Button variant="secondary" onClick={() => setSelectedExpenseId(null)}>Cerrar detalle</Button>
+          {selectedExpense.status === 'POSTED' && grants.has('accounting.journal_entry:reverse') ?
+            <Button variant="secondary" onClick={() => { setReverseDocumentId(selectedExpense.id); setReversalReason('') }}>
+              Anular mediante reversión
+            </Button> : null}
+          <Button variant="secondary" onClick={() => { setSelectedExpenseId(null); setReverseDocumentId(null) }}>Cerrar detalle</Button>
         </div>
+        {reverseDocumentId === selectedExpense.id ? <div className="nx-treasury__form">
+          <p role="alert">Confirmación de anulación: se registrará un asiento inverso y se conservará el movimiento original. Esta operación requiere permiso financiero y queda auditada.</p>
+          <Input label="Motivo de la anulación (mínimo 10 caracteres)" value={reversalReason} onChange={event => setReversalReason(event.target.value)} required />
+          <div className="nx-work-actions">
+            <Button disabled={reversalReason.trim().length < 10 || reverseExpense.isPending} loading={reverseExpense.isPending}
+              onClick={() => reverseExpense.mutate({ documentId: selectedExpense.id, reason: reversalReason.trim() })}>
+              Confirmar reversión contable
+            </Button>
+            <Button variant="secondary" disabled={reverseExpense.isPending} onClick={() => setReverseDocumentId(null)}>Cancelar</Button>
+          </div>
+        </div> : null}
       </Card> : null}
       {data.expenseCount > 25 ? <div className="nx-work-actions"><p>Movimientos {offset + 1}–{offset + data.expenses.length} de {data.expenseCount}. El total incluye todos.</p>
         <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 25))}>Anteriores</Button>
