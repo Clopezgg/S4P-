@@ -89,6 +89,10 @@ export function HomePage() {
             ) : null}
 
             <MiTrabajoHoy summary={companySummaryQuery.data} />
+            <Card title="Compromisos y pendientes">
+              <p>Consulta facturas, cuotas de contratos, saldos y próximos vencimientos en un solo lugar.</p>
+              <Link to="/inicio/compromisos">Ver próximos pagos y vencimientos</Link>
+            </Card>
 
             <HomeForecastCard companyId={activeCompanyId} />
 
