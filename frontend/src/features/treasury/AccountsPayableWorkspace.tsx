@@ -6,12 +6,16 @@ import { treasuryService } from '../../services/treasuryService'
 import { formatMoney } from '../../utils/currency'
 import { daysUntilBusinessDate } from '../../utils/dueDateUtils'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
+import { useAuth } from '../auth/auth-context'
+import { PaySupplierInvoiceButton } from './SupplierInvoiceFlows'
 import { AccountsPayablePage } from './AccountsPayablePage'
 import { PaymentPlanModal } from './PaymentPlanModal'
 import { SupplierPaymentHistoryModal } from './SupplierPaymentHistoryModal'
 
 export function AccountsPayableWorkspace() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const canPay = Boolean(user?.permissions?.includes('ap.supplier_payment:create'))
   const [invoiceId, setInvoiceId] = useState('')
   const [horizonDays, setHorizonDays] = useState(14)
   const [historyInvoice, setHistoryInvoice] = useState<SupplierInvoice | null>(null)
@@ -51,6 +55,15 @@ export function AccountsPayableWorkspace() {
     { key: 'actions', header: 'Acciones', render: row => {
       const invoice = invoices.find(item => item.id === row.invoiceId)
       return invoice ? <div className="nx-treasury__actions">
+        {canPay && ['APPROVED', 'SCHEDULED', 'PARTIALLY_PAID'].includes(invoice.status) && treasuryQuery.data?.length ?
+          <PaySupplierInvoiceButton
+            invoice={invoice}
+            companyId={activeCompanyId}
+            treasuryAccounts={treasuryQuery.data}
+            remaining={invoice.amount + invoice.taxAmount - invoice.amountPaid}
+            selectedInstallmentId={invoice.contractInstallmentId}
+            label="Pagar cuota o saldo"
+          /> : null}
         <Button variant="secondary" onClick={() => setPlanInvoice(invoice)}>Ver calendario</Button>
         <Button variant="secondary" onClick={() => setHistoryInvoice(invoice)}>Ver pagos</Button>
       </div> : null
@@ -135,12 +148,21 @@ export function AccountsPayableWorkspace() {
               ))}
             </Select>
             <div className="nx-treasury__actions">
+              {canPay && selectedInvoice && ['APPROVED', 'SCHEDULED', 'PARTIALLY_PAID'].includes(selectedInvoice.status) ?
+                <PaySupplierInvoiceButton
+                  invoice={selectedInvoice}
+                  companyId={activeCompanyId}
+                  treasuryAccounts={treasuryQuery.data ?? []}
+                  remaining={selectedInvoice.amount + selectedInvoice.taxAmount - selectedInvoice.amountPaid}
+                  selectedInstallmentId={selectedInvoice.contractInstallmentId}
+                  label="Registrar pago parcial o total"
+                /> : null}
               <Button
                 variant="secondary"
                 disabled={!selectedInvoice}
                 onClick={() => selectedInvoice && setHistoryInvoice(selectedInvoice)}
               >
-                Ver pagos y reversals
+                Ver pagos y anulaciones
               </Button>
               <Button
                 variant="secondary"

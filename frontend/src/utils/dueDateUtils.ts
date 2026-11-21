@@ -5,7 +5,8 @@ export function daysUntilBusinessDate(dueDate: string, today = businessTodayIso(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return null
   const parse = (s: string): number => {
     const [year, month, day] = s.split('-').map(Number)
-    return Date.UTC(year, month - 1, day)
+    const value = Date.UTC(year, month - 1, day)
+    return new Date(value).toISOString().slice(0, 10) === s ? value : NaN
   }
   const due = parse(dueDate)
   const now = parse(today)
