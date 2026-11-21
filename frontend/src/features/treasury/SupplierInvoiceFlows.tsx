@@ -70,6 +70,10 @@ export function AccountsPayablePage() {
   const handleMutationError = useMutationError()
   const [openCreate, setOpenCreate] = useState(false)
   const [submitInvoiceId, setSubmitInvoiceId] = useState<string | null>(null)
+  const [cancelInvoiceId, setCancelInvoiceId] = useState<string | null>(null)
+  const { user } = useAuth()
+  const canApproveInvoice = Boolean(user?.permissions?.includes('ap.supplier_invoice:approve'))
+  const canCancelInvoice = Boolean(user?.permissions?.includes('ap.supplier_invoice:cancel'))
   const [filterStatus, setFilterStatus] = useState('')
   const [filterSupplier, setFilterSupplier] = useState('')
 
@@ -109,6 +113,14 @@ export function AccountsPayablePage() {
     },
     onError: (error) => handleMutationError(error, 'Aprobar factura de proveedor'),
   })
+  const cancel = useMutation({
+    mutationFn: (id: string) => apService.cancelInvoice(id),
+    onSuccess: () => {
+      setCancelInvoiceId(null)
+      queryClient.invalidateQueries({ queryKey: ['ap', 'supplier-invoices', activeCompanyId] })
+    },
+    onError: (error) => handleMutationError(error, 'Cancelar factura de proveedor'),
+  })
 
   if (companiesLoading) return <LoadingState label="Cargando…" />
   if (companies.length === 0) {
@@ -146,15 +158,20 @@ export function AccountsPayablePage() {
         <div className="nx-treasury__actions">
           {row.status === 'DRAFT' ? (
             <>
-              <Button variant="secondary" onClick={() => approve.mutate(row.id)} loading={approve.isPending}>
+              {canApproveInvoice ? <Button variant="secondary" onClick={() => approve.mutate(row.id)} loading={approve.isPending}>
                 Aprobar
-              </Button>
+              </Button> : null}
               <Button variant="ghost" onClick={() => setSubmitInvoiceId(row.id)}>
                 Enviar a aprobación
               </Button>
             </>
           ) : null}
-          {['APPROVED', 'SCHEDULED', 'PARTIALLY_PAID'].includes(row.status) && treasuryAccounts.length > 0 ? (
+          {canCancelInvoice && ['DRAFT', 'REVIEW'].includes(row.status) ? (
+             <Button variant="secondary" onClick={() => setCancelInvoiceId(row.id)}>
+               Cancelar {row.status === 'DRAFT' ? 'borrador' : 'solicitud'}
+             </Button>
+           ) : null}
+           {['APPROVED', 'SCHEDULED', 'PARTIALLY_PAID'].includes(row.status) && treasuryAccounts.length > 0 ? (
             <PaySupplierInvoiceButton
               invoice={row}
               companyId={activeCompanyId as string}
@@ -215,6 +232,13 @@ export function AccountsPayablePage() {
         emptyMessage="Aún no hay facturas u obligaciones de proveedor registradas."
       />
 
+      {cancelInvoiceId ? <Modal open title="Confirmar cancelación de factura" onClose={() => setCancelInvoiceId(null)}>
+        <p>El borrador o solicitud quedará en estado Cancelado y permanecerá en el historial. No se eliminará de la base de datos.</p>
+        <div className="nx-treasury__actions">
+          <Button variant="secondary" disabled={cancel.isPending} onClick={() => setCancelInvoiceId(null)}>Conservar factura</Button>
+          <Button loading={cancel.isPending} disabled={cancel.isPending} onClick={() => cancel.mutate(cancelInvoiceId)}>Confirmar cancelación</Button>
+        </div>
+      </Modal> : null}
       {openCreate && activeCompanyId ? (
         <CreateSupplierInvoiceModal
           companyId={activeCompanyId}

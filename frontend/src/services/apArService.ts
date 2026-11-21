@@ -133,6 +133,10 @@ export const apService = {
     normalizeSupplierInvoice(
       await apiFetch<SupplierInvoice>(`/ap/supplier-invoices/${id}/approve`, { method: 'POST' }),
     ),
+  cancelInvoice: async (id: string) =>
+    normalizeSupplierInvoice(
+      await apiFetch<SupplierInvoice>(`/ap/supplier-invoices/${id}/cancel`, { method: 'POST' }),
+    ),
   submitForApproval: async (id: string, assignedTo: string) =>
     normalizeSupplierInvoice(
       await apiFetch<SupplierInvoice>(`/ap/supplier-invoices/${id}/submit-for-approval`, {
