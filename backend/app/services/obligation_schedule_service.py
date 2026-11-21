@@ -18,10 +18,11 @@ def due_in_month(year: int, month: int, day: int) -> date:
 
 def occurrence_dates(plan: ObligationPlan, until: date) -> list[date]:
     first = plan.first_due_date
-    if first > until or plan.status == "CANCELLED":
+    if (first > until or plan.status == "CANCELLED"
+            or (plan.last_due_date is not None and first > plan.last_due_date)):
         return []
     if plan.recurrence == "ONCE":
-        return [first] if plan.last_due_date is None or first <= plan.last_due_date else []
+        return [first]
     dates = [first]
     year, month = first.year, first.month
     for _ in range(600):
