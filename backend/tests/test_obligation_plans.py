@@ -131,3 +131,18 @@ def test_monthly_schedule_rejects_inverted_bounds_defensively():
         due_day=31, recurrence="MONTHLY", status="ACTIVE",
     )
     assert occurrence_dates(plan, date(2027, 12, 31)) == []
+
+
+def test_monthly_schedule_leap_day_and_horizon_are_bounded():
+    """A 31st-day plan must clamp leap February without leaking beyond the horizon."""
+    plan = SimpleNamespace(
+        first_due_date=date(2028, 1, 31), last_due_date=date(2028, 3, 31),
+        due_day=31, recurrence="MONTHLY", status="ACTIVE",
+    )
+    assert occurrence_dates(plan, date(2028, 2, 28)) == [date(2028, 1, 31)]
+    assert occurrence_dates(plan, date(2028, 2, 29)) == [
+        date(2028, 1, 31), date(2028, 2, 29),
+    ]
+    assert occurrence_dates(plan, date(2028, 3, 31)) == [
+        date(2028, 1, 31), date(2028, 2, 29), date(2028, 3, 31),
+    ]
