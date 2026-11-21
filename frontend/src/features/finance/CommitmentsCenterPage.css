@@ -33,3 +33,24 @@
 .s4p-commitments__disclaimer { border-top: 1px solid var(--nx-color-border, #e4e9f0); padding-top: 14px; }
 @media(max-width: 1000px) { .s4p-commitments__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .s4p-commitments__row { grid-template-columns: 120px minmax(0,1fr) auto; } .s4p-commitments__money { grid-column: 2; } }
 @media(max-width: 620px) { .s4p-commitments__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .s4p-commitments__row { display: flex; align-items: flex-start; flex-direction: column; gap: 9px; } .s4p-commitments__money { margin: 2px 0; } .s4p-commitments__hero { flex-direction: column; } }
+
+/* Recurring obligation editor and external evidence form */
+.s4p-commitments__disclosure { cursor: pointer; font-weight: 800; padding: 13px 0; color: #1769d2; }
+.s4p-commitments__form { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; padding: 16px 0; }
+.s4p-commitments__form label, .s4p-commitments__settlement label { display: flex; flex-direction: column; gap: 5px; font-size: .8rem; color: var(--nx-color-text-secondary, #53657a); }
+.s4p-commitments__form input, .s4p-commitments__form select, .s4p-commitments__settlement input {
+  border: 1px solid var(--nx-color-border, #bcccdc); border-radius: 7px; padding: 9px 11px; background: var(--nx-color-surface, white); color: inherit; width: 100%;
+}
+.s4p-commitments__form-note { align-self: center; font-size: .82rem; }
+.s4p-commitments__form button[type=submit], .s4p-commitments__settlement button[type=submit] { border: 0; background: #1769d2; color: white; border-radius: 8px; padding: 11px 16px; cursor: pointer; font-weight: 700; }
+.s4p-commitments__form button:disabled, .s4p-commitments__settlement button:disabled { opacity: .55; cursor: not-allowed; }
+.s4p-commitments__plans { display: flex; flex-direction: column; gap: 10px; }
+.s4p-commitments__plan { display: flex; gap: 18px; justify-content: space-between; align-items: center; padding: 13px 0; border-top: 1px solid var(--nx-color-border, #e2e8f0); }
+.s4p-commitments__plan p { margin: 5px 0; }
+.s4p-commitments__plan small { color: var(--nx-color-text-secondary, #53657a); }
+.s4p-commitments__settlement { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; border: 1px solid var(--nx-color-border, #dfe7f0); border-radius: 10px; padding: 14px; }
+.s4p-commitments__settlement > strong, .s4p-commitments__settlement > p, .s4p-commitments__settlement > div { grid-column: 1 / -1; margin: 0; }
+.s4p-commitments__row > button { cursor: pointer; background: transparent; border: 1px solid #1769d2; color: #1769d2; border-radius: 7px; padding: 8px 12px; }
+.s4p-commitments__error { color: #b42929 !important; }
+.s4p-commitments__success { color: #13805e !important; }
+@media(max-width: 620px) { .s4p-commitments__form { grid-template-columns: minmax(0,1fr); } .s4p-commitments__settlement { grid-template-columns: minmax(0,1fr); width: 100%; } .s4p-commitments__plan { align-items: flex-start; flex-direction: column; } }
