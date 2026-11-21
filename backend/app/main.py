@@ -58,6 +58,7 @@ from app.api.routes import (
     treasury_advanced,
     voucher_verification,
     workforce,
+    work_needs,
 )
 from app.api.security_headers import register_security_headers
 from app.core.config import get_settings
@@ -161,6 +162,7 @@ def create_app() -> FastAPI:
     app.include_router(contract_payments.router, prefix="/api")
     app.include_router(commitments.router, prefix="/api")
     app.include_router(obligation_plans.router, prefix="/api")
+    app.include_router(work_needs.router, prefix="/api")
     app.include_router(master_data.router, prefix="/api")
     app.include_router(access_management.router, prefix="/api")
     app.include_router(master_dimensions.router, prefix="/api")
