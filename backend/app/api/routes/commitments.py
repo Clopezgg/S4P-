@@ -44,6 +44,7 @@ class CommitmentLine(CamelModel):
     detail_url: str
     plan_id: uuid.UUID | None = None
     accounting_status: str = "ERP"
+    scope: str = "BUSINESS"
     days_until_due: int = 0
     alert_now: bool = False
 
@@ -53,6 +54,8 @@ class CommitmentsOverview(CamelModel):
     lines: list[CommitmentLine] = Field(default_factory=list)
     pending_by_currency: dict[str, Decimal] = Field(default_factory=dict)
     overdue_by_currency: dict[str, Decimal] = Field(default_factory=dict)
+    pending_by_scope: dict[str, dict[str, Decimal]] = Field(default_factory=dict)
+    overdue_by_scope: dict[str, dict[str, Decimal]] = Field(default_factory=dict)
 
 
 def _status(due: date, paid: Decimal, remaining: Decimal, today: date) -> str:
@@ -175,12 +178,19 @@ def overview(
     lines.sort(key=lambda row: (row.due_date, row.id))
     pending: dict[str, Decimal] = {}
     overdue: dict[str, Decimal] = {}
+    pending_by_scope: dict[str, dict[str, Decimal]] = {}
+    overdue_by_scope: dict[str, dict[str, Decimal]] = {}
     for item in lines:
         currency = item.currency_code
         pending[currency] = pending.get(currency, Decimal("0")) + item.remaining
+        scope_bucket = pending_by_scope.setdefault(item.scope, {})
+        scope_bucket[currency] = scope_bucket.get(currency, Decimal("0")) + item.remaining
         if item.due_date < today:
             overdue[currency] = overdue.get(currency, Decimal("0")) + item.remaining
+            overdue_bucket = overdue_by_scope.setdefault(item.scope, {})
+            overdue_bucket[currency] = overdue_bucket.get(currency, Decimal("0")) + item.remaining
     return CommitmentsOverview(
         as_of=today, lines=lines,
         pending_by_currency=pending, overdue_by_currency=overdue,
+        pending_by_scope=pending_by_scope, overdue_by_scope=overdue_by_scope,
     )
