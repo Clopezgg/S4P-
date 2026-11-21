@@ -3,7 +3,9 @@ from tests.helpers import create_company, login_admin
 
 
 def test_commitments_requires_authentication(client):
-    response = client.get("/api/commitments/overview")
+    response = client.get("/api/commitments/overview", params={
+        "companyId": "00000000-0000-0000-0000-000000000001",
+    })
     assert response.status_code == 401
 
 
