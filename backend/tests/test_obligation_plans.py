@@ -160,3 +160,38 @@ def test_monthly_schedule_leap_day_and_horizon_are_bounded():
     assert occurrence_dates(plan, date(2028, 3, 31)) == [
         date(2028, 1, 31), date(2028, 2, 29), date(2028, 3, 31),
     ]
+
+
+
+def test_private_plan_cannot_be_settled_by_another_company_administrator(client, db_session):
+    """Even an administrator in the same company cannot add payments to another owner's plan."""
+    from tests.helpers import create_user_with_role, login_as
+
+    login_admin(client)
+    company = create_company(client)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": company["id"], "title": "Private settlement isolation",
+        "category": "OTHER", "scope": "PERSONAL",
+        "currencyCode": "HNL", "amount": "250.00",
+        "recurrence": "ONCE", "firstDueDate": "2026-11-15", "dueDay": 15,
+    })
+    assert created.status_code == 201, created.text
+    plan_id = created.json()["id"]
+
+    create_user_with_role(
+        db_session, email="other-settlement-admin@nexora.group",
+        role_name="Administrator",
+    )
+    login_as(client, email="other-settlement-admin@nexora.group")
+    denied = client.post(f"/api/obligation-plans/{plan_id}/settlements", json={
+        "occurrenceDueDate": "2026-11-15",
+        "paymentDate": "2026-11-15",
+        "amount": "50.00",
+        "reference": "OTHER-OWNER-DENIED",
+    })
+    assert denied.status_code == 404, denied.text
+
+    login_admin(client)
+    receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
+    assert receipts.status_code == 200, receipts.text
+    assert receipts.json() == []
