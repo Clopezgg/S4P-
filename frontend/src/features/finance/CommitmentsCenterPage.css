@@ -54,3 +54,10 @@
 .s4p-commitments__error { color: #b42929 !important; }
 .s4p-commitments__success { color: #13805e !important; }
 @media(max-width: 620px) { .s4p-commitments__form { grid-template-columns: minmax(0,1fr); } .s4p-commitments__settlement { grid-template-columns: minmax(0,1fr); width: 100%; } .s4p-commitments__plan { align-items: flex-start; flex-direction: column; } }
+
+.s4p-commitments__needs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 20px; }
+.s4p-commitments__needs > div { min-width: 0; }
+.s4p-commitments__need { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--nx-color-border, #e2e8f0); }
+.s4p-commitments__need span { color: var(--nx-color-text-secondary, #53657a); font-size: .8rem; }
+.s4p-commitments__needs a { color: #1769d2; display: inline-block; margin: 12px 0; font-weight: 700; }
+@media(max-width:700px) { .s4p-commitments__needs { grid-template-columns: minmax(0,1fr); } }
