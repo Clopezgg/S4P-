@@ -1,0 +1,103 @@
+name: S4P PG16 to PG17 isolated migration parity drill
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/scripts/pg16_to_aiven_pg17.py'
+      - 'backend/tests/test_pg16_to_aiven_pg17.py'
+      - 'backend/tests/_seed_backup_restore_fixture.py'
+      - 'backend/alembic/**'
+      - '.github/workflows/s4p-pg17-compat.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-version-restore-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      source16:
+        image: postgres:16
+        env:
+          POSTGRES_USER: s4p_qa
+          POSTGRES_PASSWORD: qa_only_local
+          POSTGRES_DB: s4p_qa_source
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U s4p_qa -d s4p_qa_source"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      target17:
+        image: postgres:17
+        env:
+          POSTGRES_USER: s4p_qa
+          POSTGRES_PASSWORD: qa_only_local
+          POSTGRES_DB: s4p_qa_target
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U s4p_qa -d s4p_qa_target"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: testing
+      SECRET_KEY: qa-only-secret-not-for-production
+      PGPASSWORD: qa_only_local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PostgreSQL client and backend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+          python -m pip install -r backend/requirements.txt pytest ruff
+      - name: Check migration guard unit tests and Ruff
+        working-directory: backend
+        run: |
+          ruff check scripts/pg16_to_aiven_pg17.py tests/test_pg16_to_aiven_pg17.py
+          python -m pytest -q tests/test_pg16_to_aiven_pg17.py
+      - name: Create complete ERP schema in isolated PG16
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://s4p_qa:qa_only_local@127.0.0.1:5432/s4p_qa_source
+        run: |
+          alembic upgrade head
+          python -m tests._seed_backup_restore_fixture > "$RUNNER_TEMP/seed-qa-private.json"
+      - name: Clone into isolated PG17 without production data
+        run: |
+          test "$(psql -h 127.0.0.1 -p 5433 -U s4p_qa -d s4p_qa_target -Atc "SELECT count(*) FROM pg_tables WHERE schemaname='public'")" = "0"
+          pg_dump -h 127.0.0.1 -p 5432 -U s4p_qa -d s4p_qa_source -Fc --no-owner --no-acl -f "$RUNNER_TEMP/qa.pgcustom"
+          pg_restore -h 127.0.0.1 -p 5433 -U s4p_qa -d s4p_qa_target --single-transaction --exit-on-error --no-owner --no-acl "$RUNNER_TEMP/qa.pgcustom"
+      - name: Verify every PG16 row against PG17 and balance financial entries
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          import os
+          from scripts.pg16_to_aiven_pg17 import financial_integrity, fingerprint_all, one
+
+          def conn(port, db):
+              env = {k: v for k, v in os.environ.items() if not k.startswith('PG')}
+              env.update(PGHOST='127.0.0.1', PGPORT=str(port),
+                         PGDATABASE=db, PGUSER='s4p_qa', PGPASSWORD='qa_only_local',
+                         PGSSLMODE='disable')
+              return env
+
+          pg16 = conn(5432, 's4p_qa_source')
+          pg17 = conn(5433, 's4p_qa_target')
+          assert int(one(pg16, "SELECT current_setting('server_version_num')")) // 10000 == 16
+          assert int(one(pg17, "SELECT current_setting('server_version_num')")) // 10000 == 17
+          source = fingerprint_all(pg16)
+          target = fingerprint_all(pg17)
+          assert source == target, "PG16/17 data or table parity failure"
+          assert len(source[0]) >= 50, "Incomplete ERP schema"
+          assert one(pg16, 'SELECT version_num FROM alembic_version') == one(pg17, 'SELECT version_num FROM alembic_version')
+          financial_integrity(pg16)
+          financial_integrity(pg17)
+          assert one(pg17, 'SELECT count(*) FROM companies') == '1'
+          assert one(pg17, 'SELECT count(*) FROM remittances') == '1'
+          print('PASS: isolated PG16 -> PG17 full-row parity, identities, journal, Alembic, FKs')
+          print('NOTE: these are synthetic QA records, NOT production backup or cutover evidence.')
+          PY
+      - name: Clean temporary QA backup
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/qa.pgcustom" "$RUNNER_TEMP/seed-qa-private.json"
