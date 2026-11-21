@@ -11,6 +11,7 @@ import { resolveHomeConfig } from './roleHomes'
 import { MiTrabajoHoy } from './MiTrabajoHoy'
 import { HomeForecastCard } from './HomeForecastCard'
 import { HomeBankAccountsCard } from './HomeBankAccountsCard'
+import { HomeCommitmentsCard } from './HomeCommitmentsCard'
 import { Card, EmptyState, ErrorState, Icon, LoadingState, StatCard } from '../../design-system'
 import { ProjectWorkHome } from './ProjectWorkHome'
 import './HomePage.css'
@@ -93,6 +94,8 @@ export function HomePage() {
               <p>Consulta facturas, cuotas de contratos, saldos y próximos vencimientos en un solo lugar.</p>
               <Link to="/inicio/compromisos">Ver próximos pagos y vencimientos</Link>
             </Card>
+
+            <HomeCommitmentsCard companyId={activeCompanyId} />
 
             <HomeForecastCard companyId={activeCompanyId} />
 
