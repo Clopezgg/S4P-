@@ -71,8 +71,10 @@ export interface ProjectSpending {
   totalRemittances: string | null
   scopeLimited: boolean
   expenseCount: number
+  filteredExpenseCount: number
+  filteredTotalExpenses: string
   projects: { id: string; name: string; parentProjectId: string | null; totalExpenses: string }[]
-  expenses: { id: string; projectId: string; documentNumber: string; effectiveDate: string; description: string | null; amount: string; status: string }[]
+  expenses: { id: string; projectId: string; documentNumber: string; documentTypeCode: string; effectiveDate: string; description: string | null; amount: string; status: string }[]
 }
 
 export interface ProjectFinancialSummary {

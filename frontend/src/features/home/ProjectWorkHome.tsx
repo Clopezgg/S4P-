@@ -32,10 +32,16 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [reverseDocumentId, setReverseDocumentId] = useState<string | null>(null)
   const [reversalReason, setReversalReason] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const [parentId, setParentId] = useState<string | null>(null)
   const grants = new Set(user?.permissions ?? [])
   const project = useQuery({ queryKey: ['project', projectId], queryFn: () => projectService.get(projectId) })
-  const spending = useQuery({ queryKey: ['project', projectId, 'spending', offset], queryFn: ({ signal }) => projectService.getSpending(projectId, signal, offset) })
+  const spendingFilters = { search: expenseSearch, dateFrom: expenseFrom, dateTo: expenseTo, workProjectId: expenseWork, status: expenseStatus }
+  const spending = useQuery({
+    queryKey: ['project', projectId, 'spending', offset, expenseSearch, expenseFrom, expenseTo, expenseWork, expenseStatus],
+    queryFn: ({ signal }) => projectService.getSpending(projectId, signal, offset, spendingFilters),
+  })
   const projects = useQuery({ queryKey: ['projects', activeCompanyId], queryFn: () => projectService.list(activeCompanyId as string), enabled: Boolean(activeCompanyId) })
   const lifecycle = useQuery({ queryKey: ['project', projectId, 'lifecycle'], queryFn: () => projectService.getLifecycle(projectId) })
   function refresh() { queryClient.invalidateQueries({ queryKey: ['project'] }); queryClient.invalidateQueries({ queryKey: ['projects'] }) }
@@ -69,32 +75,47 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const canActivate = grants.has('project:update') && lifecycle.data?.allowedTransitions.some(t => t.status === 'ACTIVE' && !t.sensitive)
   const currentParent = projects.data?.find(row => row.id === p.parentProjectId)
   const projectNames = new Map(data.projects.map(row => [row.id, row.name]))
-  const filteredExpenses = data.expenses.filter(row => {
-    const term = expenseSearch.trim().toLocaleLowerCase()
-    return (!term || [row.description, row.documentNumber, projectNames.get(row.projectId)].some(value => (value ?? '').toLocaleLowerCase().includes(term)))
-      && (!expenseFrom || row.effectiveDate >= expenseFrom)
-      && (!expenseTo || row.effectiveDate <= expenseTo)
-      && (!expenseWork || row.projectId === expenseWork)
-      && (!expenseStatus || row.status === expenseStatus)
-  })
+  const filteredExpenses = data.expenses
   const selectedExpense = data.expenses.find(row => row.id === selectedExpenseId)
-  function exportVisibleExpenses() {
-    const rows = [
-      ['Fecha', 'Obra / trabajo', 'Documento', 'Concepto', 'Importe', 'Moneda', 'Estado'],
-      ...filteredExpenses.map(row => [
-        row.effectiveDate, projectNames.get(row.projectId) ?? '', row.documentNumber,
-        row.description ?? '', row.amount, data.currencyCode,
-        row.status === 'REVERSED' ? 'Revertido' : 'Contabilizado',
-      ]),
-    ]
-    const url = URL.createObjectURL(new Blob([serializeCsv(rows)], { type: 'text/csv;charset=utf-8' }))
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = 'S4P-gastos-obra-' + projectId + '-pagina-' + (offset / 25 + 1) + '.csv'
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
-    window.setTimeout(() => URL.revokeObjectURL(url), 5000)
+  const isFiltered = Boolean(expenseSearch || expenseFrom || expenseTo || expenseWork || expenseStatus)
+  async function exportFilteredExpenses() {
+    if (data.filteredExpenseCount > 10000) {
+      setExportError('La exportación supera 10,000 movimientos. Reduce el período para obtener un archivo íntegro.')
+      return
+    }
+    setExporting(true)
+    setExportError(null)
+    try {
+      const rows = [['Fecha', 'Obra / trabajo', 'Documento', 'Concepto', 'Importe', 'Moneda', 'Estado']]
+      let currentOffset = 0
+      while (currentOffset < data.filteredExpenseCount) {
+        const page = await projectService.getSpending(projectId, undefined, currentOffset, spendingFilters, 100)
+        if (!page.expenses.length) throw new Error('La consulta se interrumpió antes de completar la exportación.')
+        for (const row of page.expenses) {
+          rows.push([
+            row.effectiveDate, projectNames.get(row.projectId) ?? '', row.documentNumber,
+            row.description ?? '', row.amount, data.currencyCode,
+            row.status === 'REVERSED' ? 'Revertido' : 'Contabilizado',
+          ])
+        }
+        currentOffset += page.expenses.length
+      }
+      if (currentOffset !== data.filteredExpenseCount) {
+        throw new Error('Los movimientos cambiaron durante la exportación. Repite la consulta para obtener un archivo consistente.')
+      }
+      const url = URL.createObjectURL(new Blob([serializeCsv(rows)], { type: 'text/csv;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = 'S4P-gastos-obra-' + projectId + '-filtrados.csv'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 5000)
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'No se pudo generar la exportación.')
+    } finally {
+      setExporting(false)
+    }
   }
   return <div className="nx-home">
     <header className="nx-home__header"><div>
@@ -117,6 +138,7 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
       <StatCard label="Todos los gastos de esta obra" value={formatMoney(data.totalExpenses, data.currencyCode)} />
       <StatCard label="Remesas identificadas para esta obra" value={data.totalRemittances === null ? 'Sin permiso de consulta' : formatMoney(data.totalRemittances, data.currencyCode)} />
       <StatCard label="Trabajos vinculados" value={data.projects.filter(row => row.id !== projectId).length} />
+      {isFiltered ? <StatCard label="Gastos con filtros" value={formatMoney(data.filteredTotalExpenses, data.currencyCode)} /> : null}
     </section>
     <p className="nx-field__hint">Las remesas identifican aportes para la obra. El dinero disponible permanece en caja o banco y se consulta en Tesorería.</p>
     {data.scopeLimited ? <p className="nx-field__hint">El resumen incluye únicamente los proyectos y trabajos a los que tienes acceso.</p> : null}
@@ -135,22 +157,23 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
     <div id="gastos-de-la-obra"><Card title="Todos los gastos">
       <p>Gastos contabilizados de esta obra y sus trabajos. Los reversos se muestran para conservar el historial.</p>
       <div className="nx-treasury__form">
-        <Input label="Buscar concepto o documento" value={expenseSearch} onChange={event => setExpenseSearch(event.target.value)} placeholder="Cemento, factura, proveedor…" />
+        <Input label="Buscar concepto o documento" value={expenseSearch} onChange={event => { setExpenseSearch(event.target.value); setOffset(0) }} placeholder="Cemento, factura, proveedor…" />
         <div className="nx-work-actions">
-          <Input label="Desde" type="date" value={expenseFrom} onChange={event => setExpenseFrom(event.target.value)} />
-          <Input label="Hasta" type="date" value={expenseTo} onChange={event => setExpenseTo(event.target.value)} />
-          <Select label="Trabajo" value={expenseWork} onChange={event => setExpenseWork(event.target.value)}>
+          <Input label="Desde" type="date" value={expenseFrom} onChange={event => { setExpenseFrom(event.target.value); setOffset(0) }} />
+          <Input label="Hasta" type="date" value={expenseTo} onChange={event => { setExpenseTo(event.target.value); setOffset(0) }} />
+          <Select label="Trabajo" value={expenseWork} onChange={event => { setExpenseWork(event.target.value); setOffset(0) }}>
             <option value="">Todos los trabajos</option>
             {data.projects.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
           </Select>
-          <Select label="Estado" value={expenseStatus} onChange={event => setExpenseStatus(event.target.value)}>
+          <Select label="Estado" value={expenseStatus} onChange={event => { setExpenseStatus(event.target.value); setOffset(0) }}>
             <option value="">Todos</option>
             <option value="POSTED">Contabilizado</option>
             <option value="REVERSED">Revertido</option>
           </Select>
         </div>
-        <p className="nx-field__hint">Los filtros afectan los movimientos cargados en esta página. Los totales superiores siempre corresponden a toda la obra.</p>
-        {filteredExpenses.length > 0 ? <Button variant="secondary" onClick={exportVisibleExpenses}>Exportar movimientos visibles (CSV para Excel)</Button> : null}
+        <p className="nx-field__hint">Filtros aplicados en toda la obra. {data.filteredExpenseCount} movimientos coincidentes. El total general superior no se modifica.</p>
+        {exportError ? <p role="alert">{exportError}</p> : null}
+        {data.filteredExpenseCount > 0 ? <Button variant="secondary" loading={exporting} disabled={exporting} onClick={exportFilteredExpenses}>Exportar todos los filtrados (CSV para Excel)</Button> : null}
       </div>
       {filteredExpenses.length ? <Table rows={filteredExpenses} getRowKey={row => row.id} columns={[
         { key: 'date', header: 'Fecha', render: row => row.effectiveDate },
@@ -159,7 +182,7 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
         { key: 'amount', header: 'Importe', numeric: true, render: row => formatMoney(row.amount, data.currencyCode) },
         { key: 'status', header: 'Estado', render: row => row.status === 'REVERSED' ? 'Revertido' : 'Contabilizado' },
         { key: 'actions', header: 'Acciones', render: row => <Button variant="secondary" onClick={() => setSelectedExpenseId(row.id)}>Ver detalle</Button> },
-      ]} /> : <EmptyState title={data.expenses.length ? 'Sin resultados en esta página' : 'Aún no hay gastos en esta obra'} description={data.expenses.length ? 'Modifica los filtros o consulta las páginas siguientes.' : 'Registra el primer gasto con el botón de arriba.'} />}
+      ]} /> : <EmptyState title={isFiltered ? 'Sin movimientos coincidentes' : 'Aún no hay gastos en esta obra'} description={isFiltered ? 'Modifica los filtros para consultar otros movimientos.' : 'Registra el primer gasto con el botón de arriba.'} />}
       {selectedExpense ? <Card title="Detalle del movimiento">
         <p><strong>Documento:</strong> {selectedExpense.documentNumber}</p>
         <p><strong>Concepto:</strong> {selectedExpense.description ?? '—'}</p>
@@ -169,7 +192,7 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
         <p className="nx-field__hint">Los gastos contabilizados no pueden borrarse directamente. Las correcciones deben realizarse mediante una reversión autorizada, conservando el historial.</p>
         <div className="nx-work-actions">
           {grants.has('accounting.journal_entry:read') ? <Link to="/finanzas/inspector">Abrir inspector de transacciones</Link> : null}
-          {selectedExpense.status === 'POSTED' && grants.has('accounting.journal_entry:reverse') ?
+          {selectedExpense.status === 'POSTED' && selectedExpense.documentTypeCode === 'GGE' && grants.has('accounting.journal_entry:reverse') ?
             <Button variant="secondary" onClick={() => { setReverseDocumentId(selectedExpense.id); setReversalReason('') }}>
               Anular mediante reversión
             </Button> : null}
@@ -187,9 +210,9 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
           </div>
         </div> : null}
       </Card> : null}
-      {data.expenseCount > 25 ? <div className="nx-work-actions"><p>Movimientos {offset + 1}–{offset + data.expenses.length} de {data.expenseCount}. El total incluye todos.</p>
+      {data.filteredExpenseCount > 25 ? <div className="nx-work-actions"><p>Movimientos {offset + 1}–{offset + data.expenses.length} de {data.filteredExpenseCount} filtrados. El total general incluye todos.</p>
         <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 25))}>Anteriores</Button>
-        <Button variant="secondary" disabled={offset + data.expenses.length >= data.expenseCount} onClick={() => setOffset(offset + 25)}>Siguientes</Button>
+        <Button variant="secondary" disabled={offset + data.expenses.length >= data.filteredExpenseCount} onClick={() => setOffset(offset + 25)}>Siguientes</Button>
       </div> : null}
     </Card></div>
     <details><summary>Opciones avanzadas del proyecto</summary>

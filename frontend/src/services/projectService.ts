@@ -105,7 +105,15 @@ export const projectService = {
   update: (projectId: string, input: Partial<Omit<ProjectInput, 'companyId'>>) => apiFetch<Project>(`/projects/${projectId}`, { method: 'PATCH', body: JSON.stringify(input) }),
   transitionStatus: (projectId: string, status: ProjectStatus, reason?: string) => apiFetch<Project>(`/projects/${projectId}/status`, { method: 'POST', body: JSON.stringify({ status, reason }) }),
   getFinancialSummary: (projectId: string) => apiFetch<ProjectFinancialSummary>(`/projects/${projectId}/financial-summary`),
-  getSpending: (projectId: string, signal?: AbortSignal, offset = 0) => apiFetch<ProjectSpending>(`/projects/${projectId}/spending?offset=${offset}&limit=25`, { signal }),
+  getSpending: (projectId: string, signal?: AbortSignal, offset = 0,
+    filters?: { dateFrom?: string; dateTo?: string; workProjectId?: string; status?: string; search?: string },
+    limit = 25) => {
+    const params = new URLSearchParams({ offset: String(offset), limit: String(limit) })
+    if (filters) for (const [key, value] of Object.entries(filters)) {
+      if (value?.trim()) params.set(key, value.trim())
+    }
+    return apiFetch<ProjectSpending>(`/projects/${projectId}/spending?${params.toString()}`, { signal })
+  },
 
   listWbs: (projectId: string) => apiFetch<WBSNode[]>(`/projects/${projectId}/wbs`),
   listWbsFinancials: (projectId: string) => apiFetch<WBSFinancialSummary[]>(`/projects/${projectId}/wbs/financial-summary`),
