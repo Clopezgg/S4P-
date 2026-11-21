@@ -132,11 +132,11 @@ def overview(
         permitted = accessible_project_ids(
             db, user_id=user.id, resource="contract.payment_schedule", action="read",
         )
-        schedules = db.execute(select(ContractPaymentSchedule).where(
+        contract_schedules = db.execute(select(ContractPaymentSchedule).where(
             ContractPaymentSchedule.company_id == company_id,
             ContractPaymentSchedule.status != "CANCELLED",
         )).scalars().all()
-        for schedule in schedules:
+        for schedule in contract_schedules:
             if permitted is not None and schedule.project_id is not None and schedule.project_id not in permitted:
                 continue
             contract = db.get(SupplierContract, schedule.supplier_contract_id)
