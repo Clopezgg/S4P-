@@ -85,6 +85,20 @@ def test_house_totals_include_new_linked_work_but_never_others(client, db_sessio
     page = client.get(f"/api/projects/{casa['id']}/spending?limit=1&offset=1").json()
     assert len(page['expenses']) == 1 and page['expenseCount'] == 4
     assert Decimal(page['totalExpenses']) == Decimal('100.00')
+    filtered = client.get(f"/api/projects/{casa['id']}/spending", params={
+        'workProjectId': techo['id'], 'search': 'Trabajo Techo', 'status': 'POSTED',
+        'dateFrom': '2026-11-01', 'dateTo': '2026-11-30',
+    })
+    assert filtered.status_code == 200, filtered.text
+    assert filtered.json()['expenseCount'] == 4
+    assert filtered.json()['filteredExpenseCount'] == 1
+    assert Decimal(filtered.json()['filteredTotalExpenses']) == Decimal('40.00')
+    assert filtered.json()['expenses'][0]['documentTypeCode'] == 'GGE'
+    assert Decimal(filtered.json()['totalExpenses']) == Decimal('100.00')
+    foreign_filter = client.get(f"/api/projects/{casa['id']}/spending", params={'workProjectId': otros['id']})
+    assert foreign_filter.status_code == 200 and foreign_filter.json()['filteredExpenseCount'] == 0
+    assert client.get(f"/api/projects/{casa['id']}/spending?dateFrom=2026-12-01&dateTo=2026-11-01").status_code == 422
+    assert client.get(f"/api/projects/{casa['id']}/spending?status=INVALID").status_code == 422
     assert client.get(f"/api/projects/{casa['id']}/spending?offset=-1").status_code == 422
 
     document = db_session.get(AccountingDocument, uuid.UUID(first.json()['accountingDocumentId']))
@@ -95,6 +109,8 @@ def test_house_totals_include_new_linked_work_but_never_others(client, db_sessio
     reversed_cost = client.post(f"/api/accounting/journal-entries/{work_cost['id']}/reverse", json={'reason': 'Corrección QA'})
     assert reversed_cost.status_code == 200, reversed_cost.text
     assert Decimal(client.get(f"/api/projects/{casa['id']}/spending").json()['totalExpenses']) == Decimal('60.00')
+    reversed_only = client.get(f"/api/projects/{casa['id']}/spending", params={'status': 'REVERSED'})
+    assert reversed_only.status_code == 200 and reversed_only.json()['filteredExpenseCount'] == 1
     reversed_remittance = client.post(f"/api/accounting/journal-entries/{document.id}/reverse", json={'reason': 'Aporte cancelado QA'})
     assert reversed_remittance.status_code == 200, reversed_remittance.text
     assert Decimal(client.get(f"/api/projects/{casa['id']}/spending").json()['totalRemittances']) == Decimal('50.00')

@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -244,7 +245,11 @@ def get_summary(db: Session, *, project_id: uuid.UUID) -> ProjectFinancialSummar
 
 def get_spending(db: Session, *, project_id: uuid.UUID,
                  allowed_project_ids: list[uuid.UUID] | None, include_remittances: bool,
-                 offset: int = 0, limit: int = 25) -> dict:
+                 offset: int = 0, limit: int = 25,
+                 date_from: date | None = None, date_to: date | None = None,
+                 work_project_id: uuid.UUID | None = None,
+                 expense_status: str | None = None,
+                 search: str | None = None) -> dict:
     """Selected work and its explicitly linked jobs. Never company-wide cash."""
     from app.models.project import Project
     from app.models.treasury import Remittance
@@ -264,6 +269,7 @@ def get_spending(db: Session, *, project_id: uuid.UUID,
     costs = (
         select(AccountingDocument.id.label("id"), AccountingDocument.project_id.label("project_id"),
                AccountingDocument.document_number.label("document_number"),
+               AccountingDocument.document_type_code.label("document_type_code"),
                AccountingDocument.effective_date.label("effective_date"),
                AccountingDocument.description.label("description"), AccountingDocument.status.label("status"),
                func.sum(JournalLine.debit_amount - JournalLine.credit_amount).label("amount"))
@@ -279,7 +285,30 @@ def get_spending(db: Session, *, project_id: uuid.UUID,
     )
     total, count = db.execute(select(func.coalesce(func.sum(costs.c.amount), 0), func.count()).select_from(costs)).one()
     per_project = dict(db.execute(select(costs.c.project_id, func.sum(costs.c.amount)).group_by(costs.c.project_id)).all())
-    expenses = list(db.execute(select(costs).order_by(costs.c.effective_date.desc(), costs.c.id).offset(offset).limit(limit)).mappings())
+    conditions = []
+    if date_from is not None:
+        conditions.append(costs.c.effective_date >= date_from)
+    if date_to is not None:
+        conditions.append(costs.c.effective_date <= date_to)
+    if work_project_id is not None:
+        # Outside this company's accessible work scope must never reveal records.
+        conditions.append(costs.c.project_id == work_project_id if work_project_id in ids else False)
+    if expense_status is not None:
+        conditions.append(costs.c.status == expense_status)
+    if search:
+        needle = search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        conditions.append(
+            costs.c.description.ilike(f"%{needle}%", escape="\\")
+            | costs.c.document_number.ilike(f"%{needle}%", escape="\\")
+        )
+    filtered_total, filtered_count = db.execute(
+        select(func.coalesce(func.sum(costs.c.amount), 0), func.count())
+        .select_from(costs).where(*conditions)
+    ).one()
+    expenses = list(db.execute(
+        select(costs).where(*conditions)
+        .order_by(costs.c.effective_date.desc(), costs.c.id).offset(offset).limit(limit)
+    ).mappings())
     currency = project.currency_code or company.functional_currency_code
     remittances = None
     if include_remittances:
@@ -292,6 +321,7 @@ def get_spending(db: Session, *, project_id: uuid.UUID,
     return {"project_id": project_id, "currency_code": currency,
             "total_expenses": total, "total_remittances": remittances,
             "scope_limited": allowed_project_ids is not None,
-            "expense_count": count, "expenses": expenses,
+            "expense_count": count, "filtered_expense_count": filtered_count,
+            "filtered_total_expenses": filtered_total, "expenses": expenses,
             "projects": [{"id": p.id, "name": p.name, "parent_project_id": p.parent_project_id,
                           "total_expenses": per_project.get(p.id, Decimal("0"))} for p in projects]}

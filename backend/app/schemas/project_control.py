@@ -366,6 +366,7 @@ class ProjectExpenseRow(CamelModel):
     id: uuid.UUID
     project_id: uuid.UUID
     document_number: str
+    document_type_code: str
     effective_date: date
     description: str | None
     amount: Decimal
@@ -379,5 +380,7 @@ class ProjectSpendingResponse(CamelModel):
     total_remittances: Decimal | None
     scope_limited: bool
     expense_count: int
+    filtered_expense_count: int
+    filtered_total_expenses: Decimal
     projects: list[ProjectWorkSummary]
     expenses: list[ProjectExpenseRow]

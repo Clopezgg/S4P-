@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -38,7 +39,14 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 @router.get("/{project_id}/spending", response_model=ProjectSpendingResponse)
 def project_spending(project_id: uuid.UUID, db: Session = Depends(get_db),
                      offset: int = Query(default=0, ge=0), limit: int = Query(default=25, ge=1, le=100),
+                     date_from: date | None = Query(default=None, alias="dateFrom"),
+                     date_to: date | None = Query(default=None, alias="dateTo"),
+                     work_project_id: uuid.UUID | None = Query(default=None, alias="workProjectId"),
+                     expense_status: str | None = Query(default=None, alias="status", pattern="^(POSTED|REVERSED)$"),
+                     search: str | None = Query(default=None, max_length=100),
                      user=Depends(require_permission("project", "read"))) -> ProjectSpendingResponse:
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="La fecha inicial no puede ser posterior a la final")
     project = _get_project_or_404(db, project_id)
     assert_project_access(db, user_id=user.id, resource="project", action="read", project_id=project.id)
     include_remittances = True
@@ -51,6 +59,8 @@ def project_spending(project_id: uuid.UUID, db: Session = Depends(get_db),
         allowed_project_ids=accessible_project_ids(db, user_id=user.id, resource="project", action="read"),
         include_remittances=include_remittances,
         offset=offset, limit=limit,
+        date_from=date_from, date_to=date_to,
+        work_project_id=work_project_id, expense_status=expense_status, search=search,
     )
     return ProjectSpendingResponse(**result)
 
