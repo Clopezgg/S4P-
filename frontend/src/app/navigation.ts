@@ -15,7 +15,7 @@ export interface NavGroup {
 
 const read = (...permissions: string[]) => permissions
 
-const legacyNavGroups: NavGroup[] = [
+export const navGroups: NavGroup[] = [
   {
     key: 'inicio',
     label: 'Inicio',
@@ -119,12 +119,12 @@ const legacyNavGroups: NavGroup[] = [
 // Mantener las rutas históricas, pero ofrecer solo seis accesos diarios.
 // Cada perfil puede abrir sus funciones avanzadas sin borrar información.
 function legacyItem(path: string, label?: string): NavItem {
-  const found = legacyNavGroups.flatMap(group => group.items).find(item => item.path === path)
+  const found = navGroups.flatMap(group => group.items).find(item => item.path === path)
   if (!found) throw new Error('Ruta no encontrada: ' + path)
   return label ? { ...found, label } : found
 }
 
-export const navGroups: NavGroup[] = [
+export const simpleNavGroups: NavGroup[] = [
   {
     key: 'operacion',
     label: 'Operación diaria',
@@ -140,20 +140,34 @@ export const navGroups: NavGroup[] = [
   { key: 'administracion', label: 'Sistema', items: [legacyItem('/control/configuracion', 'Configuración')] },
 ]
 
-export function filterNavGroups(permissions: string[] | undefined, includeAdvanced = false): NavGroup[] {
+/** API histórica usada por el workstation SAP y sus reglas RBAC. */
+export function filterNavGroups(permissions: string[] | undefined): NavGroup[] {
   const grants = new Set(permissions ?? [])
-  const primaryPaths = new Set(navGroups.flatMap(group => group.items.map(item => item.path)))
+  return navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(
+        item => !item.requiredAny || item.requiredAny.some(permission => grants.has(permission)),
+      ),
+    }))
+    .filter(group => group.items.length > 0)
+}
+
+/** Shell moderno: solo seis accesos cotidianos; opt-in para la navegación avanzada. */
+export function filterSimpleNavGroups(permissions: string[] | undefined, includeAdvanced = false): NavGroup[] {
+  const grants = new Set(permissions ?? [])
+  const primaryPaths = new Set(simpleNavGroups.flatMap(group => group.items.map(item => item.path)))
   const groups: NavGroup[] = includeAdvanced
     ? [
-        ...navGroups,
-        ...legacyNavGroups.map(group => ({
+        ...simpleNavGroups,
+        ...navGroups.map(group => ({
           ...group,
           key: 'advanced-' + group.key,
           label: 'Avanzado · ' + group.label,
           items: group.items.filter(item => !primaryPaths.has(item.path)),
         })),
       ]
-    : navGroups
+    : simpleNavGroups
   return groups
     .map(group => ({
       ...group,
@@ -164,7 +178,7 @@ export function filterNavGroups(permissions: string[] | undefined, includeAdvanc
     .filter(group => group.items.length > 0)
 }
 
-// El router necesita todas las rutas, incluidas las ocultas del menú.
+/** Router compartido: no perder rutas ni crear redirecciones falsas. */
 export const navItems: NavItem[] = [...new Map(
-  [...legacyNavGroups, ...navGroups].flatMap(group => group.items).map(item => [item.path, item] as const),
+  [...navGroups, ...simpleNavGroups].flatMap(group => group.items).map(item => [item.path, item] as const),
 ).values()]

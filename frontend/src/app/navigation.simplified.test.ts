@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { filterNavGroups, navGroups, navItems } from './navigation'
+import { filterSimpleNavGroups, simpleNavGroups, navItems } from './navigation'
 
 describe('Navegación simplificada de S4P', () => {
   it('ofrece seis accesos diarios sin eliminar rutas existentes', () => {
-    expect(navGroups.find(group => group.key === 'operacion')?.items).toHaveLength(6)
+    expect(simpleNavGroups.find(group => group.key === 'operacion')?.items).toHaveLength(6)
     const paths = navItems.map(item => item.path)
     expect(paths).toContain('/operacion/movimientos')
     expect(paths).toContain('/finanzas/conciliacion-subledger')
@@ -13,8 +13,8 @@ describe('Navegación simplificada de S4P', () => {
   })
   it('respeta permisos y permite mostrar u ocultar funciones avanzadas', () => {
     const grants = ['project:read', 'treasury.account:read', 'contract.payment_schedule:read', 'core.company:read']
-    const simple = filterNavGroups(grants)
-    const advanced = filterNavGroups(grants, true)
+    const simple = filterSimpleNavGroups(grants)
+    const advanced = filterSimpleNavGroups(grants, true)
     expect(simple.flatMap(group => group.items).some(item => item.path === '/proyectos/wbs')).toBe(false)
     expect(advanced.flatMap(group => group.items).some(item => item.path === '/proyectos/wbs')).toBe(false)
     expect(simple.flatMap(group => group.items).some(item => item.path === '/operacion/movimientos')).toBe(true)

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { filterNavGroups } from '../app/navigation'
+import { filterSimpleNavGroups } from '../app/navigation'
 import { Icon } from '../design-system'
 import { useAuth } from '../features/auth/auth-context'
 
@@ -19,7 +19,7 @@ export function NavList({ onNavigate, variant = 'sidebar' }: NavListProps) {
   const [query, setQuery] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const groups = useMemo(
-    () => filterNavGroups(user?.permissions, showAdvanced || query.trim().length > 0),
+    () => filterSimpleNavGroups(user?.permissions, showAdvanced || query.trim().length > 0),
     [user?.permissions, showAdvanced, query],
   )
 
