@@ -21,6 +21,7 @@ export const navGroups: NavGroup[] = [
     label: 'Inicio',
     items: [
       { path: '/inicio', label: 'Inicio', icon: 'home' },
+      { path: '/inicio/compromisos', label: 'Compromisos y pendientes', icon: 'inbox', requiredAny: read('ap.supplier_invoice:read', 'contract.payment_schedule:read') },
       { path: '/inicio/aprobaciones', label: 'Aprobaciones', icon: 'inbox', requiredAny: read('workflow.approval:read') },
     ],
   },
@@ -130,6 +131,7 @@ export const simpleNavGroups: NavGroup[] = [
     label: 'Operación diaria',
     items: [
       legacyItem('/inicio'),
+      legacyItem('/inicio/compromisos', 'Compromisos'),
       legacyItem('/proyectos', 'Mis obras'),
       { path: '/operacion/movimientos', label: 'Gastos y remesas', icon: 'receipt', requiredAny: read('project:read') },
       legacyItem('/finanzas/libro-contractual', 'Contratos y pagos'),
