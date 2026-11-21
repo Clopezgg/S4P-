@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.api.deps_correlation import get_correlation_id
+from app.core.business_time import business_today
 from app.models.currency import Currency
 from app.models.obligation import ObligationPlan, ObligationSettlement
 from app.schemas.base import CamelModel
@@ -186,6 +187,8 @@ def record_external_settlement(
     )
     if plan.status != "ACTIVE":
         raise HTTPException(409, "El compromiso no está activo")
+    if payload.payment_date > business_today():
+        raise HTTPException(422, "No se puede registrar como realizado un pago con fecha futura")
     if payload.occurrence_due_date not in schedule.occurrence_dates(
         plan, payload.occurrence_due_date
     ):
