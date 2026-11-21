@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.api.deps_correlation import get_correlation_id
-from app.core.business_time import business_today
 from app.models.currency import Currency
 from app.models.obligation import ObligationPlan, ObligationSettlement
 from app.schemas.base import CamelModel
