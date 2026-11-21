@@ -240,7 +240,15 @@ def change_plan_status(
     correlation_id: str = Depends(get_correlation_id),
 ):
     user, _ = current
-    plan = _owner(db, plan_id, user.id)
+    # Serialize status transitions with settlement writes on the same plan row.
+    # Without this lock a concurrent settlement could pass the ACTIVE check
+    # while another transaction is cancelling or pausing the plan.
+    plan = db.execute(select(ObligationPlan).where(
+        ObligationPlan.id == plan_id,
+        ObligationPlan.owner_user_id == user.id,
+    ).with_for_update()).scalar_one_or_none()
+    if plan is None:
+        raise HTTPException(404, "Compromiso no encontrado")
     assert_company_access(
         db, user_id=user.id, resource="core.company", action="read", company_id=plan.company_id
     )
