@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { useActiveCompany } from '../../hooks/useActiveCompany'
 import { commitmentsService, type CommitmentLine } from '../../services/commitmentsService'
 import { friendlyApiMessage } from '../../services/httpClient'
+import { ObligationPlansPanel } from './ObligationPlansPanel'
+import { ManualSettlementForm } from './ManualSettlementForm'
 import { formatMoney } from '../../utils/currency'
 import './CommitmentsCenterPage.css'
 
@@ -14,8 +16,11 @@ const dateLabel = (value: string) => {
   }).format(new Date(Date.UTC(year, month - 1, day)))
 }
 
-const categoryLabel = (row: CommitmentLine) =>
-  row.source === 'CONTRACT' ? 'Contrato / contratista' : 'Proveedor'
+const categoryLabel = (row: CommitmentLine) => {
+  if (row.source === 'CONTRACT') return 'Contrato / contratista'
+  if (row.source === 'AP') return 'Proveedor'
+  return ({ LAND: 'Terreno', CONTRACTOR: 'Contratista', MATERIAL: 'Materiales', VEHICLE: 'Vehículo', GENERAL: 'Gasto externo', OTHER: 'Otro' } as Record<string, string>)[row.category] ?? 'Compromiso manual'
+}
 
 const statusLabel: Record<string, string> = {
   OVERDUE: 'Vencido',
@@ -28,6 +33,7 @@ export function CommitmentsCenterPage() {
   const { activeCompanyId, activeCompany } = useActiveCompany()
   const [filter, setFilter] = useState('ALL')
   const [search, setSearch] = useState('')
+  const [selectedManualId, setSelectedManualId] = useState<string | null>(null)
   const [horizon, setHorizon] = useState(90)
 
   const query = useQuery({
@@ -146,7 +152,15 @@ export function CommitmentsCenterPage() {
                       <strong>{formatMoney(line.remaining, line.currencyCode)}</strong>
                       {Number(line.paid) > 0 && <span>Abonado: {formatMoney(line.paid, line.currencyCode)}</span>}
                     </div>
-                    <Link to={line.detailUrl}>Ver detalle</Link>
+                    {line.source === 'MANUAL' && line.planId ? (
+                      <button type="button" onClick={() => setSelectedManualId(
+                        selectedManualId === line.id ? null : line.id,
+                      )}>Registrar abono</button>
+                    ) : <Link to={line.detailUrl}>Ver detalle</Link>}
+                    {selectedManualId === line.id && line.source === 'MANUAL' && activeCompanyId && (
+                      <ManualSettlementForm key={line.id} line={line}
+                        companyId={activeCompanyId} close={() => setSelectedManualId(null)} />
+                    )}
                   </article>
                 ))}
               </div>
@@ -159,6 +173,8 @@ export function CommitmentsCenterPage() {
         </>
       )}
 
+      {activeCompanyId && <ObligationPlansPanel companyId={activeCompanyId} />}
+
       <section className="s4p-commitments__panel">
         <h2>Administrar otras necesidades</h2>
         <div className="s4p-commitments__shortcuts">
@@ -168,9 +184,9 @@ export function CommitmentsCenterPage() {
           <Link to="/proyectos">Terrenos y obras como proyectos</Link>
         </div>
         <p className="s4p-commitments__disclaimer">
-          Vista de consolidación de datos del ERP. Las cuotas personales de terrenos, pagos externos y
-          recordatorios automáticos todavía requieren el módulo de recurrencias y su validación.
-          Esta pantalla no crea pagos ni modifica la contabilidad.
+          Los saldos del ERP provienen de facturas y contratos; los compromisos manuales son
+          planificación privada sin contabilización. Las alertas externas y conciliación automática
+          con pagos reales siguen pendientes de certificación. Esta pantalla no realiza transferencias.
         </p>
       </section>
     </main>
