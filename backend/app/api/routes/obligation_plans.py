@@ -14,7 +14,8 @@ from app.api.deps_correlation import get_correlation_id
 from app.models.currency import Currency
 from app.models.obligation import ObligationPlan, ObligationSettlement
 from app.schemas.base import CamelModel
-from app.services import audit_service, obligation_schedule_service as schedule
+from app.services import audit_service
+from app.services import obligation_schedule_service as schedule
 from app.services.permission_service import assert_company_access
 
 router = APIRouter(prefix="/obligation-plans", tags=["obligation-plans"])
