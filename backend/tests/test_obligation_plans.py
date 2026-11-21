@@ -65,6 +65,8 @@ def test_private_plan_payment_tracking_without_gl_posting(client):
     december = next(line for line in overview["lines"] if line["dueDate"] == "2026-12-30")
     assert Decimal(december["remaining"]) == Decimal("600.00")
     assert Decimal(december["paid"]) == Decimal("400.00")
+    assert december["scope"] == "PERSONAL"
+    assert overview["pendingByScope"]["PERSONAL"]["HNL"] is not None
 
     pause = client.patch(f"/api/obligation-plans/{plan['id']}/status?status=PAUSED")
     assert pause.status_code == 200, pause.text
