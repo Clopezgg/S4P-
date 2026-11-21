@@ -21,7 +21,7 @@ export const navGroups: NavGroup[] = [
     label: 'Inicio',
     items: [
       { path: '/inicio', label: 'Inicio', icon: 'home' },
-      { path: '/inicio/compromisos', label: 'Compromisos y pendientes', icon: 'inbox', requiredAny: read('ap.supplier_invoice:read', 'contract.payment_schedule:read') },
+      { path: '/inicio/compromisos', label: 'Compromisos y pendientes', icon: 'inbox', requiredAny: read('core.company:read', 'ap.supplier_invoice:read', 'contract.payment_schedule:read') },
       { path: '/inicio/aprobaciones', label: 'Aprobaciones', icon: 'inbox', requiredAny: read('workflow.approval:read') },
     ],
   },
