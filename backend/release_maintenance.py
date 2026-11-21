@@ -333,6 +333,7 @@ def production_smoke(source):
 
 def recover():
     operation = os.environ.get("S4P_RELEASE_OPERATION", "preflight")
+    publish(stage="checking_release_mode")
     if operation not in {"preflight", "migrate", "rollback", "smoke"}:
         raise RuntimeError("UnsupportedOperation")
     if operation != "preflight":
@@ -340,6 +341,9 @@ def recover():
         if (len(approved_sha) != 40 or approved_sha != os.environ.get("RENDER_GIT_COMMIT")
                 or os.environ.get("S4P_APPROVE_SCHEMA_CHANGE") != TARGET):
             raise RuntimeError("ExplicitRevisionAndSHAAcceptanceRequired")
+    # Operational stages must be safe for the public sanitized /status endpoint.
+    # Never emit values, private URLs, credentials or provider exceptions.
+    publish(stage="reading_protected_configuration")
     # Read settings only after validating operation; never run app bootstrap.
     from app.core.config import get_settings
     from app.services.backup_worker import _bridge, _json_call, create_encrypted_backup
@@ -347,9 +351,10 @@ def recover():
 
     source_url = get_settings().database_url
     source_address = make_url(source_url)
-    if (not (source_address.host or "").startswith("dpg-dbh8j41srm7s73f3u1b0-a")
+    if (source_address.host not in {"dpg-dbh8j41srm7s73f3u1b0-a", "dpg-dbh8j41srm7s73f3u1b0-a.internal"}
             or source_address.database != "s4p_postgres_staging"):
         raise RuntimeError("UnexpectedProductionDatabase")
+    publish(stage="querying_readonly_production")
     source = create_engine(source_url, pool_pre_ping=True, connect_args={"sslmode": "require"})
     try:
         if operation == "smoke":
