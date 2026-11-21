@@ -20,6 +20,12 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const activeEntry = entry ?? (requestedEntry === 'expense' || requestedEntry === 'remittance' ? requestedEntry : null)
   const [workName, setWorkName] = useState('')
   const [offset, setOffset] = useState(0)
+  const [expenseSearch, setExpenseSearch] = useState('')
+  const [expenseFrom, setExpenseFrom] = useState('')
+  const [expenseTo, setExpenseTo] = useState('')
+  const [expenseWork, setExpenseWork] = useState('')
+  const [expenseStatus, setExpenseStatus] = useState('')
+  const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [parentId, setParentId] = useState<string | null>(null)
   const grants = new Set(user?.permissions ?? [])
   const project = useQuery({ queryKey: ['project', projectId], queryFn: () => projectService.get(projectId) })
@@ -43,6 +49,15 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
   const canActivate = grants.has('project:update') && lifecycle.data?.allowedTransitions.some(t => t.status === 'ACTIVE' && !t.sensitive)
   const currentParent = projects.data?.find(row => row.id === p.parentProjectId)
   const projectNames = new Map(data.projects.map(row => [row.id, row.name]))
+  const filteredExpenses = data.expenses.filter(row => {
+    const term = expenseSearch.trim().toLocaleLowerCase()
+    return (!term || [row.description, row.documentNumber, projectNames.get(row.projectId)].some(value => (value ?? '').toLocaleLowerCase().includes(term)))
+      && (!expenseFrom || row.effectiveDate >= expenseFrom)
+      && (!expenseTo || row.effectiveDate <= expenseTo)
+      && (!expenseWork || row.projectId === expenseWork)
+      && (!expenseStatus || row.status === expenseStatus)
+  })
+  const selectedExpense = data.expenses.find(row => row.id === selectedExpenseId)
   return <div className="nx-home">
     <header className="nx-home__header"><div>
       <p className="nx-home__eyebrow">{p.parentProjectId ? 'Trabajo de la obra' : 'Obra / proyecto'}</p>
@@ -79,13 +94,43 @@ export function ProjectWorkHome({ projectId }: { projectId: string }) {
     </Card>
     <div id="gastos-de-la-obra"><Card title="Todos los gastos">
       <p>Gastos contabilizados de esta obra y sus trabajos. Los reversos se muestran para conservar el historial.</p>
-      {data.expenses.length ? <Table rows={data.expenses} getRowKey={row => row.id} columns={[
+      <div className="nx-treasury__form">
+        <Input label="Buscar concepto o documento" value={expenseSearch} onChange={event => setExpenseSearch(event.target.value)} placeholder="Cemento, factura, proveedor…" />
+        <div className="nx-work-actions">
+          <Input label="Desde" type="date" value={expenseFrom} onChange={event => setExpenseFrom(event.target.value)} />
+          <Input label="Hasta" type="date" value={expenseTo} onChange={event => setExpenseTo(event.target.value)} />
+          <Select label="Trabajo" value={expenseWork} onChange={event => setExpenseWork(event.target.value)}>
+            <option value="">Todos los trabajos</option>
+            {data.projects.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
+          </Select>
+          <Select label="Estado" value={expenseStatus} onChange={event => setExpenseStatus(event.target.value)}>
+            <option value="">Todos</option>
+            <option value="POSTED">Contabilizado</option>
+            <option value="REVERSED">Revertido</option>
+          </Select>
+        </div>
+        <p className="nx-field__hint">Los filtros afectan los movimientos cargados en esta página. Los totales superiores siempre corresponden a toda la obra.</p>
+      </div>
+      {filteredExpenses.length ? <Table rows={filteredExpenses} getRowKey={row => row.id} columns={[
         { key: 'date', header: 'Fecha', render: row => row.effectiveDate },
         { key: 'work', header: 'Proyecto / trabajo', render: row => projectNames.get(row.projectId) ?? '—' },
         { key: 'description', header: 'Concepto', render: row => row.description || row.documentNumber },
         { key: 'amount', header: 'Importe', numeric: true, render: row => formatMoney(row.amount, data.currencyCode) },
         { key: 'status', header: 'Estado', render: row => row.status === 'REVERSED' ? 'Revertido' : 'Contabilizado' },
-      ]} /> : <EmptyState title="Aún no hay gastos en esta obra" description="Registra el primer gasto con el botón de arriba. Los gastos de Otros no aparecen aquí." />}
+        { key: 'actions', header: 'Acciones', render: row => <Button variant="secondary" onClick={() => setSelectedExpenseId(row.id)}>Ver detalle</Button> },
+      ]} /> : <EmptyState title={data.expenses.length ? 'Sin resultados en esta página' : 'Aún no hay gastos en esta obra'} description={data.expenses.length ? 'Modifica los filtros o consulta las páginas siguientes.' : 'Registra el primer gasto con el botón de arriba.'} />}
+      {selectedExpense ? <Card title="Detalle del movimiento">
+        <p><strong>Documento:</strong> {selectedExpense.documentNumber}</p>
+        <p><strong>Concepto:</strong> {selectedExpense.description ?? '—'}</p>
+        <p><strong>Trabajo:</strong> {projectNames.get(selectedExpense.projectId) ?? '—'}</p>
+        <p><strong>Fecha:</strong> {selectedExpense.effectiveDate} · <strong>Importe:</strong> {formatMoney(selectedExpense.amount, data.currencyCode)}</p>
+        <p><strong>Estado:</strong> {selectedExpense.status === 'REVERSED' ? 'Revertido' : 'Contabilizado'}</p>
+        <p className="nx-field__hint">Los gastos contabilizados no pueden borrarse directamente. Las correcciones deben realizarse mediante una reversión autorizada, conservando el historial.</p>
+        <div className="nx-work-actions">
+          {grants.has('accounting.journal_entry:read') ? <Link to="/finanzas/inspector">Abrir inspector de transacciones</Link> : null}
+          <Button variant="secondary" onClick={() => setSelectedExpenseId(null)}>Cerrar detalle</Button>
+        </div>
+      </Card> : null}
       {data.expenseCount > 25 ? <div className="nx-work-actions"><p>Movimientos {offset + 1}–{offset + data.expenses.length} de {data.expenseCount}. El total incluye todos.</p>
         <Button variant="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 25))}>Anteriores</Button>
         <Button variant="secondary" disabled={offset + data.expenses.length >= data.expenseCount} onClick={() => setOffset(offset + 25)}>Siguientes</Button>

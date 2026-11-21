@@ -9,6 +9,7 @@ import {
   ErrorState,
   Input,
   LoadingState,
+  Select,
   StatCard,
   Table,
   type TableColumn,
@@ -42,6 +43,8 @@ const STATUS_TONE: Record<string, 'success' | 'warning' | 'danger' | 'neutral'> 
 
 export function ContractPaymentLedgerPage() {
   const queryClient = useQueryClient()
+  const [contractSearch, setContractSearch] = useState('')
+  const [installmentFilter, setInstallmentFilter] = useState('ALL')
   const [prepare, setPrepare] = useState<{
     entry: ContractLedgerEntry
     installment: ContractInstallment
@@ -370,7 +373,17 @@ export function ContractPaymentLedgerPage() {
               />
             </div>
 
-{query.data.entries.map((entry: ContractLedgerEntry) => (
+<div className="nx-treasury__actions">
+              <Input label="Buscar contrato o proveedor" value={contractSearch} onChange={event => setContractSearch(event.target.value)} placeholder="Número de contrato o proveedor" />
+              <Select label="Mostrar cuotas" value={installmentFilter} onChange={event => setInstallmentFilter(event.target.value)}>
+                <option value="ALL">Todas</option>
+                <option value="PENDING">Con saldo pendiente</option>
+                <option value="OVERDUE">Vencidas</option>
+              </Select>
+            </div>
+            {query.data.entries
+                .filter(entry => [entry.contractNumber, entry.supplierLegalName ?? ''].some(value => value.toLocaleLowerCase().includes(contractSearch.trim().toLocaleLowerCase())))
+                .map((entry: ContractLedgerEntry) => (
                 <Card key={entry.scheduleId}>
                   <header className="nx-page__header">
                     <div>
@@ -392,7 +405,7 @@ export function ContractPaymentLedgerPage() {
                     <h3 className="nx-field__label">Cuotas</h3>
                     <Table
                       columns={installmentColumns(entry)}
-                      rows={entry.installments}
+                      rows={entry.installments.filter(row => installmentFilter === 'ALL' || (installmentFilter === 'OVERDUE' ? row.status === 'OVERDUE' : Number(row.remaining) > 0 && row.status !== 'CANCELLED'))}
                       getRowKey={(row) => row.installmentId}
                       emptyMessage="Sin cuotas."
                     />

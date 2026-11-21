@@ -12,6 +12,7 @@ import { SupplierPaymentHistoryModal } from './SupplierPaymentHistoryModal'
 export function AccountsPayableWorkspace() {
   const queryClient = useQueryClient()
   const [invoiceId, setInvoiceId] = useState('')
+  const [horizonDays, setHorizonDays] = useState(14)
   const [historyInvoice, setHistoryInvoice] = useState<SupplierInvoice | null>(null)
   const [planInvoice, setPlanInvoice] = useState<SupplierInvoice | null>(null)
 
@@ -33,8 +34,8 @@ export function AccountsPayableWorkspace() {
   const selectedInvoice = invoices.find((invoice) => invoice.id === invoiceId) ?? null
 
   const proposalQuery = useQuery({
-    queryKey: ['ap', 'payment-proposal', activeCompanyId],
-    queryFn: () => apService.paymentProposal(activeCompanyId, 14),
+    queryKey: ['ap', 'payment-proposal', activeCompanyId, horizonDays],
+    queryFn: () => apService.paymentProposal(activeCompanyId, horizonDays),
     enabled: Boolean(activeCompanyId),
   })
   const proposalColumns: TableColumn<PaymentProposalItem>[] = [
@@ -42,6 +43,13 @@ export function AccountsPayableWorkspace() {
     { key: 'supplier', header: 'Proveedor', render: (row) => row.supplierName ?? '—' },
     { key: 'due', header: 'Vence', render: (row) => row.dueDate },
     { key: 'remaining', header: 'A pagar', render: (row) => formatMoney(row.remaining, currencyCode) },
+    { key: 'actions', header: 'Acciones', render: row => {
+      const invoice = invoices.find(item => item.id === row.invoiceId)
+      return invoice ? <div className="nx-treasury__actions">
+        <Button variant="secondary" onClick={() => setPlanInvoice(invoice)}>Ver calendario</Button>
+        <Button variant="secondary" onClick={() => setHistoryInvoice(invoice)}>Ver pagos</Button>
+      </div> : null
+    } },
     {
       key: 'flag',
       header: '',
@@ -55,7 +63,13 @@ export function AccountsPayableWorkspace() {
     <div className="nx-treasury">
       <AccountsPayablePage />
 
-      <Card title="Propuesta de pago · próximos 14 días">
+      <Card title="Propuesta de pagos y vencimientos">
+        <Select label="Ver obligaciones de los próximos" value={String(horizonDays)} onChange={event => setHorizonDays(Number(event.target.value))}>
+          <option value="7">7 días</option>
+          <option value="14">14 días</option>
+          <option value="30">30 días</option>
+          <option value="60">60 días</option>
+        </Select>
         {companies.length === 0 ? (
           <EmptyState icon="card" title="No hay compañía configurada" description="Configura una compañía." />
         ) : proposalQuery.isLoading ? (

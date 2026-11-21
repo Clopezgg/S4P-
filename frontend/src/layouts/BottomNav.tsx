@@ -18,8 +18,8 @@ interface BottomNavItem {
  * "Finanzas" y "Proyectos" son la composición aprobada (Opción 2); se
  * filtran por RBAC y se completan con alternativas si faltan permisos. */
 const CANDIDATES: BottomNavItem[] = [
-  { path: '/finanzas/control', label: 'Finanzas', icon: 'bank', requiredAny: ['treasury.account:read', 'accounting.journal_entry:read'] },
-  { path: '/proyectos', label: 'Proyectos', icon: 'project', requiredAny: ['project:read'] },
+  { path: '/operacion/movimientos', label: 'Gastos', icon: 'receipt', requiredAny: ['project:read'] },
+  { path: '/proyectos', label: 'Obras', icon: 'project', requiredAny: ['project:read'] },
   { path: '/inicio/aprobaciones', label: 'Mi trabajo', icon: 'clipboard', requiredAny: ['workflow.approval:read'] },
   { path: '/finanzas/tesoreria', label: 'Tesorería', icon: 'card', requiredAny: ['treasury.account:read'] },
   { path: '/control/reportes', label: 'Reportes', icon: 'file', requiredAny: ['reports.trial_balance:read', 'reports.general_ledger:read'] },

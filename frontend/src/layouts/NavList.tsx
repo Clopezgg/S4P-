@@ -17,7 +17,11 @@ interface NavListProps {
 export function NavList({ onNavigate, variant = 'sidebar' }: NavListProps) {
   const { user } = useAuth()
   const [query, setQuery] = useState('')
-  const groups = useMemo(() => filterNavGroups(user?.permissions), [user?.permissions])
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const groups = useMemo(
+    () => filterNavGroups(user?.permissions, showAdvanced || query.trim().length > 0),
+    [user?.permissions, showAdvanced, query],
+  )
 
   const normalized = query.trim().toLowerCase()
   const filteredGroups = normalized
@@ -68,6 +72,15 @@ export function NavList({ onNavigate, variant = 'sidebar' }: NavListProps) {
           </ul>
         </div>
       ))}
+      <button
+        type="button"
+        className="nx-sidebar__link"
+        aria-expanded={showAdvanced}
+        onClick={() => setShowAdvanced(current => !current)}
+      >
+        <Icon name="settings" />
+        {showAdvanced ? 'Ocultar funciones avanzadas' : 'Ver funciones avanzadas'}
+      </button>
     </nav>
   )
 }

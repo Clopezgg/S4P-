@@ -15,7 +15,7 @@ export interface NavGroup {
 
 const read = (...permissions: string[]) => permissions
 
-export const navGroups: NavGroup[] = [
+const legacyNavGroups: NavGroup[] = [
   {
     key: 'inicio',
     label: 'Inicio',
@@ -116,16 +116,55 @@ export const navGroups: NavGroup[] = [
   },
 ]
 
-export function filterNavGroups(permissions: string[] | undefined): NavGroup[] {
-  const grants = new Set(permissions ?? [])
-  return navGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(
-        (item) => !item.requiredAny || item.requiredAny.some((permission) => grants.has(permission)),
-      ),
-    }))
-    .filter((group) => group.items.length > 0)
+// Mantener las rutas históricas, pero ofrecer solo seis accesos diarios.
+// Cada perfil puede abrir sus funciones avanzadas sin borrar información.
+function legacyItem(path: string, label?: string): NavItem {
+  const found = legacyNavGroups.flatMap(group => group.items).find(item => item.path === path)
+  if (!found) throw new Error('Ruta no encontrada: ' + path)
+  return label ? { ...found, label } : found
 }
 
-export const navItems: NavItem[] = navGroups.flatMap((group) => group.items)
+export const navGroups: NavGroup[] = [
+  {
+    key: 'operacion',
+    label: 'Operación diaria',
+    items: [
+      legacyItem('/inicio'),
+      legacyItem('/proyectos', 'Mis obras'),
+      { path: '/operacion/movimientos', label: 'Gastos y remesas', icon: 'receipt', requiredAny: read('project:read') },
+      legacyItem('/finanzas/libro-contractual', 'Contratos y pagos'),
+      legacyItem('/finanzas/tesoreria', 'Caja y bancos'),
+      legacyItem('/control/reportes', 'Informes'),
+    ],
+  },
+  { key: 'administracion', label: 'Sistema', items: [legacyItem('/control/configuracion', 'Configuración')] },
+]
+
+export function filterNavGroups(permissions: string[] | undefined, includeAdvanced = false): NavGroup[] {
+  const grants = new Set(permissions ?? [])
+  const primaryPaths = new Set(navGroups.flatMap(group => group.items.map(item => item.path)))
+  const groups: NavGroup[] = includeAdvanced
+    ? [
+        ...navGroups,
+        ...legacyNavGroups.map(group => ({
+          ...group,
+          key: 'advanced-' + group.key,
+          label: 'Avanzado · ' + group.label,
+          items: group.items.filter(item => !primaryPaths.has(item.path)),
+        })),
+      ]
+    : navGroups
+  return groups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(
+        item => !item.requiredAny || item.requiredAny.some(permission => grants.has(permission)),
+      ),
+    }))
+    .filter(group => group.items.length > 0)
+}
+
+// El router necesita todas las rutas, incluidas las ocultas del menú.
+export const navItems: NavItem[] = [...new Map(
+  [...legacyNavGroups, ...navGroups].flatMap(group => group.items).map(item => [item.path, item] as const),
+).values()]
