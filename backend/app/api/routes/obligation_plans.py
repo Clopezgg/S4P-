@@ -110,10 +110,11 @@ def list_plans(
     assert_company_access(
         db, user_id=user.id, resource="core.company", action="read", company_id=company_id
     )
-    return db.execute(select(ObligationPlan).where(
+    plans = db.execute(select(ObligationPlan).where(
         ObligationPlan.company_id == company_id,
         ObligationPlan.owner_user_id == user.id,
     ).order_by(ObligationPlan.created_at.desc())).scalars().all()
+    return [PlanResponse.model_validate(plan, from_attributes=True) for plan in plans]
 
 
 @router.post("", response_model=PlanResponse, status_code=201)
@@ -149,7 +150,7 @@ def create_plan(
     )
     db.commit()
     db.refresh(plan)
-    return plan
+    return PlanResponse.model_validate(plan, from_attributes=True)
 
 
 @router.get("/{plan_id}/settlements", response_model=list[SettlementResponse])
@@ -162,9 +163,10 @@ def list_settlements(
     assert_company_access(
         db, user_id=user.id, resource="core.company", action="read", company_id=plan.company_id
     )
-    return db.execute(select(ObligationSettlement).where(
+    rows = db.execute(select(ObligationSettlement).where(
         ObligationSettlement.plan_id == plan.id,
     ).order_by(ObligationSettlement.payment_date.desc())).scalars().all()
+    return [SettlementResponse.model_validate(row, from_attributes=True) for row in rows]
 
 
 @router.post("/{plan_id}/settlements", response_model=SettlementResponse, status_code=201)
@@ -228,7 +230,7 @@ def record_external_settlement(
     )
     db.commit()
     db.refresh(row)
-    return row
+    return SettlementResponse.model_validate(row, from_attributes=True)
 
 
 @router.patch("/{plan_id}/status", response_model=PlanResponse)
