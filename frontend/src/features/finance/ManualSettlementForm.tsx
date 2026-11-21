@@ -25,7 +25,8 @@ export function ManualSettlementForm({
   const [reference, setReference] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const mutation = useMutation({
-    mutationFn: commitmentsService.recordExternalSettlement,
+    mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof commitmentsService.recordExternalSettlement>[1] }) =>
+      commitmentsService.recordExternalSettlement(id, payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['commitments', 'overview', companyId] })
       void qc.invalidateQueries({ queryKey: ['obligation-plans', companyId] })
