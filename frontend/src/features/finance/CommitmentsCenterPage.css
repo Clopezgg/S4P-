@@ -1,0 +1,35 @@
+.s4p-commitments { display: flex; flex-direction: column; gap: 16px; color: var(--nx-color-text, #173b61); }
+.s4p-commitments__hero { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-bottom: 1px solid var(--nx-color-border, #dfe7f0); padding: 10px 0 20px; }
+.s4p-commitments__hero h1 { font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 8px; }
+.s4p-commitments__hero p { margin: 5px 0; color: var(--nx-color-text-secondary, #53657a); font-size: .88rem; }
+.s4p-commitments__eyebrow { color: #1769d2 !important; text-transform: uppercase; font-weight: 800; letter-spacing: .09em; }
+.s4p-commitments__scope { font-weight: 700; }
+.s4p-commitments__action { border-radius: 8px; background: #1769d2; padding: 11px 16px; color: white; text-decoration: none; font-weight: 700; }
+.s4p-commitments__metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+.s4p-commitments__metric, .s4p-commitments__panel, .s4p-commitments__state { background: var(--nx-color-surface, #fff); border: 1px solid var(--nx-color-border, #dae5f1); border-radius: 12px; padding: 18px; }
+.s4p-commitments__metric { display: flex; flex-direction: column; gap: 12px; min-height: 116px; overflow-wrap: anywhere; }
+.s4p-commitments__metric span { color: var(--nx-color-text-secondary, #53657a); font-size: .8rem; }
+.s4p-commitments__metric strong { font-size: clamp(1rem, 2.1vw, 1.45rem); }
+.s4p-commitments__metric--urgent strong { color: #b42929; }
+.s4p-commitments__panel h2 { margin: 0 0 9px; font-size: 1.1rem; }
+.s4p-commitments__panel p { color: var(--nx-color-text-secondary, #53657a); font-size: .86rem; }
+.s4p-commitments__toolbar, .s4p-commitments__filters { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.s4p-commitments__toolbar { margin-bottom: 16px; }
+.s4p-commitments__toolbar p { margin: 0; }
+.s4p-commitments__toolbar label, .s4p-commitments__search { display: flex; flex-direction: column; gap: 5px; color: var(--nx-color-text-secondary, #53657a); font-size: .78rem; }
+.s4p-commitments__toolbar select, .s4p-commitments__search input { border: 1px solid var(--nx-color-border, #bacadc); border-radius: 8px; padding: 10px 12px; background: var(--nx-color-surface, white); color: inherit; }
+.s4p-commitments__search { min-width: min(100%, 260px); }
+.s4p-commitments__filters { margin-bottom: 12px; }
+.s4p-commitments__chips, .s4p-commitments__shortcuts { display: flex; gap: 8px; flex-wrap: wrap; }
+.s4p-commitments__chips button { cursor: pointer; border: 1px solid var(--nx-color-border, #bacadc); border-radius: 999px; background: transparent; color: inherit; padding: 9px 13px; }
+.s4p-commitments__chips button.is-selected { background: #1769d2; color: white; border-color: #1769d2; }
+.s4p-commitments__row { display: grid; grid-template-columns: 150px minmax(160px,1fr) minmax(140px, .55fr) auto; gap: 16px; align-items: center; padding: 16px 0; border-top: 1px solid var(--nx-color-border, #e4e9f0); }
+.s4p-commitments__date, .s4p-commitments__description, .s4p-commitments__money { display: flex; flex-direction: column; gap: 4px; }
+.s4p-commitments__date span, .s4p-commitments__description span, .s4p-commitments__money span { color: var(--nx-color-text-secondary, #53657a); font-size: .78rem; }
+.s4p-commitments__date span.is-overdue { color: #bb2b2b; font-weight: 700; }
+.s4p-commitments__row a, .s4p-commitments__shortcuts a { color: #1769d2; font-weight: 700; }
+.s4p-commitments__shortcuts a { padding: 10px 13px; border: 1px solid var(--nx-color-border, #d4dce8); border-radius: 8px; text-decoration: none; }
+.s4p-commitments__empty { padding: 22px 0; }
+.s4p-commitments__disclaimer { border-top: 1px solid var(--nx-color-border, #e4e9f0); padding-top: 14px; }
+@media(max-width: 1000px) { .s4p-commitments__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .s4p-commitments__row { grid-template-columns: 120px minmax(0,1fr) auto; } .s4p-commitments__money { grid-column: 2; } }
+@media(max-width: 620px) { .s4p-commitments__metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .s4p-commitments__row { display: flex; align-items: flex-start; flex-direction: column; gap: 9px; } .s4p-commitments__money { margin: 2px 0; } .s4p-commitments__hero { flex-direction: column; } }
