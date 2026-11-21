@@ -72,3 +72,29 @@ def test_private_plan_payment_tracking_without_gl_posting(client):
         "companyId": company["id"], "horizon_days": 365,
     }).json()
     assert not [line for line in remaining["lines"] if line["source"] == "MANUAL"]
+
+
+def test_obligation_plans_are_private_even_between_company_administrators(client, db_session):
+    from tests.helpers import create_user_with_role, login_as
+
+    login_admin(client)
+    company = create_company(client)
+    response = client.post("/api/obligation-plans", json={
+        "companyId": company["id"], "title": "Compromiso confidencial",
+        "category": "LAND", "scope": "PERSONAL",
+        "currencyCode": "HNL", "amount": "500.00",
+        "recurrence": "ONCE", "firstDueDate": "2026-11-15", "dueDay": 15,
+    })
+    assert response.status_code == 201, response.text
+    plan_id = response.json()["id"]
+    create_user_with_role(
+        db_session, email="other-obligation-admin@nexora.group", role_name="Administrator",
+    )
+    login_as(client, email="other-obligation-admin@nexora.group")
+    own = client.get("/api/obligation-plans", params={"companyId": company["id"]})
+    assert own.status_code == 200, own.text
+    assert own.json() == []
+    receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
+    assert receipts.status_code == 404
+    update = client.patch(f"/api/obligation-plans/{plan_id}/status?status=CANCELLED")
+    assert update.status_code == 404
