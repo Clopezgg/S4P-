@@ -143,6 +143,13 @@ export function CommitmentsCenterPage() {
                       <span className={line.status === 'OVERDUE' ? 'is-overdue' : ''}>
                         {statusLabel[line.status] ?? line.status}
                       </span>
+                      {line.alertNow && (
+                        <span role="status">
+                          {line.daysUntilDue < 0 ? `Atraso: ${Math.abs(line.daysUntilDue)} días`
+                            : line.daysUntilDue === 0 ? 'Atención: vence hoy'
+                              : `Recordatorio: faltan ${line.daysUntilDue} días`}
+                        </span>
+                      )}
                     </div>
                     <div className="s4p-commitments__description">
                       <strong>{line.title}</strong>
