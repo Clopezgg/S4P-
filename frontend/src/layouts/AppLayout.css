@@ -105,6 +105,15 @@
   min-height: 36px;
   padding: 7px 10px;
   border-radius: 5px;
+  /* Links and the advanced-menu button must share the dark sidebar surface.
+     Native buttons otherwise render a light #efefef background against white text,
+     failing the WCAG AA 4.5:1 contrast audit. */
+  background-color: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
   color: #c2d0df;
   text-decoration: none;
   font-size: 12px;

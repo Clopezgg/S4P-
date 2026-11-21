@@ -8,7 +8,10 @@ FLOW / TREASURY DIRECTION, §12-§14, §20 bloque CASH).
 - El flujo real y el forecast son endpoints distintos (§4/§14).
 """
 
+from datetime import timedelta
 from decimal import Decimal
+
+from app.core.business_time import business_today
 
 from tests.helpers import (
     create_account,
@@ -40,7 +43,10 @@ def _company_with_bank(client):
     return company, bank
 
 
-def _remittance(client, company, bank, *, counter_id, origin_type, amount, remittance_date="2026-08-20"):
+def _remittance(client, company, bank, *, counter_id, origin_type, amount, remittance_date=None):
+    # Relative to the business calendar, not a historical hard-coded date
+    # that silently falls outside the rolling 13-week cash-flow report.
+    remittance_date = remittance_date or (business_today() - timedelta(days=21)).isoformat()
     r = client.post(
         "/api/treasury/remittances",
         json={
@@ -91,10 +97,11 @@ def test_remittance_appears_once_in_actual_cash_flow(client):
     login_admin(client)
     company, bank = _company_with_bank(client)
     equity = create_account(client, company_id=company["id"], code="3100", name="Aportes", account_type="EQUITY")
+    economic_date = (business_today() - timedelta(days=21)).isoformat()
     _remittance(
         client, company, bank, counter_id=equity["id"],
         origin_type="CAPITAL_CONTRIBUTION", amount="100000.00",
-        remittance_date="2026-08-20",
+        remittance_date=economic_date,
     )
 
     cf = client.get(f"/api/financial-control/cash-flow-actual?companyId={company['id']}")
@@ -107,10 +114,10 @@ def test_remittance_appears_once_in_actual_cash_flow(client):
     assert Decimal(body["inflowByCategory"]["Aportes de capital"]) == Decimal("100000.00")
     assert len(body["weeks"]) == 13
     # El movimiento cae en la semana que CONTIENE su fecha económica
-    # (remittanceDate = 2026-08-20), no en la última semana.
+    # (remittanceDate = business date minus three weeks), no en la última semana.
     weeks_with = [w for w in body["weeks"] if Decimal(w["inflows"]) > 0]
     assert len(weeks_with) == 1
-    assert weeks_with[0]["weekStart"] <= "2026-08-20" <= weeks_with[0]["weekEnd"]
+    assert weeks_with[0]["weekStart"] <= economic_date <= weeks_with[0]["weekEnd"]
     assert Decimal(weeks_with[0]["inflows"]) == Decimal("100000.00")
     # El saldo de cierre del flujo == saldo real de tesorería.
     assert Decimal(body["closingBalance"]) == Decimal("100000.00")
@@ -149,7 +156,7 @@ def test_supplier_payment_is_an_outflow_in_actual_cash_flow(client):
         json={
             "companyId": company["id"], "treasuryAccountId": bank["id"],
             "expenseAccountId": expense_gl["id"], "category": "Luz", "amount": "3000.00",
-            "currencyCode": "HNL", "expenseDate": "2026-08-25", "description": "Energía",
+            "currencyCode": "HNL", "expenseDate": (business_today() - timedelta(days=14)).isoformat(), "description": "Energía",
         },
     )
 
@@ -173,7 +180,7 @@ def test_internal_transfer_is_not_a_cash_flow_movement(client):
         json={
             "companyId": company["id"], "sourceTreasuryAccountId": bank_a["id"],
             "destinationTreasuryAccountId": bank_b["id"], "amount": "5000.00",
-            "currencyCode": "HNL", "transferDate": "2026-08-26",
+            "currencyCode": "HNL", "transferDate": (business_today() - timedelta(days=14)).isoformat(),
         },
     )
     assert transfer.status_code == 201, transfer.text
