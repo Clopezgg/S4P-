@@ -43,6 +43,8 @@ class CommitmentLine(CamelModel):
     detail_url: str
     plan_id: uuid.UUID | None = None
     accounting_status: str = "ERP"
+    days_until_due: int = 0
+    alert_now: bool = False
 
 
 class CommitmentsOverview(CamelModel):
@@ -165,6 +167,10 @@ def overview(
     ):
         lines.append(CommitmentLine(**item))
 
+    for item in lines:
+        item.days_until_due = (item.due_date - today).days
+        # On-screen alert triggers when the user visits the center; no push is implied.
+        item.alert_now = item.days_until_due in (7, 3, 1, 0) or item.days_until_due < 0
     lines.sort(key=lambda row: (row.due_date, row.id))
     pending: dict[str, Decimal] = {}
     overdue: dict[str, Decimal] = {}
