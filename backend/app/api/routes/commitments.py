@@ -20,6 +20,7 @@ from app.models.contract_payment import ContractPaymentSchedule
 from app.models.supplier import Supplier, SupplierContract
 from app.schemas.base import CamelModel
 from app.services import contract_payment_service as cps
+from app.services import obligation_schedule_service as schedules
 from app.services.permission_service import (
     accessible_project_ids, assert_company_access, user_has_permission,
 )
@@ -40,6 +41,8 @@ class CommitmentLine(CamelModel):
     remaining: Decimal
     status: str
     detail_url: str
+    plan_id: uuid.UUID | None = None
+    accounting_status: str = "ERP"
 
 
 class CommitmentsOverview(CamelModel):
@@ -141,6 +144,11 @@ def overview(
                     status=_status(installment.due_date, installment.paid, installment.remaining, today),
                     detail_url="/finanzas/libro-contractual",
                 ))
+
+    for item in schedules.pending_lines(
+        db, company_id=company_id, user_id=user.id, today=today, horizon_days=horizon_days
+    ):
+        lines.append(CommitmentLine(**item))
 
     lines.sort(key=lambda row: (row.due_date, row.id))
     pending: dict[str, Decimal] = {}
