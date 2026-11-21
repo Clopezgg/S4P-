@@ -136,7 +136,6 @@ export const simpleNavGroups: NavGroup[] = [
       { path: '/operacion/movimientos', label: 'Gastos y remesas', icon: 'receipt', requiredAny: read('project:read') },
       legacyItem('/finanzas/libro-contractual', 'Contratos y pagos'),
       legacyItem('/finanzas/tesoreria', 'Caja y bancos'),
-      legacyItem('/control/reportes', 'Informes'),
     ],
   },
   { key: 'administracion', label: 'Sistema', items: [legacyItem('/control/configuracion', 'Configuración')] },
