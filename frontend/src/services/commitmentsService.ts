@@ -15,6 +15,8 @@ export interface CommitmentLine {
   detailUrl: string
   planId: string | null
   accountingStatus: 'ERP' | 'UNPOSTED_MANUAL'
+  daysUntilDue: number
+  alertNow: boolean
 }
 
 export interface CommitmentsOverview {
