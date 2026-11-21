@@ -15,6 +15,7 @@ export interface CommitmentLine {
   detailUrl: string
   planId: string | null
   accountingStatus: 'ERP' | 'UNPOSTED_MANUAL'
+  scope: 'PERSONAL' | 'BUSINESS' | 'THIRD_PARTY'
   daysUntilDue: number
   alertNow: boolean
 }
@@ -24,6 +25,8 @@ export interface CommitmentsOverview {
   lines: CommitmentLine[]
   pendingByCurrency: Record<string, string>
   overdueByCurrency: Record<string, string>
+  pendingByScope: Record<string, Record<string, string>>
+  overdueByScope: Record<string, Record<string, string>>
 }
 
 export interface ObligationPlan {
