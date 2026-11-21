@@ -1,0 +1,31 @@
+"""Safety regressions for the read-only commitments center."""
+from tests.helpers import create_company, login_admin
+
+
+def test_commitments_requires_authentication(client):
+    response = client.get("/api/commitments/overview")
+    assert response.status_code == 401
+
+
+def test_commitments_empty_company_never_invents_upcoming_payments(client):
+    login_admin(client)
+    company = create_company(client)
+    response = client.get(
+        "/api/commitments/overview",
+        params={"companyId": company["id"], "horizon_days": 90},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["lines"] == []
+    assert data["pendingByCurrency"] == {}
+    assert data["overdueByCurrency"] == {}
+
+
+def test_commitments_rejects_unbounded_forecast(client):
+    login_admin(client)
+    company = create_company(client)
+    response = client.get(
+        "/api/commitments/overview",
+        params={"companyId": company["id"], "horizon_days": 99999},
+    )
+    assert response.status_code == 422
