@@ -122,3 +122,12 @@ def test_monthly_schedule_respects_last_due_date_after_february_clamp():
     assert occurrence_dates(plan, date(2027, 12, 31)) == [
         date(2027, 1, 31), date(2027, 2, 28),
     ]
+
+
+def test_monthly_schedule_rejects_inverted_bounds_defensively():
+    """Legacy/imported plans must never create an installment beyond their end date."""
+    plan = SimpleNamespace(
+        first_due_date=date(2027, 3, 31), last_due_date=date(2027, 2, 28),
+        due_day=31, recurrence="MONTHLY", status="ACTIVE",
+    )
+    assert occurrence_dates(plan, date(2027, 12, 31)) == []
