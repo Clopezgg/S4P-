@@ -105,6 +105,11 @@ def test_obligation_plans_are_private_even_between_company_administrators(client
     own = client.get("/api/obligation-plans", params={"companyId": company["id"]})
     assert own.status_code == 200, own.text
     assert own.json() == []
+    overview = client.get("/api/commitments/overview", params={
+        "companyId": company["id"], "horizon_days": 365,
+    })
+    assert overview.status_code == 200, overview.text
+    assert not [line for line in overview.json()["lines"] if line["source"] == "MANUAL"]
     receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
     assert receipts.status_code == 404
     update = client.patch(f"/api/obligation-plans/{plan_id}/status?status=CANCELLED")
