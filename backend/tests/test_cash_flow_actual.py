@@ -12,7 +12,6 @@ from datetime import timedelta
 from decimal import Decimal
 
 from app.core.business_time import business_today
-
 from tests.helpers import (
     create_account,
     create_company,
