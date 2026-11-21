@@ -45,6 +45,30 @@ def test_rejects_untrusted_source():
         )
 
 
+@pytest.mark.parametrize("host", [
+    "dpg-dbh8j41srm7s73f3u1b0-a.attacker.example",
+    "dpg-dbh8j41srm7s73f3u1b0-a.virginia-postgres.render.com",
+    "dpg-dbh8j41srm7s73f3u1b0-attack.internal",
+])
+def test_rejects_lookalike_and_public_source_hosts(host):
+    source = module.parse_connection(
+        f"postgresql://ops:secret@{host}:5432/s4p_postgres_staging"
+    )
+    with pytest.raises(RuntimeError, match="Unrecognized Render"):
+        module.validate_endpoints(
+            source, module.parse_connection(TARGET), "pg-service.aivencloud.com",
+        )
+
+
+def test_accepts_verified_private_render_host():
+    source = module.parse_connection(
+        "postgresql://ops:secret@dpg-dbh8j41srm7s73f3u1b0-a:5432/s4p_postgres_staging"
+    )
+    module.validate_endpoints(
+        source, module.parse_connection(TARGET), "pg-service.aivencloud.com",
+    )
+
+
 def test_requires_real_ca_file(tmp_path):
     with pytest.raises(RuntimeError, match="CA certificate"):
         module.pg_environment(module.parse_connection(TARGET), ca_file=str(tmp_path / "missing.pem"))

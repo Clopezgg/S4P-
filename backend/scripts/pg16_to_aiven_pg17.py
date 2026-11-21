@@ -53,7 +53,11 @@ def parse_connection(uri: str) -> Connection:
 
 
 def validate_endpoints(source: Connection, target: Connection, expected_target_host: str) -> None:
-    if not source.host.startswith(SOURCE_HOST_PREFIX) or source.database != SOURCE_DB:
+    # Only the known private-network Render hostname may be read. Prefix-only
+    # matching could accept an attacker-controlled host such as
+    # dpg-...-a.attacker.example, even when the database name matches.
+    private_source_hosts = {SOURCE_HOST_PREFIX, f"{SOURCE_HOST_PREFIX}.internal"}
+    if source.host not in private_source_hosts or source.database != SOURCE_DB:
         raise RuntimeError("Unrecognized Render PostgreSQL source")
     if (not expected_target_host or target.host != expected_target_host
             or not target.host.endswith(".aivencloud.com")
