@@ -100,3 +100,25 @@ def test_obligation_plans_are_private_even_between_company_administrators(client
     assert receipts.status_code == 404
     update = client.patch(f"/api/obligation-plans/{plan_id}/status?status=CANCELLED")
     assert update.status_code == 404
+
+
+def test_once_schedule_respects_end_date_and_cancellation():
+    plan = SimpleNamespace(
+        first_due_date=date(2027, 1, 15), last_due_date=date(2027, 1, 14),
+        due_day=15, recurrence="ONCE", status="ACTIVE",
+    )
+    assert occurrence_dates(plan, date(2027, 12, 31)) == []
+    plan.last_due_date = date(2027, 1, 15)
+    assert occurrence_dates(plan, date(2027, 12, 31)) == [date(2027, 1, 15)]
+    plan.status = "CANCELLED"
+    assert occurrence_dates(plan, date(2027, 12, 31)) == []
+
+
+def test_monthly_schedule_respects_last_due_date_after_february_clamp():
+    plan = SimpleNamespace(
+        first_due_date=date(2027, 1, 31), last_due_date=date(2027, 2, 28),
+        due_day=31, recurrence="MONTHLY", status="ACTIVE",
+    )
+    assert occurrence_dates(plan, date(2027, 12, 31)) == [
+        date(2027, 1, 31), date(2027, 2, 28),
+    ]
