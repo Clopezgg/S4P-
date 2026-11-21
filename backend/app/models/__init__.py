@@ -34,8 +34,8 @@ from app.models.idempotency import IdempotencyRecord
 from app.models.inventory import PhysicalCount, PhysicalCountLine, StockLedgerEntry
 from app.models.item import Item
 from app.models.notification import Notification
-from app.models.obligation import ObligationPlan, ObligationSettlement
 from app.models.number_sequence import NumberSequence
+from app.models.obligation import ObligationPlan, ObligationSettlement
 from app.models.permission import (
     Permission,
     RolePermission,
