@@ -74,6 +74,15 @@ def test_private_plan_payment_tracking_without_gl_posting(client):
         "companyId": company["id"], "horizon_days": 365,
     }).json()
     assert not [line for line in remaining["lines"] if line["source"] == "MANUAL"]
+    # Pausing and cancelling must prevent additional off-ledger settlements.
+    blocked = client.post(f"/api/obligation-plans/{plan['id']}/settlements", json={
+        **payment, "reference": "PAUSED-TEST", "amount": "1.00",
+    })
+    assert blocked.status_code == 409
+    cancelled = client.patch(f"/api/obligation-plans/{plan['id']}/status?status=CANCELLED")
+    assert cancelled.status_code == 200
+    reactivation = client.patch(f"/api/obligation-plans/{plan['id']}/status?status=ACTIVE")
+    assert reactivation.status_code == 409
 
 
 def test_obligation_plans_are_private_even_between_company_administrators(client, db_session):
