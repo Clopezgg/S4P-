@@ -39,6 +39,7 @@ from app.api.routes import (
     master_data,
     master_dimensions,
     notifications,
+    obligation_plans,
     preferences,
     procurement,
     project_budget_management,
@@ -159,6 +160,7 @@ def create_app() -> FastAPI:
     app.include_router(context.router, prefix="/api")
     app.include_router(contract_payments.router, prefix="/api")
     app.include_router(commitments.router, prefix="/api")
+    app.include_router(obligation_plans.router, prefix="/api")
     app.include_router(master_data.router, prefix="/api")
     app.include_router(access_management.router, prefix="/api")
     app.include_router(master_dimensions.router, prefix="/api")
