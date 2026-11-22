@@ -108,3 +108,15 @@ def test_commitment_reminders_fire_only_on_documented_days():
         assert _alert_due(today + timedelta(days=days), today), days
     for days in (2, 4, 5, 6, 8, 30):
         assert not _alert_due(today + timedelta(days=days), today), days
+
+
+def test_commitments_rejects_non_numeric_forecast(client):
+    """Malformed horizon inputs must not silently select a default forecast."""
+    login_admin(client)
+    company = create_company(client)
+    for horizon in ("abc", "1.5", ""):
+        response = client.get(
+            "/api/commitments/overview",
+            params={"companyId": company["id"], "horizon_days": horizon},
+        )
+        assert response.status_code == 422, response.text
