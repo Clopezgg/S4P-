@@ -120,3 +120,20 @@ def test_commitments_rejects_non_numeric_forecast(client):
             params={"companyId": company["id"], "horizon_days": horizon},
         )
         assert response.status_code == 422, response.text
+
+
+def test_commitments_accepts_minimum_forecast_without_inventing_data(client):
+    """The one-day lower boundary remains valid and cannot create phantom debt."""
+    login_admin(client)
+    company = create_company(client)
+    response = client.get(
+        "/api/commitments/overview",
+        params={"companyId": company["id"], "horizon_days": 1},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["lines"] == []
+    assert data["pendingByCurrency"] == {}
+    assert data["overdueByCurrency"] == {}
+    assert data["pendingByScope"] == {}
+    assert data["overdueByScope"] == {}
