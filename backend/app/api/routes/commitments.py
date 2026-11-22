@@ -58,6 +58,12 @@ class CommitmentsOverview(CamelModel):
     overdue_by_scope: dict[str, dict[str, Decimal]] = Field(default_factory=dict)
 
 
+def _alert_due(due: date, today: date) -> bool:
+    """Show a reminder on overdue dates and exactly 7, 3, 1 or 0 days ahead."""
+    days = (due - today).days
+    return days < 0 or days in (0, 1, 3, 7)
+
+
 def _status(due: date, paid: Decimal, remaining: Decimal, today: date) -> str:
     if remaining <= 0:
         return "PAID"
@@ -174,7 +180,7 @@ def overview(
     for item in lines:
         item.days_until_due = (item.due_date - today).days
         # On-screen alert triggers when the user visits the center; no push is implied.
-        item.alert_now = item.days_until_due in (7, 3, 1, 0) or item.days_until_due < 0
+        item.alert_now = _alert_due(item.due_date, today)
     lines.sort(key=lambda row: (row.due_date, row.id))
     pending: dict[str, Decimal] = {}
     overdue: dict[str, Decimal] = {}
