@@ -137,3 +137,18 @@ def test_commitments_accepts_minimum_forecast_without_inventing_data(client):
     assert data["overdueByCurrency"] == {}
     assert data["pendingByScope"] == {}
     assert data["overdueByScope"] == {}
+
+
+def test_commitment_alerts_handle_leap_day_and_year_rollover():
+    """Reminder offsets must use actual calendar days across month/year boundaries."""
+    from datetime import date
+
+    from app.api.routes.commitments import _alert_due
+
+    # 2028 is a leap year: Feb 29 is exactly one day after Feb 28.
+    assert _alert_due(date(2028, 2, 29), date(2028, 2, 28))
+    assert _alert_due(date(2028, 3, 3), date(2028, 2, 29))
+    assert not _alert_due(date(2028, 3, 2), date(2028, 2, 29))
+    # Year-end boundaries must not accidentally suppress the 3-day reminder.
+    assert _alert_due(date(2027, 1, 2), date(2026, 12, 30))
+    assert not _alert_due(date(2027, 1, 3), date(2026, 12, 30))
