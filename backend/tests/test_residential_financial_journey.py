@@ -280,9 +280,14 @@ def test_residential_cycle_approval_payment_pdf_reconciliation_reversal(migrated
         issued = session.scalar(select(VoucherIssuance))
         original_context = issued.contract_context_snapshot
         assert original_context['history'][0]['paid'] == '1000.00'
-    # Real DDL rollback/re-upgrade must retain an already issued snapshot.
+    # The recovery rehearsal is pinned to historical revisions only. A current
+    # HEAD database must be rejected rather than downgraded by that utility.
     from release_maintenance import schema_roundtrip
-    assert schema_roundtrip(engine)
+    with pytest.raises(RuntimeError, match="^UnexpectedRevision$"):
+        schema_roundtrip(engine)
+    with Session(engine) as session:
+        persisted = session.scalar(select(VoucherIssuance))
+        assert persisted.contract_context_snapshot == original_context
     login(unassigned['email'])
     for query in [receipt_number, receipt_code, 'QA-RES-BANK-REF']:
         assert call('GET', f'/accounting/documents/lookup?q={query}')['results'] == []
