@@ -181,6 +181,11 @@ describe('HomePage', () => {
     expect(await screen.findByText(/Entradas L\s?65,000/)).toBeInTheDocument()
     expect(screen.queryByText(/^S[1-9]$/)).not.toBeInTheDocument()
     expect(screen.queryByText(/^S1[0-3]$/)).not.toBeInTheDocument()
+    // Centro de compromisos: la respuesta vacía debe renderizar sin romper Inicio.
+    const commitments = await screen.findByRole('region', { name: 'Compromisos urgentes' })
+    expect(within(commitments).getByText('0 vencido(s)')).toBeInTheDocument()
+    expect(within(commitments).getByText(/Sin alertas de vencimiento/)).toBeInTheDocument()
+    expect(within(commitments).getByRole('link', { name: 'Ver todo' })).toHaveAttribute('href', '/inicio/compromisos')
     expect(await screen.findByText('Banco Atlántida')).toBeInTheDocument()
     expect(screen.getByText('••••5852 · HNL')).toBeInTheDocument()
   })
