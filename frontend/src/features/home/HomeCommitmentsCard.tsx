@@ -13,8 +13,9 @@ export function HomeCommitmentsCard({ companyId }: { companyId: string }) {
     queryKey: ['commitments', 'overview', companyId, 30],
     queryFn: ({ signal }) => commitmentsService.overview(companyId, 30, signal),
   })
-  const upcoming = query.data?.lines.filter(item => item.alertNow).slice(0, 5) ?? []
-  const overdue = query.data?.lines.filter(item => item.daysUntilDue < 0).length ?? 0
+  const lines = Array.isArray(query.data?.lines) ? query.data.lines : []
+  const upcoming = lines.filter(item => item.alertNow).slice(0, 5)
+  const overdue = lines.filter(item => item.daysUntilDue < 0).length
 
   return (
     <section className="nx-home-commitments" aria-label="Compromisos urgentes">
@@ -32,7 +33,7 @@ export function HomeCommitmentsCard({ companyId }: { companyId: string }) {
           <>
             <div className="nx-home-commitments__count">
               <strong>{overdue} vencido(s)</strong>
-              <span>{query.data?.lines.length ?? 0} obligaciones registradas para los próximos 30 días y anteriores abiertas</span>
+              <span>{lines.length} obligaciones registradas para los próximos 30 días y anteriores abiertas</span>
             </div>
             {upcoming.length ? upcoming.map(item => (
               <div className="nx-home-commitments__row" key={item.id}>
