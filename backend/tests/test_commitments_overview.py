@@ -80,6 +80,7 @@ def test_commitment_status_prioritizes_remaining_and_due_date():
 
     today = date(2026, 11, 22)
     assert _status(today, Decimal("0"), Decimal("100"), today) == "DUE"
+    assert _status(today, Decimal("20"), Decimal("80"), today) == "DUE"
     assert _status(date(2026, 11, 21), Decimal("20"), Decimal("80"), today) == "OVERDUE"
     assert _status(date(2026, 11, 23), Decimal("20"), Decimal("80"), today) == "PARTIALLY_PAID"
     assert _status(date(2026, 11, 23), Decimal("0"), Decimal("100"), today) == "UPCOMING"
