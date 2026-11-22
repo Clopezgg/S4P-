@@ -44,6 +44,20 @@ function stubSapFetch(themeId: string | null = 'sap-gui-signature') {
           json: async () => [{ id: 'c1', name: 'Constructora Nexora', code: 'NX', functionalCurrencyCode: 'HNL', defaultThemeId: null, defaultDensity: null }],
         } as Response)
       }
+      if (url.includes('/commitments/overview')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            asOf: '2026-01-01',
+            lines: [],
+            pendingByCurrency: {},
+            overdueByCurrency: {},
+            pendingByScope: {},
+            overdueByScope: {},
+          }),
+        } as Response)
+      }
       if (url.includes('/fiscal/periods/current')) {
         return Promise.resolve({
           ok: true,
