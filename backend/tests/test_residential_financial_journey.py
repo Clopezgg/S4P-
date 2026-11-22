@@ -28,7 +28,7 @@ from tests.helpers import login_admin
 
 BACKEND = Path(__file__).resolve().parents[1]
 SLUG = re.sub(r'[^a-z0-9]+', '_', BACKEND.parent.name.lower()).strip('_')
-DB_NAME = f'nexora_residential_cycle_{SLUG}'
+DB_NAME = f'nexora_residential_cycle_{SLUG}_{uuid.uuid4().hex[:8]}'
 
 
 @pytest.fixture
@@ -38,7 +38,8 @@ def migrated_residential_api(client):
            'PGHOST': 'localhost', 'PGPORT': '5432', 'PGUSER': 'nexora',
            'PGPASSWORD': os.environ.get('POSTGRES_PASSWORD', 'nexora')}
     url = f"postgresql+psycopg://nexora:{env['PGPASSWORD']}@localhost:5432/{DB_NAME}"
-    subprocess.run(['dropdb', '--if-exists', DB_NAME], env=env, check=True)
+    # Use a fresh, uniquely named disposable QA database. Never drop a
+    # pre-existing database before the test has created its own.
     subprocess.run(['createdb', DB_NAME], env=env, check=True)
     engine = create_engine(url)
     previous_override = app.dependency_overrides[get_db]
