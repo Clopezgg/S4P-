@@ -95,3 +95,16 @@ def test_commitment_status_prioritizes_remaining_and_due_date():
     assert _status(date(2026, 11, 23), Decimal("20"), Decimal("80"), today) == "PARTIALLY_PAID"
     assert _status(date(2026, 11, 23), Decimal("0"), Decimal("100"), today) == "UPCOMING"
     assert _status(date(2026, 11, 21), Decimal("100"), Decimal("0"), today) == "PAID"
+
+
+def test_commitment_reminders_fire_only_on_documented_days():
+    """Do not emit early or repeated reminders on other future dates."""
+    from datetime import date, timedelta
+
+    from app.api.routes.commitments import _alert_due
+
+    today = date(2026, 11, 22)
+    for days in (-30, -1, 0, 1, 3, 7):
+        assert _alert_due(today + timedelta(days=days), today), days
+    for days in (2, 4, 5, 6, 8, 30):
+        assert not _alert_due(today + timedelta(days=days), today), days
