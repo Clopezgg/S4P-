@@ -9,6 +9,14 @@ def test_commitments_requires_authentication(client):
     assert response.status_code == 401
 
 
+def test_commitments_rejects_missing_or_invalid_company_id(client):
+    """Never silently fall back to another company when the scope is invalid."""
+    login_admin(client)
+    for params in ({}, {"companyId": "not-a-uuid"}, {"companyId": ""}):
+        response = client.get("/api/commitments/overview", params=params)
+        assert response.status_code == 422, response.text
+
+
 def test_commitments_empty_company_never_invents_upcoming_payments(client):
     login_admin(client)
     company = create_company(client)
