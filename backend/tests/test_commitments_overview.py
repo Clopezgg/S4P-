@@ -166,3 +166,38 @@ def test_commitments_repeated_reads_are_stable_for_empty_company(client):
     assert first.json()["lines"] == []
     for field in ("pendingByCurrency", "overdueByCurrency", "pendingByScope", "overdueByScope"):
         assert first.json()[field] == {}
+
+
+def test_commitments_isolate_private_plans_by_company(client):
+    """A private plan in one company must not leak into another company's dashboard."""
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
+
+    login_admin(client)
+    first_company = create_company(client, name="Isolation A")
+    second_company = create_company(client, name="Isolation B")
+    due = business_today() + timedelta(days=7)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": first_company["id"],
+        "title": "Isolation test commitment",
+        "category": "GENERAL",
+        "scope": "PERSONAL",
+        "currencyCode": "HNL",
+        "amount": "125.00",
+        "recurrence": "ONCE",
+        "firstDueDate": due.isoformat(),
+        "dueDay": due.day,
+    })
+    assert created.status_code == 201, created.text
+    first = client.get("/api/commitments/overview", params={
+        "companyId": first_company["id"], "horizon_days": 30,
+    })
+    second = client.get("/api/commitments/overview", params={
+        "companyId": second_company["id"], "horizon_days": 30,
+    })
+    assert first.status_code == second.status_code == 200
+    assert any(line["planId"] == created.json()["id"] for line in first.json()["lines"])
+    assert second.json()["lines"] == []
+    assert second.json()["pendingByCurrency"] == {}
+    assert second.json()["pendingByScope"] == {}
