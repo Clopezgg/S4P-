@@ -41,21 +41,14 @@ def _run_alembic(*args: str) -> subprocess.CompletedProcess:
     )
 
 
-def test_fresh_install_then_full_downgrade_then_upgrade_roundtrip_succeeds():
-    """NXR-REQ-0106 (Migrations): real evidence, not "alembic upgrade head
-    aplicado" by itself. Found and fixed a real bug building this test:
-    several migrations passed `None` as the constraint name to
-    `create_foreign_key`/`create_unique_constraint`, which let PostgreSQL
-    autogenerate an unpredictable name at CREATE time -- their own
-    `downgrade()` then tried `drop_constraint(None, ...)`, which cannot
-    resolve to any real constraint and always failed. Fixed by naming
-    every such constraint explicitly at creation
-    (131a6debf189/c622defc2308/f1075e290473/eaf5b6c0d061). This test
-    would have caught it: fresh install -> head, full downgrade -> base,
-    full upgrade -> head again, against a real dedicated PostgreSQL
-    database (not `Base.metadata.create_all`, which every other test in
-    this suite uses and which would never have exercised `downgrade()`
-    or the real migration chain at all)."""
+def test_fresh_install_then_safe_downgrade_then_upgrade_roundtrip_succeeds():
+    """Verify the reversible boundary without destroying off-ledger payment evidence.
+
+    Revision 742fbe13c921 intentionally retains obligation tables on downgrade.
+    Downgrading all the way to base would fail when the currencies table is
+    dropped, and a CASCADE would destroy financial evidence. Test the supported
+    head -> previous revision -> head transition on an isolated database.
+    """
     subprocess.run(["dropdb", "--if-exists", _DB_NAME], check=True, env=_pg_env())
     subprocess.run(["createdb", _DB_NAME], check=True, env=_pg_env())
     try:
@@ -70,8 +63,16 @@ def test_fresh_install_then_full_downgrade_then_upgrade_roundtrip_succeeds():
         )
         assert status_width.stdout.strip() == "32"
 
-        downgrade_to_base = _run_alembic("downgrade", "base")
+        downgrade_to_base = _run_alembic("downgrade", "9083ca4ebf44")
         assert downgrade_to_base.returncode == 0, downgrade_to_base.stderr
+
+        retained = subprocess.run(
+            ["psql", "-X", "-A", "-t", "--dbname", _DB_NAME, "-c",
+             "SELECT to_regclass('public.obligation_plans'), "
+             "to_regclass('public.obligation_settlements')"],
+            env=_pg_env(), capture_output=True, text=True, check=True,
+        )
+        assert retained.stdout.strip() == "obligation_plans|obligation_settlements"
 
         upgrade_again = _run_alembic("upgrade", "head")
         assert upgrade_again.returncode == 0, upgrade_again.stderr
