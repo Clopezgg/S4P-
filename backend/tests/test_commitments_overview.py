@@ -276,3 +276,51 @@ def test_external_settlement_rejects_duplicate_reference_without_double_counting
     line = next(line for line in overview.json()["lines"] if line["planId"] == plan_id)
     assert float(line["paid"]) == 25.0
     assert float(line["remaining"]) == 100.0
+
+
+
+def test_external_settlement_rejects_overpayment_without_changing_balance(client):
+    """Partial receipts must never let one installment exceed its contractual amount."""
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
+
+    login_admin(client)
+    company = create_company(client, name="Settlement overpayment guard")
+    due = business_today() + timedelta(days=7)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": company["id"],
+        "title": "Overpayment regression",
+        "category": "GENERAL",
+        "scope": "PERSONAL",
+        "currencyCode": "HNL",
+        "amount": "125.00",
+        "recurrence": "ONCE",
+        "firstDueDate": due.isoformat(),
+        "dueDay": due.day,
+    })
+    assert created.status_code == 201, created.text
+    plan_id = created.json()["id"]
+    base = {
+        "occurrenceDueDate": due.isoformat(),
+        "paymentDate": business_today().isoformat(),
+    }
+    first = client.post(f"/api/obligation-plans/{plan_id}/settlements", json={
+        **base, "amount": "100.00", "reference": "QA-PARTIAL-001",
+    })
+    assert first.status_code == 201, first.text
+    rejected = client.post(f"/api/obligation-plans/{plan_id}/settlements", json={
+        **base, "amount": "25.01", "reference": "QA-OVERPAY-002",
+    })
+    assert rejected.status_code == 422, rejected.text
+    receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
+    assert receipts.status_code == 200, receipts.text
+    assert len(receipts.json()) == 1
+    assert receipts.json()[0]["id"] == first.json()["id"]
+    overview = client.get("/api/commitments/overview", params={
+        "companyId": company["id"], "horizon_days": 30,
+    })
+    assert overview.status_code == 200, overview.text
+    line = next(line for line in overview.json()["lines"] if line["planId"] == plan_id)
+    assert float(line["paid"]) == 100.0
+    assert float(line["remaining"]) == 25.0
