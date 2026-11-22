@@ -230,3 +230,49 @@ def test_private_plan_list_is_scoped_to_requested_company(client):
     assert own.status_code == other.status_code == 200
     assert any(plan["id"] == created.json()["id"] for plan in own.json())
     assert other.json() == []
+
+
+def test_external_settlement_rejects_duplicate_reference_without_double_counting(client):
+    """An external receipt reference is idempotency protection, not a GL posting."""
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
+
+    login_admin(client)
+    company = create_company(client, name="Settlement duplicate guard")
+    due = business_today() + timedelta(days=7)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": company["id"],
+        "title": "External settlement regression",
+        "category": "GENERAL",
+        "scope": "PERSONAL",
+        "currencyCode": "HNL",
+        "amount": "125.00",
+        "recurrence": "ONCE",
+        "firstDueDate": due.isoformat(),
+        "dueDay": due.day,
+    })
+    assert created.status_code == 201, created.text
+    plan_id = created.json()["id"]
+    payload = {
+        "occurrenceDueDate": due.isoformat(),
+        "paymentDate": business_today().isoformat(),
+        "amount": "25.00",
+        "reference": "TEST-EXTERNAL-RECEIPT-001",
+    }
+    first = client.post(f"/api/obligation-plans/{plan_id}/settlements", json=payload)
+    assert first.status_code == 201, first.text
+    assert first.json()["accountingStatus"] == "UNPOSTED_MANUAL"
+    repeated = client.post(f"/api/obligation-plans/{plan_id}/settlements", json=payload)
+    assert repeated.status_code == 409, repeated.text
+    receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
+    assert receipts.status_code == 200, receipts.text
+    assert len(receipts.json()) == 1
+    assert receipts.json()[0]["id"] == first.json()["id"]
+    overview = client.get("/api/commitments/overview", params={
+        "companyId": company["id"], "horizon_days": 30,
+    })
+    assert overview.status_code == 200, overview.text
+    line = next(line for line in overview.json()["lines"] if line["planId"] == plan_id)
+    assert float(line["paid"]) == 25.0
+    assert float(line["remaining"]) == 100.0
