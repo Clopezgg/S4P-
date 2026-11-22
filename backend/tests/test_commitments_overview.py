@@ -21,6 +21,8 @@ def test_commitments_empty_company_never_invents_upcoming_payments(client):
     assert data["lines"] == []
     assert data["pendingByCurrency"] == {}
     assert data["overdueByCurrency"] == {}
+    assert data["pendingByScope"] == {}
+    assert data["overdueByScope"] == {}
 
 
 def test_commitments_rejects_unbounded_forecast(client):
