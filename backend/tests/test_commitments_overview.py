@@ -31,3 +31,15 @@ def test_commitments_rejects_unbounded_forecast(client):
         params={"companyId": company["id"], "horizon_days": 99999},
     )
     assert response.status_code == 422
+
+
+def test_commitments_rejects_zero_and_negative_forecast(client):
+    """A nonpositive horizon must not silently produce misleading obligations."""
+    login_admin(client)
+    company = create_company(client)
+    for horizon in (0, -1):
+        response = client.get(
+            "/api/commitments/overview",
+            params={"companyId": company["id"], "horizon_days": horizon},
+        )
+        assert response.status_code == 422, response.text
