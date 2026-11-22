@@ -32,6 +32,18 @@ function stubAuthenticatedFetch(roles: string[], dashboard?: Record<string, unkn
           ],
         } as Response)
       }
+      if (url.includes('/commitments/overview')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            companyId: 'c1',
+            horizonDays: 30,
+            lines: [],
+            totalsByCurrency: [],
+          }),
+        } as Response)
+      }
       if (url.includes('/dashboard/summary') && dashboard) {
         return Promise.resolve({ ok: true, status: 200, json: async () => dashboard } as Response)
       }
