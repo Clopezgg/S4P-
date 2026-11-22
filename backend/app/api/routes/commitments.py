@@ -63,10 +63,10 @@ def _status(due: date, paid: Decimal, remaining: Decimal, today: date) -> str:
         return "PAID"
     if due < today:
         return "OVERDUE"
-    if paid > 0:
-        return "PARTIALLY_PAID"
     if due == today:
         return "DUE"
+    if paid > 0:
+        return "PARTIALLY_PAID"
     return "UPCOMING"
 
 
