@@ -69,3 +69,18 @@ def test_commitments_rejects_forecast_just_above_limit(client):
         params={"companyId": company["id"], "horizon_days": 366},
     )
     assert response.status_code == 422, response.text
+
+
+def test_commitment_status_prioritizes_remaining_and_due_date():
+    """A partially paid overdue debt must not appear as merely partially paid."""
+    from datetime import date
+    from decimal import Decimal
+
+    from app.api.routes.commitments import _status
+
+    today = date(2026, 11, 22)
+    assert _status(today, Decimal("0"), Decimal("100"), today) == "DUE"
+    assert _status(date(2026, 11, 21), Decimal("20"), Decimal("80"), today) == "OVERDUE"
+    assert _status(date(2026, 11, 23), Decimal("20"), Decimal("80"), today) == "PARTIALLY_PAID"
+    assert _status(date(2026, 11, 23), Decimal("0"), Decimal("100"), today) == "UPCOMING"
+    assert _status(date(2026, 11, 21), Decimal("100"), Decimal("0"), today) == "PAID"
