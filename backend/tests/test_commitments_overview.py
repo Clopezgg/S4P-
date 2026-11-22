@@ -201,3 +201,32 @@ def test_commitments_isolate_private_plans_by_company(client):
     assert second.json()["lines"] == []
     assert second.json()["pendingByCurrency"] == {}
     assert second.json()["pendingByScope"] == {}
+
+
+def test_private_plan_list_is_scoped_to_requested_company(client):
+    """The plans API must not reveal a private plan from a different company."""
+    from datetime import timedelta
+
+    from app.core.business_time import business_today
+
+    login_admin(client)
+    company_a = create_company(client, name="Private list A")
+    company_b = create_company(client, name="Private list B")
+    due = business_today() + timedelta(days=7)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": company_a["id"],
+        "title": "Company A private plan",
+        "category": "GENERAL",
+        "scope": "PERSONAL",
+        "currencyCode": "HNL",
+        "amount": "125.00",
+        "recurrence": "ONCE",
+        "firstDueDate": due.isoformat(),
+        "dueDay": due.day,
+    })
+    assert created.status_code == 201, created.text
+    own = client.get("/api/obligation-plans", params={"companyId": company_a["id"]})
+    other = client.get("/api/obligation-plans", params={"companyId": company_b["id"]})
+    assert own.status_code == other.status_code == 200
+    assert any(plan["id"] == created.json()["id"] for plan in own.json())
+    assert other.json() == []
