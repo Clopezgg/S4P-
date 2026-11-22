@@ -152,3 +152,17 @@ def test_commitment_alerts_handle_leap_day_and_year_rollover():
     # Year-end boundaries must not accidentally suppress the 3-day reminder.
     assert _alert_due(date(2027, 1, 2), date(2026, 12, 30))
     assert not _alert_due(date(2027, 1, 3), date(2026, 12, 30))
+
+
+def test_commitments_repeated_reads_are_stable_for_empty_company(client):
+    """Refreshing the dashboard must not materialize planned payments or balances."""
+    login_admin(client)
+    company = create_company(client)
+    params = {"companyId": company["id"], "horizon_days": 30}
+    first = client.get("/api/commitments/overview", params=params)
+    second = client.get("/api/commitments/overview", params=params)
+    assert first.status_code == second.status_code == 200
+    assert first.json() == second.json()
+    assert first.json()["lines"] == []
+    for field in ("pendingByCurrency", "overdueByCurrency", "pendingByScope", "overdueByScope"):
+        assert first.json()[field] == {}
