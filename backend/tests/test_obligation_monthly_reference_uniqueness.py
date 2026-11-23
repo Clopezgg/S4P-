@@ -2,7 +2,6 @@
 
 Synthetic QA records only. No GL, bank or production writes.
 """
-from datetime import date, timedelta
 from decimal import Decimal
 
 from app.core.business_time import business_today
