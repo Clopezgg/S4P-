@@ -3,6 +3,7 @@
 Uses synthetic QA records; external tracking never posts to the general ledger.
 """
 from datetime import timedelta
+from decimal import Decimal
 
 from app.core.business_time import business_today
 from tests.helpers import create_company, login_admin
@@ -34,6 +35,7 @@ def test_fully_paid_installment_cannot_be_paid_twice(client):
     paid = client.post(f"/api/obligation-plans/{plan_id}/settlements", json=payment)
     assert paid.status_code == 201, paid.text
     assert paid.json()["accountingStatus"] == "UNPOSTED_MANUAL"
+    original_receipt_id = paid.json()["id"]
 
     rejected = client.post(f"/api/obligation-plans/{plan_id}/settlements", json={
         **payment, "amount": "0.01", "reference": "QA-EXTRA-AFTER-FULL",
@@ -43,6 +45,9 @@ def test_fully_paid_installment_cannot_be_paid_twice(client):
     receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
     assert receipts.status_code == 200, receipts.text
     assert len(receipts.json()) == 1
+    assert receipts.json()[0]["id"] == original_receipt_id
+    assert Decimal(receipts.json()[0]["amount"]) == Decimal("125.00")
+    assert receipts.json()[0]["accountingStatus"] == "UNPOSTED_MANUAL"
 
     overview = client.get("/api/commitments/overview", params={
         "companyId": company["id"], "horizon_days": 30,
