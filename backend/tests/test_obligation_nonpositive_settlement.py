@@ -3,6 +3,7 @@
 Uses a synthetic company and plan; never posts bank or GL transactions.
 """
 from datetime import timedelta
+from decimal import Decimal
 
 import pytest
 
@@ -40,3 +41,12 @@ def test_non_positive_external_payment_is_rejected_atomically(client, invalid_am
     receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
     assert receipts.status_code == 200, receipts.text
     assert receipts.json() == []
+
+    overview = client.get("/api/commitments/overview", params={
+        "companyId": company["id"], "horizon_days": 30,
+    })
+    assert overview.status_code == 200, overview.text
+    lines = [line for line in overview.json()["lines"] if line["planId"] == plan_id]
+    assert len(lines) == 1
+    assert Decimal(lines[0]["paid"]) == Decimal("0.00")
+    assert Decimal(lines[0]["remaining"]) == Decimal("100.00")
