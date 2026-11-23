@@ -56,3 +56,47 @@ def test_overpayment_after_partial_settlement_preserves_balance_and_receipt(clie
     assert len(lines) == 1
     assert Decimal(lines[0]["paid"]) == Decimal("40.00")
     assert Decimal(lines[0]["remaining"]) == Decimal("60.00")
+
+
+def test_reference_normalization_rejects_duplicate_without_mutating_balance(client):
+    """A padded reference cannot bypass the per-plan uniqueness constraint."""
+    login_admin(client)
+    company = create_company(client, name="QA normalized payment reference")
+    due = business_today() + timedelta(days=4)
+    created = client.post("/api/obligation-plans", json={
+        "companyId": company["id"],
+        "title": "QA reference uniqueness",
+        "category": "GENERAL",
+        "scope": "PERSONAL",
+        "currencyCode": "HNL",
+        "amount": "100.00",
+        "recurrence": "ONCE",
+        "firstDueDate": due.isoformat(),
+        "dueDay": due.day,
+    })
+    assert created.status_code == 201, created.text
+    plan_id = created.json()["id"]
+    payment = {
+        "occurrenceDueDate": due.isoformat(),
+        "paymentDate": business_today().isoformat(),
+        "amount": "25.00",
+        "reference": "QA-UNIQUE-001",
+    }
+    first = client.post(f"/api/obligation-plans/{plan_id}/settlements", json=payment)
+    assert first.status_code == 201, first.text
+    duplicate = client.post(f"/api/obligation-plans/{plan_id}/settlements", json={
+        **payment, "amount": "10.00", "reference": "  QA-UNIQUE-001  ",
+    })
+    assert duplicate.status_code == 409, duplicate.text
+    receipts = client.get(f"/api/obligation-plans/{plan_id}/settlements")
+    assert receipts.status_code == 200, receipts.text
+    assert len(receipts.json()) == 1
+    assert receipts.json()[0]["id"] == first.json()["id"]
+    overview = client.get("/api/commitments/overview", params={
+        "companyId": company["id"], "horizon_days": 30,
+    })
+    assert overview.status_code == 200, overview.text
+    lines = [line for line in overview.json()["lines"] if line["planId"] == plan_id]
+    assert len(lines) == 1
+    assert Decimal(lines[0]["paid"]) == Decimal("25.00")
+    assert Decimal(lines[0]["remaining"]) == Decimal("75.00")
