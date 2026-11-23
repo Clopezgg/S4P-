@@ -3,7 +3,6 @@
 Uses synthetic QA records; external tracking never posts to the general ledger.
 """
 from datetime import timedelta
-from decimal import Decimal
 
 from app.core.business_time import business_today
 from tests.helpers import create_company, login_admin
@@ -50,6 +49,7 @@ def test_fully_paid_installment_cannot_be_paid_twice(client):
     })
     assert overview.status_code == 200, overview.text
     lines = [line for line in overview.json()["lines"] if line["planId"] == plan_id]
-    assert len(lines) == 1
-    assert Decimal(lines[0]["paid"]) == Decimal("125.00")
-    assert Decimal(lines[0]["remaining"]) == Decimal("0.00")
+    # The commitments overview is a pending-only projection: fully settled
+    # installments are intentionally absent, while their receipts remain
+    # available from the settlement history endpoint above.
+    assert lines == []
