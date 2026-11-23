@@ -132,6 +132,8 @@ def create_plan(
         raise HTTPException(422, "Moneda no configurada")
     if payload.last_due_date is not None and payload.last_due_date < payload.first_due_date:
         raise HTTPException(422, "La última cuota no puede ser anterior a la primera")
+    if payload.recurrence == "ONCE" and payload.due_day != payload.first_due_date.day:
+        raise HTTPException(422, "El día de pago debe coincidir con la fecha de la cuota única")
     if payload.recurrence == "MONTHLY":
         expected_first = schedule.due_in_month(
             payload.first_due_date.year, payload.first_due_date.month, payload.due_day
