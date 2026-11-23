@@ -7,7 +7,12 @@ import uuid
 import pytest
 
 
-@pytest.mark.parametrize("authorization", [None, "Bearer invalid-qa-token"])
+@pytest.mark.parametrize("authorization", [
+    None,
+    "Bearer invalid-qa-token",
+    "Basic Zm9vOmJhcg==",
+    "Bearer",
+])
 def test_private_obligation_routes_require_authentication(client, authorization):
     """Neither missing nor invalid credentials may expose private obligations."""
     unknown_plan = str(uuid.uuid4())
